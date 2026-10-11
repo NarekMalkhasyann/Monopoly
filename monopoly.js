@@ -2801,6 +2801,13 @@ window.onload = function() {
 		currentCellName.className = "cell-name";
 		currentCellName.textContent = s.name;
 
+		if (square[i].groupNumber && square[i].groupNumber >= 3) {
+			var currentCellColorBar = currentCellAnchor.appendChild(document.createElement("div"));
+			currentCellColorBar.id = "cell" + i + "colorbar";
+			currentCellColorBar.className = "cell-color-bar";
+			currentCellColorBar.style.backgroundColor = s.color;
+		}
+
 		if (square[i].groupNumber) {
 			currentCellOwner = currentCellAnchor.appendChild(document.createElement("div"));
 			currentCellOwner.id = "cell" + i + "owner";

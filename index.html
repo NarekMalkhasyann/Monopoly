@@ -4,6 +4,11 @@
 	<title>Monopoly</title>
 	<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
 
+	<!-- Google Fonts -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 	<script type="text/javascript" src="classicedition.js"></script>
 	<!-- Comment out the previous line and uncomment the next one to enable the New York City Edition -->
@@ -241,8 +246,13 @@
 	</div>
 
 	<div id="setup">
+		<div class="setup-header">
+			<h1 class="game-title">MONOPOLY</h1>
+			<p class="game-subtitle">Classic Property Trading Game</p>
+		</div>
+
 		<div style="margin-bottom: 20px;">
-			Select number of players.
+			<label for="playernumber" style="font-weight: 600; margin-right: 8px;">Select number of players:</label>
 			<select id="playernumber" title="Select the number of players for the game.">
 				<option>2</option>
 				<option>3</option>
