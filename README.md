@@ -2,6 +2,8 @@
 
 An interactive, browser-based implementation of the classic **Monopoly** board game written in HTML, CSS, JavaScript, and jQuery. Play against other human players locally or challenge AI opponents with full trading, mortgaging, and auction capabilities.
 
+(original project cloned from https://github.com/intrepidcoder/monopoly.git )
+
 ---
 
 ## 🎮 Features
