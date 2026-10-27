@@ -7,8 +7,10 @@ import ControlPanel from './components/ControlPanel.jsx';
 import TradePanel from './components/TradePanel.jsx';
 import useFitBoard from './hooks/useFitBoard.js';
 
-// The order matches the original page: overlays, deed, board, side panel,
-// setup screen, control panel, trade window.
+// Order: overlays, deed, board, control panel, player list, setup screen, trade
+// window. On wide screens the control panel and player list are positioned over
+// / beside the board, so their place in the markup only matters on narrow
+// screens, where they stack in this order (Roll Dice first, then the players).
 //
 // The board sits in #stage > #stage-inner so useFitBoard can shrink it on small
 // screens. The control panel and money bar stay outside, at normal size: on
@@ -26,9 +28,9 @@ export default function App() {
 					<Board />
 				</div>
 			</div>
+			<ControlPanel />
 			<MoneyBar />
 			<Setup />
-			<ControlPanel />
 			<TradePanel />
 		</>
 	);

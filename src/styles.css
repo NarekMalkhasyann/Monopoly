@@ -1259,6 +1259,7 @@ a.statscellcolor {
 	#moneybar {
 		float: none;
 		margin: 0 auto;
+		z-index: 1; /* stay below the pop-up overlay */
 	}
 
 	/* Pop-ups: centred in the visible area, never wider than the screen */
@@ -1284,9 +1285,17 @@ a.statscellcolor {
 		overflow-x: auto;
 	}
 
+	/* One player per row instead of a row of cards that would scroll sideways */
+	#statstext > table,
+	#statstext > table > tbody,
+	#statstext > table > tbody > tr {
+		display: block;
+	}
+
 	.statscell {
+		display: block;
 		width: auto;
-		min-width: 180px;
+		margin-bottom: 10px;
 	}
 
 	#trade {

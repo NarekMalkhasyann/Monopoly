@@ -36,6 +36,7 @@ An interactive, browser-based implementation of the classic **Monopoly** board g
 ├── src/
 │   ├── main.jsx            # Mounts <App /> (synchronously, so the engine finds its elements)
 │   ├── App.jsx
+│   ├── hooks/useFitBoard.js # Shrinks the board to fit narrow screens
 │   ├── styles.css          # Design system (lime on charcoal, Montserrat)
 │   └── components/         # Board, ControlPanel, MoneyBar, Setup, TradePanel, Deed, Popups (.jsx)
 └── public/
@@ -47,6 +48,20 @@ An interactive, browser-based implementation of the classic **Monopoly** board g
 The page markup is now React (JSX). The game rules and state still live in
 `public/engine/*.js`, which reads and updates the elements by their `id`s, so
 those ids must not be renamed.
+
+---
+
+## 📱 Responsive Design
+
+| Screen width | Layout |
+| :--- | :--- |
+| 1130px and wider | Full-size board, control panel over the board centre, player list on the right |
+| Below 1130px (tablet, phone) | The board shrinks to fit the width; the control panel (Roll Dice, tabs) and the player list stack below it at normal size |
+| Below 560px (phone) | Setup form fields wrap; pop-ups, stats and trade window fit the screen |
+
+Touch screens get larger buttons and form fields. The shrinking is done by
+`src/hooks/useFitBoard.js`; the rest is CSS media queries at the end of
+`src/styles.css`. On a phone the board labels are small, so pinch to zoom in.
 
 ---
 
