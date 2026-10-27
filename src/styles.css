@@ -1247,19 +1247,77 @@ a.statscellcolor {
 		margin: 0 4px 0 0;
 	}
 
-	/* Player list: static block under the control panel */
+	/* Player list: a horizontal strip under the control panel.
+	   The turn arrow points down at the player whose turn it is. */
 	#moneybarwrap {
 		position: static;
 		min-width: 0;
-		width: max-content;
-		max-width: 100%;
+		width: 100%;
+		max-width: 640px;
 		margin: 0 auto 12px;
 	}
 
 	#moneybar {
 		float: none;
+		width: 100%;
 		margin: 0 auto;
 		z-index: 1; /* stay below the pop-up overlay */
+	}
+
+	#moneybar > table,
+	#moneybar > table > tbody {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		width: 100%;
+	}
+
+	#moneybar > table {
+		border-spacing: 0;
+	}
+
+	#moneybar > table > tbody {
+		gap: 4px;
+	}
+
+	/* Each player is a flex item. The engine shows and hides rows with an inline
+	   display value, so rows are sized here but never given their own display. */
+	#moneybar tr {
+		flex: 1 1 105px;
+		max-width: 150px;
+	}
+
+	#moneybar td {
+		display: block;
+	}
+
+	#moneybar .moneybararrowcell {
+		width: auto;
+		height: 20px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	#moneybar .money-bar-arrow {
+		transform: rotate(90deg);
+	}
+
+	#moneybar .moneybarcell {
+		width: 100%;
+		min-width: 0;
+		padding: 6px 10px;
+		overflow-wrap: anywhere;
+	}
+
+	/* "View stats" takes a full row of its own, without an arrow slot */
+	#moneybar #moneybarrowbutton {
+		flex: 1 0 100%;
+		max-width: none;
+	}
+
+	#moneybar #moneybarrowbutton td:first-child {
+		display: none;
 	}
 
 	/* Pop-ups: centred in the visible area, never wider than the screen */
