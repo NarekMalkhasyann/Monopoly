@@ -1361,6 +1361,25 @@ a.statscellcolor {
 		margin: 8px auto;
 		overflow-x: auto;
 	}
+
+	/* Property card (title deed) and the small hover preview.
+	   The engine places them next to the finger / mouse with inline left and top,
+	   which pushes them off the edge of a narrow screen and over the buttons.
+	   Here they are pinned to the bottom centre instead, and let taps through,
+	   so tapping anywhere else still closes them. */
+	#deed, .enlarge {
+		left: 50% !important;
+		top: auto !important;
+		bottom: 12px;
+		transform: translateX(-50%);
+		max-height: calc(100vh - 24px);
+		overflow-y: auto;
+		pointer-events: none;
+	}
+
+	#deed {
+		width: min(280px, calc(100vw - 24px));
+	}
 }
 
 @media (max-width: 560px) {
