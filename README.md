@@ -62,16 +62,16 @@ npm run build    # production build in dist/
 
 ## ⚙️ Customization & Editions
 
-To switch between the **Classic Edition** and the **New York City Edition**, edit `index.html` (lines 13–15):
+To switch between the **Classic Edition** and the **New York City Edition**, edit the engine `<script>` tags in `index.html`:
 
 ```html
 <!-- For Classic Edition: -->
-<script type="text/javascript" src="classicedition.js"></script>
-<!-- <script type="text/javascript" src="newyorkcityedition.js"></script> -->
+<script src="/engine/classicedition.js"></script>
+<!-- <script src="/engine/newyorkcityedition.js"></script> -->
 
 <!-- For New York City Edition: -->
-<!-- <script type="text/javascript" src="classicedition.js"></script> -->
-<script type="text/javascript" src="newyorkcityedition.js"></script>
+<!-- <script src="/engine/classicedition.js"></script> -->
+<script src="/engine/newyorkcityedition.js"></script>
 ```
 
 ---
