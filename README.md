@@ -56,7 +56,7 @@ those ids must not be renamed.
 | Screen width | Layout |
 | :--- | :--- |
 | 1130px and wider | Full-size board, control panel over the board centre, player list on the right |
-| Below 1130px (tablet, phone) | The board shrinks to fit the width; the control panel (Roll Dice, tabs) and the player list stack below it at normal size |
+| Below 1130px (tablet, phone) | The board shrinks to fit the width; the control panel (Roll Dice, tabs) and the player list stack below it at normal size; the player list becomes a horizontal strip with an arrow over the current player |
 | Below 560px (phone) | Setup form fields wrap; pop-ups, stats and trade window fit the screen |
 
 Touch screens get larger buttons and form fields. The shrinking is done by
