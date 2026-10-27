@@ -30,54 +30,48 @@ An interactive, browser-based implementation of the classic **Monopoly** board g
 ## 📂 Project Structure
 
 ```text
-├── index.html            # Main HTML document and board layout
-├── styles.css            # Stylesheet for board, tokens, deeds, and UI
-├── monopoly.js           # Core game engine (rules, turns, auctions, trades, state)
-├── ai.js                 # AI player decision-making logic
-├── classicedition.js     # Atlantic City board definitions, cards, and square data
-├── newyorkcityedition.js # NYC edition board definitions, cards, and square data
-└── images/               # Board icons, cards, and UI graphics
+├── index.html              # Vite entry: loads jQuery, the engine scripts and src/main.jsx
+├── package.json            # React 19 + Vite
+├── vite.config.js
+├── src/
+│   ├── main.jsx            # Mounts <App /> (synchronously, so the engine finds its elements)
+│   ├── App.jsx
+│   ├── styles.css          # Design system (lime on charcoal, Montserrat)
+│   └── components/         # Board, ControlPanel, MoneyBar, Setup, TradePanel, Deed, Popups (.jsx)
+└── public/
+    ├── engine/             # Game engine (plain JS, unchanged): monopoly.js, ai.js,
+    │                       #   classicedition.js, newyorkcityedition.js
+    └── images/             # Board icons, cards, and UI graphics
 ```
+
+The page markup is now React (JSX). The game rules and state still live in
+`public/engine/*.js`, which reads and updates the elements by their `id`s, so
+those ids must not be renamed.
 
 ---
 
 ## 🚀 Getting Started
 
-No build step or external dependencies installation is required.
-
-### 1. Run Directly in Browser
-Simply open `index.html` in any modern web browser:
-- Double-click `index.html`, or
-- Right-click and choose **Open With > Google Chrome / Safari / Firefox / Edge**.
-
-### 2. Run with a Local Server (Optional)
-If you prefer serving the files over HTTP:
-
-Using Python 3:
 ```bash
-python3 -m http.server 8000
-```
-Then visit `http://localhost:8000` in your web browser.
-
-Using Node.js (`npx serve` or `live-server`):
-```bash
-npx serve .
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # production build in dist/
 ```
 
 ---
 
 ## ⚙️ Customization & Editions
 
-To switch between the **Classic Edition** and the **New York City Edition**, edit `index.html` (lines 13–15):
+To switch between the **Classic Edition** and the **New York City Edition**, edit the engine `<script>` tags in `index.html`:
 
 ```html
 <!-- For Classic Edition: -->
-<script type="text/javascript" src="classicedition.js"></script>
-<!-- <script type="text/javascript" src="newyorkcityedition.js"></script> -->
+<script src="/engine/classicedition.js"></script>
+<!-- <script src="/engine/newyorkcityedition.js"></script> -->
 
 <!-- For New York City Edition: -->
-<!-- <script type="text/javascript" src="classicedition.js"></script> -->
-<script type="text/javascript" src="newyorkcityedition.js"></script>
+<!-- <script src="/engine/classicedition.js"></script> -->
+<script src="/engine/newyorkcityedition.js"></script>
 ```
 
 ---
