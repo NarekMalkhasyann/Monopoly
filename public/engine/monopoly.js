@@ -2428,6 +2428,43 @@ function roll() {
 	document.getElementById("nextbutton").title = "End turn and advance to the next player.";
 
 	game.rollDice();
+
+	// Optional 3D dice animation (src/components/Dice3D.jsx). The dice are thrown
+	// first and the roll is applied once they have landed. If the hook is missing
+	// or fails, the roll is applied immediately, as in the original game.
+	if (typeof window.animateDice === "function") {
+		var rollButton = document.getElementById("nextbutton");
+		var applied = false;
+		var applyOnce = function() {
+			if (applied) {
+				return;
+			}
+			applied = true;
+			rollButton.disabled = false;
+			applyRoll();
+		};
+
+		rollButton.disabled = true;
+		rollButton.value = "Rolling...";
+
+		try {
+			window.animateDice(game.getDie(1), game.getDie(2)).then(applyOnce, applyOnce);
+		} catch (e) {
+			applyOnce();
+		}
+		return;
+	}
+
+	applyRoll();
+}
+
+// Everything that follows a roll: doubles, jail, moving the token, landing.
+function applyRoll() {
+	var p = player[turn];
+
+	document.getElementById("nextbutton").value = "End turn";
+	document.getElementById("nextbutton").title = "End turn and advance to the next player.";
+
 	var die1 = game.getDie(1);
 	var die2 = game.getDie(2);
 
