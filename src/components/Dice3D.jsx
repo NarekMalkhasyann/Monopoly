@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 //
 // The engine still decides the numbers (game.rollDice() in public/engine/monopoly.js).
 // Here we only *show* that roll: two 3D dice are thrown over the board and land
-// on exactly those numbers ("2d6@3,5" is the library's way of fixing the result).
+// on exactly those numbers ("2dpips@3,5" is the library's way of fixing the result; "dpips" is a d6 with round pips).
 // When they have settled, the engine carries on and moves the player.
 //
 // The engine calls window.animateDice(die1, die2), which returns a promise. If
@@ -45,7 +45,7 @@ export default function Dice3D() {
 			box.clearDice();
 			scene.classList.add('visible');
 
-			const landed = box.roll(`2d6@${die1},${die2}`);
+			const landed = box.roll(`2dpips@${die1},${die2}`);
 			const tooLong = new Promise((resolve) => setTimeout(resolve, TIMEOUT_MS));
 
 			return Promise.race([landed, tooLong])

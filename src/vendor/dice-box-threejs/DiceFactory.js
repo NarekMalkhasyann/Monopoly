@@ -381,6 +381,29 @@ class DiceFactory {
 				isTexture = true;
 				context.drawImage(text, 0,0,text.width,text.height,0,0,canvas.width,canvas.height);
 
+			// pip face (added for this project): round dots like a real die
+			} else if (diceobj.pips) {
+				const PIPS = {
+					1: [[0, 0]],
+					2: [[-1, -1], [1, 1]],
+					3: [[-1, -1], [0, 0], [1, 1]],
+					4: [[-1, -1], [1, -1], [-1, 1], [1, 1]],
+					5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]],
+					6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]],
+				};
+				const centre = canvas.width / 2;
+				const step = canvas.width * 0.2; // distance between pip rows / columns
+				const radius = canvas.width * 0.07;
+
+				(PIPS[parseInt(text, 10)] || []).forEach(([dx, dy]) => {
+					[[context, forecolor], [contextBump, "#000000"]].forEach(([ctx, colour]) => {
+						ctx.beginPath();
+						ctx.arc(centre + dx * step, centre + dy * step, radius, 0, Math.PI * 2);
+						ctx.fillStyle = colour;
+						ctx.fill();
+					});
+				});
+
 			// text-only face
 			} else {
 

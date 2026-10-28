@@ -80,6 +80,15 @@ export const DICE = {
 		scale: 0.9,
 		font: 'monospace',
 	},
+	// Added for this project: a d6 whose faces are drawn as round pips (see DiceFactory.js)
+	dpips: {
+		name: 'Six-Sided Dice (Drawn Pips)',
+		type: 'd6',
+		labels: ['1', '2', '3', '4', '5', '6'],
+		values: [ 1,6 ],
+		scale: 0.9,
+		pips: true,
+	},
 	dsex: {
 		name: 'Sex-Sided Emoji Dice',
 		type: 'd6',

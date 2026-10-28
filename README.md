@@ -78,14 +78,15 @@ the game has already drawn; the token moves once they have settled.
 - `src/components/Dice3D.jsx` creates that hook with
   [dice-box-threejs](https://github.com/3d-dice/dice-box-threejs) (MIT, in
   `src/vendor/dice-box-threejs/`). The library is loaded lazily and the dice are thrown
-  with its fixed-result notation (`2d6@3,5`). If WebGL is not available, the game simply
+  with its fixed-result notation (`2dpips@3,5`: two dice drawn with pips). If WebGL is not available, the game simply
   rolls without animation.
 - Dependencies: `three` (pinned to 0.143.0, the version the library was written for) and
   `cannon-es`. Run `npm install` after pulling.
 - To turn the animation off, remove `<Dice3D />` from `src/App.jsx`.
 
 The dice library has not been updated since 2022, so it is copied into the project
-instead of being installed from npm.
+instead of being installed from npm. One small addition was made to it: dice faces with
+round pips (see `src/vendor/dice-box-threejs/README.md`).
 
 ---
 
