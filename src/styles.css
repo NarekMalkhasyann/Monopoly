@@ -1176,6 +1176,34 @@ a.statscellcolor {
 }
 
 /* ==========================================================================
+   3D dice (src/components/Dice3D.jsx)
+   A transparent area the dice are thrown in. Its position is set from
+   JavaScript so it sits over the middle of the board. It never takes clicks.
+   ========================================================================== */
+#dice-scene {
+	position: fixed;
+	left: 50%;
+	top: 50%;
+	width: min(720px, 94vw);
+	height: min(430px, 46vh);
+	transform: translate(-50%, -50%);
+	z-index: 11; /* above the board, below pop-ups */
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.25s;
+}
+
+#dice-scene.visible {
+	opacity: 1;
+}
+
+#dice-scene canvas {
+	display: block;
+	width: 100% !important;
+	height: 100% !important;
+}
+
+/* ==========================================================================
    Responsive layout
    --------------------------------------------------------------------------
    Wide screens (>= 1130px): the original layout. The board is full size, the

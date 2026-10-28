@@ -5,6 +5,7 @@ import MoneyBar from './components/MoneyBar.jsx';
 import Setup from './components/Setup.jsx';
 import ControlPanel from './components/ControlPanel.jsx';
 import TradePanel from './components/TradePanel.jsx';
+import Dice3D from './components/Dice3D.jsx';
 import useFitBoard from './hooks/useFitBoard.js';
 
 // Order: overlays, deed, board, control panel, player list, setup screen, trade
@@ -32,6 +33,7 @@ export default function App() {
 			<MoneyBar />
 			<Setup />
 			<TradePanel />
+			<Dice3D />
 		</>
 	);
 }
