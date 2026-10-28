@@ -37,8 +37,9 @@ An interactive, browser-based implementation of the classic **Monopoly** board g
 │   ├── main.jsx            # Mounts <App /> (synchronously, so the engine finds its elements)
 │   ├── App.jsx
 │   ├── hooks/useFitBoard.js # Shrinks the board to fit narrow screens
+│   ├── vendor/dice-box-threejs/ # 3D dice library (MIT), copied as is
 │   ├── styles.css          # Design system (lime on charcoal, Montserrat)
-│   └── components/         # Board, ControlPanel, MoneyBar, Setup, TradePanel, Deed, Popups (.jsx)
+│   └── components/         # Board, ControlPanel, MoneyBar, Setup, TradePanel, Deed, Popups, Dice3D (.jsx)
 └── public/
     ├── engine/             # Game engine (plain JS, unchanged): monopoly.js, ai.js,
     │                       #   classicedition.js, newyorkcityedition.js
@@ -62,6 +63,29 @@ those ids must not be renamed.
 Touch screens get larger buttons and form fields. The shrinking is done by
 `src/hooks/useFitBoard.js`; the rest is CSS media queries at the end of
 `src/styles.css`. On a phone the board labels are small, so pinch to zoom in.
+
+---
+
+## 🎲 3D Dice
+
+When a player rolls, two 3D dice tumble over the board and land on the numbers
+the game has already drawn; the token moves once they have settled.
+
+- `public/engine/monopoly.js` still picks the numbers (`game.rollDice()`). `roll()` then
+  calls `window.animateDice(die1, die2)` if it exists and applies the roll when the
+  returned promise resolves (`applyRoll()`). Without the hook the roll is instant, as in
+  the original game.
+- `src/components/Dice3D.jsx` creates that hook with
+  [dice-box-threejs](https://github.com/3d-dice/dice-box-threejs) (MIT, in
+  `src/vendor/dice-box-threejs/`). The library is loaded lazily and the dice are thrown
+  with its fixed-result notation (`2d6@3,5`). If WebGL is not available, the game simply
+  rolls without animation.
+- Dependencies: `three` (pinned to 0.143.0, the version the library was written for) and
+  `cannon-es`. Run `npm install` after pulling.
+- To turn the animation off, remove `<Dice3D />` from `src/App.jsx`.
+
+The dice library has not been updated since 2022, so it is copied into the project
+instead of being installed from npm.
 
 ---
 

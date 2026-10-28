@@ -1184,8 +1184,8 @@ a.statscellcolor {
 	position: fixed;
 	left: 50%;
 	top: 50%;
-	width: min(560px, 94vw);
-	height: min(340px, 42vh);
+	width: min(720px, 94vw);
+	height: min(430px, 46vh);
 	transform: translate(-50%, -50%);
 	z-index: 11; /* above the board, below pop-ups */
 	pointer-events: none;
