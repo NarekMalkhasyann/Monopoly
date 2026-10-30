@@ -17,8 +17,12 @@ import { useEffect } from 'react';
 const HOLD_MS = 800; // how long the landed dice stay on screen
 const TIMEOUT_MS = 6000; // never keep the game waiting longer than this
 
-export default function Dice3D() {
+// `active` is true while the game screen is showing. The dice scene must be
+// created then: inside a hidden (display: none) container it would get a 0x0
+// canvas and the dice would never be visible.
+export default function Dice3D({ active = true }) {
 	useEffect(() => {
+		if (!active) return undefined;
 		const scene = document.getElementById('dice-scene');
 		let box = null;
 		let busy = false;
@@ -83,7 +87,7 @@ export default function Dice3D() {
 			cancelled = true;
 			delete window.animateDice;
 		};
-	}, []);
+	}, [active]);
 
 	return <div id="dice-scene" aria-hidden="true" />;
 }
