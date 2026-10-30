@@ -1541,6 +1541,7 @@ a.statscellcolor {
 	background: var(--dark);
 	border-radius: 16px;
 	box-shadow: none;
+	z-index: 1; /* under pop-ups and the stats window at every width */
 }
 
 .moneybarcell {
@@ -1574,4 +1575,104 @@ a.statscellcolor {
 #viewstats {
 	border-color: rgba(217, 217, 217, 0.2);
 	border-radius: 10px;
+}
+
+/* ==========================================================================
+   "View stats" pop-up: minimal look
+   --------------------------------------------------------------------------
+   One quiet card per player with a slim bar in their colour (the engine sets
+   the colour inline; we keep only the left edge). Houses / hotels sit at the
+   right end of the row instead of wrapping under long names, and mortgaged
+   squares carry a small label.
+   ========================================================================== */
+#stats {
+	border: none;
+	border-radius: 20px;
+	background-color: var(--dark);
+	padding: 28px 24px 24px;
+}
+
+#statstext > table {
+	border-spacing: 10px;
+}
+
+.statscell {
+	border-width: 0 0 0 4px !important; /* beats the engine's inline 2px border; colour stays */
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.04);
+	padding: 14px 14px 12px;
+	width: 230px;
+}
+
+.statsplayername {
+	font-size: 17px;
+	margin-bottom: 10px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.statscell table {
+	border-spacing: 0 3px;
+}
+
+td.statscellcolor {
+	width: 6px;
+	min-width: 6px;
+	height: 22px;
+	border-radius: 3px;
+}
+
+td.statscellname {
+	position: relative;
+	padding: 4px 8px 4px 12px;
+	font-size: 13px;
+	line-height: 1.3;
+}
+
+/* houses / hotel count: pinned to the right end of the row */
+td.statscellname > span {
+	position: absolute;
+	right: 4px;
+	top: 50%;
+	transform: translateY(-50%);
+	white-space: nowrap;
+	font-size: 12px;
+	color: var(--white-o);
+}
+
+td.statscellname:has(> span) {
+	padding-right: 52px;
+}
+
+td.statscellname > span img {
+	height: 14px;
+	width: 14px;
+	vertical-align: -2px;
+}
+
+/* mortgaged: dimmed, struck through, with a label */
+td.statscellname[title="Mortgaged"] {
+	text-decoration: line-through;
+	text-decoration-color: rgba(255, 255, 255, 0.3);
+}
+
+td.statscellname[title="Mortgaged"]::after {
+	content: "mortgaged";
+	display: inline-block;
+	margin-left: 8px;
+	padding: 1px 7px;
+	border-radius: 20px;
+	border: 1px solid rgba(251, 146, 60, 0.5);
+	color: #fb923c;
+	font-size: 10px;
+	font-weight: 700;
+	text-decoration: none;
+	vertical-align: 1px;
+}
+
+@media (max-width: 1129px) {
+	.statscell {
+		width: 100%;
+		box-sizing: border-box;
+	}
 }
