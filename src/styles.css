@@ -1472,3 +1472,106 @@ a.statscellcolor {
 		animation: none !important;
 	}
 }
+
+/* ==========================================================================
+   Large screens: a much bigger player/stats panel beside the board
+   --------------------------------------------------------------------------
+   Only from 1300px up (the board is ~915px wide, so there is room for a
+   340-480px panel). Phones and tablets keep the layout above.
+   ========================================================================== */
+@media (min-width: 1300px) {
+	#moneybarwrap {
+		--stats-fs: clamp(17px, calc(100vw / 80), 24px); /* 17px at 1300px, 24px at 1920px */
+		/* Sits right next to the board (915px wide incl. margins) */
+		left: 940px;
+		right: auto;
+		width: clamp(340px, calc(100vw - 970px), 480px);
+		font-size: var(--stats-fs);
+	}
+
+	#moneybar {
+		float: none;
+		width: 100%;
+		padding: 0.9em;
+		box-sizing: border-box;
+		z-index: 1; /* the panel now reaches the screen centre: keep it under pop-ups */
+	}
+
+	#moneybar table {
+		border-spacing: 0 0.45em;
+	}
+
+	.moneybarcell {
+		width: auto;
+		min-width: 0;
+		padding: 0.7em 1em;
+		font-size: 1em;
+	}
+
+	.moneybarcell div:nth-child(2) {
+		font-size: 1.5em;
+		margin-top: 0.15em;
+	}
+
+	.moneybararrowcell {
+		width: 2.2em;
+	}
+
+	.money-bar-arrow {
+		height: 1.4em;
+		width: 1.4em;
+	}
+
+	#viewstats {
+		font-size: var(--stats-fs);
+		padding: 0.7em 1em;
+		margin-top: 0.4em;
+	}
+}
+
+/* ==========================================================================
+   Player stats panel: minimal look
+   --------------------------------------------------------------------------
+   No outlines: each player is a quiet row with a slim bar in their own colour
+   (the engine sets the colour inline, we only narrow the border to the left
+   edge). The player whose turn it is gets a soft lime tint.
+   ========================================================================== */
+#moneybar {
+	border: none;
+	background: var(--dark);
+	border-radius: 16px;
+	box-shadow: none;
+}
+
+.moneybarcell {
+	background: rgba(255, 255, 255, 0.04);
+	border-radius: 10px;
+	border-width: 0 0 0 4px !important; /* beats the engine's inline 2px border; colour stays */
+	font-weight: 500;
+	color: var(--white-o);
+}
+
+.moneybarcell:hover {
+	background: rgba(255, 255, 255, 0.07);
+}
+
+.moneybarcell div:nth-child(2) {
+	color: var(--white);
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Current player: the engine shows the arrow only in this row */
+#moneybar tr:has(.money-bar-arrow:not([style*="none"])) .moneybarcell {
+	background: rgba(172, 250, 0, 0.09);
+	color: var(--white);
+}
+
+#moneybar tr:has(.money-bar-arrow:not([style*="none"])) .moneybarcell div:nth-child(2) {
+	color: var(--green);
+}
+
+#viewstats {
+	border-color: rgba(217, 217, 217, 0.2);
+	border-radius: 10px;
+}
