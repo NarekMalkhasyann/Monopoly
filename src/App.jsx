@@ -83,7 +83,7 @@ export default function App() {
 				<MoneyBar />
 				<Setup />
 				<TradePanel />
-				<Dice3D />
+				<Dice3D active={inGame} />
 				{inGame && <GameBar />}
 			</div>
 
