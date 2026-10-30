@@ -1528,3 +1528,50 @@ a.statscellcolor {
 		margin-top: 0.4em;
 	}
 }
+
+/* ==========================================================================
+   Player stats panel: minimal look
+   --------------------------------------------------------------------------
+   No outlines: each player is a quiet row with a slim bar in their own colour
+   (the engine sets the colour inline, we only narrow the border to the left
+   edge). The player whose turn it is gets a soft lime tint.
+   ========================================================================== */
+#moneybar {
+	border: none;
+	background: var(--dark);
+	border-radius: 16px;
+	box-shadow: none;
+}
+
+.moneybarcell {
+	background: rgba(255, 255, 255, 0.04);
+	border-radius: 10px;
+	border-width: 0 0 0 4px !important; /* beats the engine's inline 2px border; colour stays */
+	font-weight: 500;
+	color: var(--white-o);
+}
+
+.moneybarcell:hover {
+	background: rgba(255, 255, 255, 0.07);
+}
+
+.moneybarcell div:nth-child(2) {
+	color: var(--white);
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Current player: the engine shows the arrow only in this row */
+#moneybar tr:has(.money-bar-arrow:not([style*="none"])) .moneybarcell {
+	background: rgba(172, 250, 0, 0.09);
+	color: var(--white);
+}
+
+#moneybar tr:has(.money-bar-arrow:not([style*="none"])) .moneybarcell div:nth-child(2) {
+	color: var(--green);
+}
+
+#viewstats {
+	border-color: rgba(217, 217, 217, 0.2);
+	border-radius: 10px;
+}
