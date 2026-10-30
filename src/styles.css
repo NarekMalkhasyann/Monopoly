@@ -1472,3 +1472,59 @@ a.statscellcolor {
 		animation: none !important;
 	}
 }
+
+/* ==========================================================================
+   Large screens: a much bigger player/stats panel beside the board
+   --------------------------------------------------------------------------
+   Only from 1300px up (the board is ~915px wide, so there is room for a
+   340-480px panel). Phones and tablets keep the layout above.
+   ========================================================================== */
+@media (min-width: 1300px) {
+	#moneybarwrap {
+		--stats-fs: clamp(17px, calc(100vw / 80), 24px); /* 17px at 1300px, 24px at 1920px */
+		/* Sits right next to the board (915px wide incl. margins) */
+		left: 940px;
+		right: auto;
+		width: clamp(340px, calc(100vw - 970px), 480px);
+		font-size: var(--stats-fs);
+	}
+
+	#moneybar {
+		float: none;
+		width: 100%;
+		padding: 0.9em;
+		box-sizing: border-box;
+		z-index: 1; /* the panel now reaches the screen centre: keep it under pop-ups */
+	}
+
+	#moneybar table {
+		border-spacing: 0 0.45em;
+	}
+
+	.moneybarcell {
+		width: auto;
+		min-width: 0;
+		padding: 0.7em 1em;
+		font-size: 1em;
+	}
+
+	.moneybarcell div:nth-child(2) {
+		font-size: 1.5em;
+		margin-top: 0.15em;
+	}
+
+	.moneybararrowcell {
+		width: 2.2em;
+	}
+
+	.money-bar-arrow {
+		height: 1.4em;
+		width: 1.4em;
+	}
+
+	#viewstats {
+		font-size: var(--stats-fs);
+		padding: 0.7em 1em;
+		margin-top: 0.4em;
+	}
+}
