@@ -1,6 +1,6 @@
 # Monopoly Web Game
 
-An interactive, browser-based implementation of the classic **Monopoly** board game written in HTML, CSS, JavaScript, and jQuery. Play against other human players locally or challenge AI opponents with full trading, mortgaging, and auction capabilities.
+An interactive, browser-based implementation of the classic **Monopoly** board game written in HTML, CSS, JavaScript, and jQuery. Play against other human players on one device or challenge AI opponents with full trading, mortgaging, and auction capabilities. Players sign in, and every game is saved to a history they can resume from. Online play across devices is planned (Milestone 2).
 
 (original project cloned from https://github.com/intrepidcoder/monopoly.git )
 
@@ -20,10 +20,12 @@ An interactive, browser-based implementation of the classic **Monopoly** board g
 - **Multiple Board Editions**:
   - **Classic Edition** (`classicedition.js`): The traditional Atlantic City property set.
   - **New York City Edition** (`newyorkcityedition.js`): Alternate board theme featuring iconic NYC landmarks and locations.
+- **Accounts & History**:
+  - Register / sign in, play on this device, resume unfinished games, browse past games with ranking and game log.
 - **Interactive UI**:
   - Interactive board deeds popup with detailed rent tiers and mortgage values.
   - Player statistics, live bank balance, log view, and draggable modal dialogues.
-  - Responsive visual tokens and styled control panels.
+  - Responsive layout for phones and tablets, animated 3D dice, styled control panels.
 
 ---
 
@@ -31,24 +33,36 @@ An interactive, browser-based implementation of the classic **Monopoly** board g
 
 ```text
 ├── index.html              # Vite entry: loads jQuery, the engine scripts and src/main.jsx
-├── package.json            # React 19 + Vite
-├── vite.config.js
+├── package.json            # React 19 + Vite; scripts for the API and tests
+├── vite.config.js          # Proxies /api to the API server in development
+├── server/                 # Backend (plain Node, no extra packages)
+│   ├── index.js            # Starts the API (port 3001)
+│   ├── app.js              # Routes: auth, games, checkpoints, history
+│   ├── auth.js             # scrypt password hashing, JWT
+│   ├── db.js               # SQLite schema
+│   └── test.js             # API tests (npm run test:server)
+├── scripts/dev.mjs         # Runs API + Vite together (npm run dev:all)
 ├── src/
 │   ├── main.jsx            # Mounts <App /> (synchronously, so the engine finds its elements)
-│   ├── App.jsx
+│   ├── App.jsx             # Screens: sign in -> Play / History -> game
+│   ├── api.js              # fetch wrapper with the login token
+│   ├── session.js          # Saves checkpoints and log lines, resumes a game
+│   ├── portal/             # Sign in, Home, History, sidebar shell (+ portal.css)
 │   ├── hooks/useFitBoard.js # Shrinks the board to fit narrow screens
 │   ├── vendor/dice-box-threejs/ # 3D dice library (MIT), copied as is
 │   ├── styles.css          # Design system (lime on charcoal, Montserrat)
 │   └── components/         # Board, ControlPanel, MoneyBar, Setup, TradePanel, Deed, Popups, Dice3D (.jsx)
 └── public/
-    ├── engine/             # Game engine (plain JS, unchanged): monopoly.js, ai.js,
+    ├── engine/             # Game engine (plain JS): monopoly.js, ai.js,
     │                       #   classicedition.js, newyorkcityedition.js
     └── images/             # Board icons, cards, and UI graphics
 ```
 
-The page markup is now React (JSX). The game rules and state still live in
+The page markup is React (JSX). The game rules and state still live in
 `public/engine/*.js`, which reads and updates the elements by their `id`s, so
-those ids must not be renamed.
+those ids must not be renamed. Beyond the original code, the engine has two
+small additions: the 3D dice hook in `roll()` and the save hooks (`onTurnStart`,
+`onGameEvent`, `onPlayerEliminated`, `onGameEnd`) used by `src/session.js`.
 
 ---
 
@@ -147,6 +161,9 @@ To switch between the **Classic Edition** and the **New York City Edition**, edi
 
 ## 🛠️ Built With
 
+- **React 19 + Vite** – Page markup and dev/build tooling.
+- **Node.js 22 (`node:http`, `node:sqlite`, `node:crypto`)** – API, SQLite storage, password hashing and JWT.
+- **three.js + cannon-es** – 3D dice.
 - **HTML5 & CSS3** – Board layout, styling, and typography.
 - **JavaScript (ES5/Vanilla)** – Game state management and business logic.
 - **jQuery (1.11.1)** – DOM interactions, drag-and-drop modals, and event handling.
