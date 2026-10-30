@@ -955,6 +955,8 @@ function Game() {
 	this.eliminatePlayer = function() {
 		var p = player[turn];
 
+		if (typeof window.onPlayerEliminated === "function") window.onPlayerEliminated(p.name);
+
 		for (var i = p.index; i < pcount; i++) {
 			player[i] = player[i + 1];
 			player[i].index = i;
@@ -991,6 +993,8 @@ function Game() {
 					// text += " " + square[i].landcount;
 			// }
 			// document.getElementById("refresh").innerHTML += "<br><br><div><textarea type='text' style='width: 980px;' onclick='javascript:select();' />" + text + "</textarea></div>";
+
+			if (typeof window.onGameEnd === "function") window.onGameEnd(player[1].name);
 
 			popup("<p>Congratulations, " + player[1].name + ", you have won the game.</p><div>");
 
@@ -1219,6 +1223,9 @@ Array.prototype.randomize = function(length) {
 // }
 
 function addAlert(alertText) {
+	// Hook: the app keeps a readable log of the game (see src/session.js).
+	if (typeof window.onGameEvent === "function") window.onGameEvent(alertText);
+
 	$alert = $("#alert");
 
 	$(document.createElement("div")).text(alertText).appendTo($alert);
@@ -2573,6 +2580,10 @@ function play() {
 	if (game.auction()) {
 		return;
 	}
+
+	// Hook: the state between two turns is complete and consistent, so this is
+	// where the app saves a checkpoint (see src/session.js).
+	if (typeof window.onTurnStart === "function") window.onTurnStart();
 
 	turn++;
 	if (turn > pcount) {

@@ -90,13 +90,42 @@ round pips (see `src/vendor/dice-box-threejs/README.md`).
 
 ---
 
+## 👤 Accounts & Game History (Milestone 1)
+
+Players sign in (register / login), and every local game is saved to their account.
+
+- **Sign in / Create account** – email + password. Passwords are hashed with scrypt, the session is a signed JWT kept in `localStorage`.
+- **Play** – start a new game on this device (2–8 players, humans and AI) or resume an unfinished one.
+- **History** – every game with its mode, players, winner, turns and date; filter by mode and status; open *Details* for the final ranking and the full game log; delete a game.
+- **Saving** – the engine calls small hooks (`onTurnStart`, `onGameEvent`, `onPlayerEliminated`, `onGameEnd`). At the start of every turn the browser uploads a checkpoint (players, properties, card decks) plus the new log lines (`src/session.js`). Resume copies the checkpoint back into the engine and continues.
+- **Backend** – `server/` is plain Node (`node:http`, `node:sqlite`, `node:crypto`), so there is nothing extra to install. SQLite for now; the tables (`users`, `games`, `game_players`, `game_actions`) map directly to PostgreSQL for deployment.
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/api/auth/register`, `/api/auth/login` | create account / sign in, returns a token |
+| GET | `/api/me` | current user |
+| POST | `/api/games` | create a game record |
+| GET | `/api/games?status=&mode=&limit=&offset=` | history (paged, filtered) |
+| GET / DELETE | `/api/games/:id` | game with checkpoint and log / delete |
+| PUT | `/api/games/:id/checkpoint` | save checkpoint + log lines |
+| POST | `/api/games/:id/finish` | save result and final ranking |
+
+Online play (WebSocket rooms) is Milestone 2; the *Online* card on the home screen is disabled until then.
+
+---
+
 ## 🚀 Getting Started
+
+Requires Node.js 22.13 or newer.
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
+npm run dev:all  # API on :3001 + site on http://localhost:5173
 npm run build    # production build in dist/
+npm run test:server   # API tests
 ```
+
+`JWT_SECRET` (environment variable) should be set to a long random string outside development. The database file is `server/data/monopoly.db` (override with `DB_FILE`).
 
 ---
 
