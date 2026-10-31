@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { openDb } from './db.js';
 import { createApp } from './app.js';
 
+process.env.FORFEIT_AFTER_MS = '400';
+process.env.ABANDON_AFTER_MS = '700';
+process.env.SWEEP_EVERY_MS = '200';
 const server = createApp(openDb(':memory:'), { secret: 'test-secret' });
 await new Promise((r) => server.listen(0, r));
 const port = server.address().port;
@@ -128,6 +131,60 @@ const r2 = (await b2s.next('room', (m) => m.room.id === ja.room.id && m.room.pla
 assert.equal(r2.players[0].name, 'Ben'); assert.equal(r2.players[0].seat, 1); assert.equal(r2.players[0].host, true);
 b2s.send({ t: 'leave' }); await b2s.next('left');
 a.send({ t: 'join', code: ja.room.code }); assert.match((await a.next('error', (m) => /No room/.test(m.message))).message, /No room/);
+
+// ---- Milestone 3: payloads, removing an away player, abandoned games ----
+{
+	const tM = await register('Mia'); const tN = await register('Noa');
+	const m = await open(tM); await m.next('hello'); const n = await open(tN); await n.next('hello');
+	m.send({ t: 'create' }); const jm = await m.next('joined');
+	n.send({ t: 'join', code: jm.room.code }); await n.next('joined');
+	m.send({ t: 'start' }); await m.next('started'); await n.next('started');
+
+	// numbers and trade offers pass through, anything else is dropped or rebuilt
+	m.send({ t: 'act', a: { id: 'auctionbid', turn: 1, v: 120, evil: 'x' } });
+	let act = await n.next('act'); assert.deepEqual(act.a, { id: 'auctionbid', turn: 1, v: 120 });
+	m.send({ t: 'act', a: { id: 'mortgagebutton', turn: 1, check: 7 } });
+	act = await n.next('act', (x) => x.a.id === 'mortgagebutton'); assert.equal(act.a.check, 7);
+	const offer = { i: 1, r: 2, m: 50, p: Array.from({ length: 40 }, (_, k) => (k === 6 ? 1 : k === 8 ? -1 : 0)), cc: 0, ch: 0 };
+	m.send({ t: 'act', a: { id: 'proposetradebutton', turn: 1, v: { ...offer, extra: 1 } } });
+	act = await n.next('act', (x) => x.a.id === 'proposetradebutton'); assert.deepEqual(act.a.v, offer);
+	m.send({ t: 'act', a: { id: 'proposetradebutton', turn: 1, v: { i: 1, p: [1] } } });
+	act = await n.next('act', (x) => x.a.id === 'proposetradebutton' && x.seq > act.seq); assert.equal(act.a.v, undefined);
+	m.send({ t: 'act', a: { id: 'forfeit', turn: 1 } }); assert.match((await m.next('error')).message, /Unknown action/);
+
+	// someone who is online cannot be removed; someone away long enough can
+	m.send({ t: 'forfeit', seat: 2 }); assert.match((await m.next('error', (x) => /Cannot|away/.test(x.message))).message, /away/);
+	n.close(); await m.next('room', (x) => x.room.players[1].online === false);
+	m.send({ t: 'forfeit', seat: 2, turn: 1 }); assert.match((await m.next('error', (x) => /away/.test(x.message))).message, /not away long enough/);
+	await new Promise((r) => setTimeout(r, 450));
+	m.send({ t: 'forfeit', seat: 2, turn: 2 });
+	act = await m.next('act', (x) => x.a.id === 'forfeit'); assert.deepEqual(act.a, { id: 'forfeit', turn: 2, v: 2 });
+
+	// the returning player replays everything, forfeit included
+	const n2 = await open(tN); await n2.next('hello');
+	n2.send({ t: 'join', gameId: jm.room.id, after: 0 });
+	const back = await n2.next('joined'); assert.ok(back.actions.some((x) => x.a.id === 'forfeit'));
+
+	// only the host may abandon
+	n2.send({ t: 'abandon' }); assert.match((await n2.next('error')).message, /host/);
+	m.send({ t: 'abandon' }); const ab = await m.next('ended'); assert.equal(ab.room.status, 'abandoned');
+	await n2.next('ended');
+	const g = (await call('GET', `/api/games/${jm.room.id}`, null, tM)).body.game;
+	assert.equal(g.status, 'abandoned');
+	assert.equal((await call('GET', '/api/games?status=abandoned', null, tM)).body.total, 1);
+	assert.equal((await call('DELETE', `/api/games/${jm.room.id}`, null, tM)).status, 200);
+	m.close(); n2.close();
+
+	// a running game that nobody opens is abandoned by the server
+	const tP = await register('Pia'); const tQ = await register('Quin');
+	const p = await open(tP); await p.next('hello'); const qq = await open(tQ); await qq.next('hello');
+	p.send({ t: 'create' }); const jp = await p.next('joined');
+	qq.send({ t: 'join', code: jp.room.code }); await qq.next('joined');
+	p.send({ t: 'start' }); await p.next('started');
+	p.close(); qq.close();
+	await new Promise((r) => setTimeout(r, 1500));
+	assert.equal((await call('GET', `/api/games/${jp.room.id}`, null, tP)).body.game.status, 'abandoned');
+}
 
 // the SPA fallback is only active when a build exists, API 404s stay JSON
 assert.equal((await call('GET', '/api/nope')).status, 404);

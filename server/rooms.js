@@ -11,11 +11,39 @@ export const COLORS = ['yellow', 'blue', 'red', 'lime', 'green', 'aqua', 'orange
 	'fuchsia', 'teal', 'maroon', 'navy', 'olive', 'silver', 'gray', 'black'];
 // Buttons whose clicks are shared between players (see src/online.js).
 export const RELAYED = new Set(['nextbutton', 'popupclose', 'popupyes', 'popupno',
-	'buybutton', 'payfiftybutton', 'gojfbutton', 'resignbutton']);
+	'buybutton', 'payfiftybutton', 'gojfbutton', 'resignbutton',
+	// Milestone 3: auctions, trade, building, mortgage, bankruptcy
+	'auctionbid', 'auctionpass', 'auctionexit',
+	'proposetradebutton', 'accepttradebutton', 'rejecttradebutton', 'canceltradebutton',
+	'buyhousebutton', 'sellhousebutton', 'mortgagebutton', 'bankunmortgage']);
+
+// Extra data an action may carry; everything is rebuilt from numbers, never copied as is.
+function cleanPayload(a) {
+	const out = { id: a.id, turn: Number(a.turn) || 0 };
+	const int = (v, lo, hi) => (Number.isInteger(v) && v >= lo && v <= hi ? v : null);
+	if (a.check !== undefined) { const c = int(a.check, -1, 41); if (c !== null) out.check = c; }
+	if (a.v !== undefined && a.v !== null) {
+		if (typeof a.v === 'number') { const n = int(a.v, -1_000_000, 1_000_000); if (n !== null) out.v = n; }
+		else if (typeof a.v === 'object') {
+			const t = a.v;
+			if (Array.isArray(t.p) && t.p.length === 40) {
+				out.v = { i: int(t.i, 1, 8) ?? 0, r: int(t.r, 1, 8) ?? 0, m: int(t.m, -1_000_000, 1_000_000) ?? 0,
+					p: t.p.map((x) => int(x, -1, 1) ?? 0), cc: int(t.cc, -1, 1) ?? 0, ch: int(t.ch, -1, 1) ?? 0 };
+			}
+		}
+	}
+	return out;
+}
 
 const MAX_PLAYERS = 8;
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const LEAVE_GRACE_MS = 20000;
+// A player who has been away this long can be removed from a running game by the others.
+const num = (v, d) => (Number(v) > 0 ? Number(v) : d);
+const FORFEIT_AFTER_MS = () => num(process.env.FORFEIT_AFTER_MS, 60_000);
+// A running game that nobody has had open for this long is marked "abandoned".
+const ABANDON_AFTER_MS = () => num(process.env.ABANDON_AFTER_MS, 30 * 60_000);
+const SWEEP_EVERY_MS = () => num(process.env.SWEEP_EVERY_MS, 30_000);
 
 export function createRooms(db) {
 	const q = {
@@ -36,6 +64,8 @@ export function createRooms(db) {
 		clicksAfter: db.prepare("SELECT seq, text FROM game_actions WHERE game_id = ? AND type = 'click' AND seq > ? ORDER BY seq"),
 		touch: db.prepare("UPDATE games SET updated_at = datetime('now'), turn_count = ? WHERE id = ?"),
 		finish: db.prepare("UPDATE games SET status = 'finished', winner_name = ?, turn_count = ?, finished_at = datetime('now'), updated_at = datetime('now') WHERE id = ?"),
+		abandon: db.prepare("UPDATE games SET status = 'abandoned', updated_at = datetime('now') WHERE id = ? AND status IN ('active','waiting')"),
+		bump: db.prepare("UPDATE games SET updated_at = datetime('now') WHERE id = ?"),
 		finalPlayer: db.prepare('UPDATE game_players SET final_money = ?, final_rank = ? WHERE game_id = ? AND seat = ?'),
 	};
 
@@ -66,7 +96,7 @@ export function createRooms(db) {
 			members: new Map(), // userId -> { seat, name, color, sessions:Set }
 		};
 		for (const m of q.members.all(row.id)) {
-			room.members.set(m.user_id, { userId: m.user_id, seat: m.seat, name: m.name, color: m.color, sessions: new Set() });
+			room.members.set(m.user_id, { userId: m.user_id, seat: m.seat, name: m.name, color: m.color, sessions: new Set(), offlineSince: Date.now() });
 		}
 		rooms.set(row.id, room);
 		return room;
@@ -77,11 +107,12 @@ export function createRooms(db) {
 	// ---- what clients may see -------------------------------------------------
 	function publicRoom(room) {
 		return {
-			id: room.id, code: room.code, status: room.status, hostId: room.hostId,
+			id: room.id, code: room.code, status: room.status, hostId: room.hostId, forfeitAfterMs: FORFEIT_AFTER_MS(),
 			seed: room.status === 'active' ? room.seed : null,
 			players: [...room.members.values()].sort((a, b) => a.seat - b.seat).map((m) => ({
 				seat: m.seat, userId: m.userId, name: m.name, color: m.color,
 				host: m.userId === room.hostId, online: m.sessions.size > 0,
+				awayMs: m.sessions.size === 0 && m.offlineSince ? Date.now() - m.offlineSince : 0,
 			})),
 		};
 	}
@@ -106,7 +137,7 @@ export function createRooms(db) {
 	function addMember(room, user) {
 		const used = new Set([...room.members.values()].map((m) => m.color));
 		const color = COLORS.find((c) => !used.has(c)) || COLORS[0];
-		const m = { userId: user.id, seat: room.members.size + 1, name: uniqueName(room, user.name), color, sessions: new Set() };
+		const m = { userId: user.id, seat: room.members.size + 1, name: uniqueName(room, user.name), color, sessions: new Set(), offlineSince: null };
 		q.insertMember.run(room.id, m.seat, m.name, m.color, user.id);
 		room.members.set(user.id, m);
 		return m;
@@ -116,6 +147,7 @@ export function createRooms(db) {
 		detach(session);
 		const m = room.members.get(session.user.id);
 		m.sessions.add(session);
+		m.offlineSince = null;
 		session.room = room;
 		return m;
 	}
@@ -128,6 +160,7 @@ export function createRooms(db) {
 		if (!m) return;
 		m.sessions.delete(session);
 		if (m.sessions.size > 0) return;
+		m.offlineSince = Date.now();
 		broadcastRoom(room);
 		if (room.status === 'waiting') {
 			// A tab closed in the lobby: remove the player unless they come back soon.
@@ -229,10 +262,36 @@ export function createRooms(db) {
 			const a = msg.a || {};
 			if (!RELAYED.has(a.id)) return err(s.conn, 'Unknown action');
 			const member = room.members.get(s.user.id);
-			const action = { seat: member.seat, a: { id: a.id, turn: Number(a.turn) || 0 } };
+			const action = { seat: member.seat, a: cleanPayload(a) };
 			const seq = ++room.seq;
 			q.insertAction.run(room.id, seq, action.a.turn, 'click', JSON.stringify(action));
+			q.bump.run(room.id);
 			broadcast(room, { t: 'act', seq, ...action });
+		},
+
+		// Remove a player who has been away for a while (their turn would block everybody).
+		forfeit(s, msg) {
+			const room = s.room;
+			if (!room || room.status !== 'active') return;
+			const target = [...room.members.values()].find((m) => m.seat === Number(msg.seat));
+			if (!target || target.userId === s.user.id) return err(s.conn, 'Cannot remove this player');
+			if (target.sessions.size > 0 || !target.offlineSince || Date.now() - target.offlineSince < FORFEIT_AFTER_MS()) {
+				return err(s.conn, 'This player is not away long enough yet');
+			}
+			const member = room.members.get(s.user.id);
+			const action = { seat: member.seat, a: { id: 'forfeit', turn: Number(msg.turn) || 0, v: target.seat } };
+			const seq = ++room.seq;
+			q.insertAction.run(room.id, seq, action.a.turn, 'click', JSON.stringify(action));
+			q.bump.run(room.id);
+			broadcast(room, { t: 'act', seq, ...action });
+		},
+
+		// The host ends a running game without a winner.
+		abandon(s) {
+			const room = s.room;
+			if (!room || room.status !== 'active') return;
+			if (room.hostId !== s.user.id) return err(s.conn, 'Only the host can abandon the game');
+			abandonRoom(room);
 		},
 
 		// The host's browser uploads the readable game log (shown in History).
@@ -260,6 +319,30 @@ export function createRooms(db) {
 		},
 	};
 
+	function abandonRoom(room) {
+		room.status = 'abandoned';
+		q.abandon.run(room.id);
+		broadcast(room, { t: 'ended', room: publicRoom(room) });
+		rooms.delete(room.id);
+	}
+
+	// Games nobody has opened for a long time are marked abandoned (also after a server restart).
+	function sweep() {
+		const cutoff = Date.now() - ABANDON_AFTER_MS();
+		for (const room of [...rooms.values()]) {
+			if (room.status !== 'active') continue;
+			const people = [...room.members.values()];
+			if (people.some((m) => m.sessions.size > 0)) continue;
+			if (people.every((m) => (m.offlineSince || 0) < cutoff)) abandonRoom(room);
+		}
+		// rooms that are not loaded (server restarted): judge by the last save
+		const stale = db.prepare("SELECT id FROM games WHERE mode = 'online' AND status = 'active' AND updated_at < datetime(?, 'unixepoch')")
+			.all(Math.floor(cutoff / 1000));
+		for (const g of stale) if (!rooms.has(g.id)) q.abandon.run(g.id);
+	}
+	const sweeper = setInterval(sweep, SWEEP_EVERY_MS());
+	sweeper.unref();
+
 	function leaveRoom(s) {
 		const room = s.room;
 		if (!room) return;
@@ -282,6 +365,7 @@ export function createRooms(db) {
 			});
 			conn.on('close', () => { sessions.delete(session); detach(session); });
 		},
+		sweep,
 		connections: () => [...sessions].map((s) => s.conn),
 	};
 }

@@ -107,7 +107,7 @@ function Game() {
 			currentbidder -= pcount;
 		}
 
-		popup("<div style='font-weight: bold; font-size: 16px; margin-bottom: 10px;'>Auction <span id='propertyname'></span></div><div>Highest Bid = $<span id='highestbid'></span> (<span id='highestbidder'></span>)</div><div><span id='currentbidder'></span>, it is your turn to bid.</div<div><input id='bid' title='Enter an amount to bid on " + s.name + ".' style='width: 291px;' /></div><div><input type='button' value='Bid' onclick='game.auctionBid();' title='Place your bid.' /><input type='button' value='Pass' title='Skip bidding this time.' onclick='game.auctionPass();' /><input type='button' value='Exit Auction' title='Stop bidding on " + s.name + " altogether.' onclick='if (confirm(\"Are you sure you want to stop bidding on this property altogether?\")) game.auctionExit();' /></div>", "blank");
+		popup("<div style='font-weight: bold; font-size: 16px; margin-bottom: 10px;'>Auction <span id='propertyname'></span></div><div>Highest Bid = $<span id='highestbid'></span> (<span id='highestbidder'></span>)</div><div><span id='currentbidder'></span>, it is your turn to bid.</div<div><input id='bid' title='Enter an amount to bid on " + s.name + ".' style='width: 291px;' /></div><div><input type='button' id='auctionbid' value='Bid' onclick='game.auctionBid();' title='Place your bid.' /><input type='button' id='auctionpass' value='Pass' title='Skip bidding this time.' onclick='game.auctionPass();' /><input type='button' id='auctionexit' value='Exit Auction' title='Stop bidding on " + s.name + " altogether.' onclick='if (confirm(\"Are you sure you want to stop bidding on this property altogether?\")) game.auctionExit();' /></div>", "blank");
 
 		document.getElementById("propertyname").innerHTML = "<a href='javascript:void(0);' onmouseover='showdeed(" + auctionproperty + ");' onmouseout='hidedeed();' class='statscellcolor'>" + s.name + "</a>";
 		document.getElementById("highestbid").innerHTML = "0";
@@ -250,6 +250,11 @@ function Game() {
 	this.auctionExit = function() {
 		player[currentbidder].bidding = false;
 		this.auctionPass();
+	};
+
+	// Used by online play (src/onlineGame.js): whose turn it is to bid.
+	this.getCurrentBidder = function() {
+		return currentbidder;
 	};
 
 
@@ -735,6 +740,44 @@ function Game() {
 	};
 
 
+	// Used by online play: the trade shown in the panel as plain data, and the reverse.
+	this.snapshotTrade = function() {
+		var t = readTrade();
+		var props = [];
+		for (var i = 0; i < 40; i++) props[i] = t.getProperty(i) || 0;
+		return {i: t.getInitiator().index, r: t.getRecipient().index, m: t.getMoney(), p: props,
+			cc: t.getCommunityChestJailCard() || 0, ch: t.getChanceJailCard() || 0};
+	};
+
+	this.applyTrade = function(s) {
+		this.trade(new Trade(player[s.i], player[s.r], s.m, s.p, s.cc, s.ch));
+	};
+
+	// Online play: a player who stays away is removed from the game; the bank takes everything.
+	this.forfeit = function() {
+		var p = player[turn];
+		auctionQueue = [];
+		$("#popupbackground").hide();
+		$("#popupwrap").hide();
+		$("#trade").hide();
+		p.money = -1;
+		p.creditor = 0;
+		game.bankruptcy();
+	};
+
+	// Online play: the creditor's "unmortgage" link after a bankruptcy, as a shareable action.
+	this.bankruptcyUnmortgageSquare = function(i) {
+		var p = player[turn];
+		var sq = square[i];
+		var credit = player[p.creditor];
+		var price = Math.round(sq.price * 0.5);
+		if (!credit || !sq.mortgage || sq.owner !== credit.index || price > credit.money) return;
+		credit.pay(price, 0);
+		sq.mortgage = false;
+		addAlert(credit.name + " unmortgaged " + sq.name + " for $" + price + ".");
+		$("#bankunmortgage" + i).closest("tr").hide();
+	};
+
 	this.cancelTrade = function() {
 		$("#trade").hide();
 		$("#buy-menu-item").click(); // back to the first tab
@@ -1032,7 +1075,7 @@ function Game() {
 				}
 
 				// Player already paid interest, so they can unmortgage for the mortgage price.
-				HTML += "' onmouseover='showdeed(" + i + ");' onmouseout='hidedeed();'></td><td class='propertycellname'><a href='javascript:void(0);' title='Unmortgage " + sq.name + " for $" + price + ".' onclick='if (" + price + " <= player[" + p.creditor + "].money) {player[" + p.creditor + "].pay(" + price + ", 0); square[" + i + "].mortgage = false; addAlert(\"" + player[p.creditor].name + " unmortgaged " + sq.name + " for $" + price + ".\");} this.parentElement.parentElement.style.display = \"none\";'>Unmortgage " + sq.name + " ($" + price + ")</a></td></tr>";
+				HTML += "' onmouseover='showdeed(" + i + ");' onmouseout='hidedeed();'></td><td class='propertycellname'><a href='javascript:void(0);' id='bankunmortgage" + i + "' title='Unmortgage " + sq.name + " for $" + price + ".' onclick='game.bankruptcyUnmortgageSquare(" + i + ");'>Unmortgage " + sq.name + " ($" + price + ")</a></td></tr>";
 
 				sq.owner = p.creditor;
 
@@ -1094,12 +1137,12 @@ function Game() {
 
 		if (p.chanceJailCard) {
 			p.chanceJailCard = false;
-			pcredit.chanceJailCard = true;
+			if (pcredit) pcredit.chanceJailCard = true;
 		}
 
 		if (p.communityChestJailCard) {
 			p.communityChestJailCard = false;
-			pcredit.communityChestJailCard = true;
+			if (pcredit) pcredit.communityChestJailCard = true;
 		}
 
 		if (pcount === 2 || bankruptcyUnmortgageFee === 0 || p.creditor === 0) {

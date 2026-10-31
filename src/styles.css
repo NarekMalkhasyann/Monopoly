@@ -904,7 +904,7 @@ input[type="checkbox"] {
 	width: 100%;
 	display: none;
 	background-color: transparent;
-	z-index: 13;
+	z-index: 19; /* above the trade window (16), so its messages and the offer notice can be read */
 }
 
 #popupbackground, #statsbackground {
@@ -916,7 +916,7 @@ input[type="checkbox"] {
 	background: #000000bf;
 	backdrop-filter: blur(4px);
 	display: none;
-	z-index: 12;
+	z-index: 18;
 }
 
 #stats {

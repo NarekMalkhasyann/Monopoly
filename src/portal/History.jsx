@@ -29,7 +29,7 @@ function Details({ id, onClose, onOpen }) {
 			{game && (
 				<>
 					<p className="muted">
-						{game.mode === 'local' ? 'On this device' : `Online (room ${game.room_code})`} · {game.status === 'finished' ? `finished ${fmtDate(game.finished_at)}` : 'in progress'} · {game.turn_count} turns
+						{game.mode === 'local' ? 'On this device' : `Online (room ${game.room_code})`} · {game.status === 'finished' ? `finished ${fmtDate(game.finished_at)}` : game.status === 'abandoned' ? 'abandoned' : 'in progress'} · {game.turn_count} turns
 					</p>
 					<table className="table">
 						<thead><tr><th>#</th><th>Player</th><th>Money</th></tr></thead>
@@ -119,6 +119,7 @@ export default function History({ detailId }) {
 				{pill('', status, setStatus, 'All')}
 				{pill('active', status, setStatus, 'In progress')}
 				{pill('finished', status, setStatus, 'Finished')}
+				{pill('abandoned', status, setStatus, 'Abandoned')}
 			</div>
 
 			{error && <p className="auth-error">{error}</p>}
@@ -131,7 +132,7 @@ export default function History({ detailId }) {
 						<div className="row-main">
 							<div className="row-tags">
 								<span className="tag">{g.mode === 'local' ? 'This device' : `Online · ${g.room_code}`}</span>
-								<span className={`badge ${g.status === 'finished' ? 'badge-done' : 'badge-pending'}`}>{g.status === 'finished' ? 'Finished' : 'In progress'}</span>
+								<span className={`badge ${g.status === 'finished' ? 'badge-done' : 'badge-pending'}`}>{g.status === 'finished' ? 'Finished' : g.status === 'abandoned' ? 'Abandoned' : 'In progress'}</span>
 							</div>
 							<PlayerDots players={g.players} winner={g.winner_name} />
 							<span className="meta">

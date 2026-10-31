@@ -229,8 +229,6 @@ body.online-wait #popupclose,
 body.online-wait #popupyes,
 body.online-wait #popupno { opacity: .45; cursor: not-allowed; }
 /* Managing properties and trading come to online games later */
-body.online-game #manage-menu-item,
-body.online-game #trade-menu-item { opacity: .4; cursor: not-allowed; }
 body.online-game #setup { display: none !important; }
 
 #online-toast {

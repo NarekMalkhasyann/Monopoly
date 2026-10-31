@@ -146,7 +146,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 			const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 20, 1), 100);
 			const offset = Math.max(Number(url.searchParams.get('offset')) || 0, 0);
 			const where = ["status != 'waiting'", '(owner_id = ? OR id IN (SELECT game_id FROM game_players WHERE user_id = ?))']; const args = [user.id, user.id];
-			if (status === 'active' || status === 'finished') { where.push('status = ?'); args.push(status); }
+			if (status === 'active' || status === 'finished' || status === 'abandoned') { where.push('status = ?'); args.push(status); }
 			if (mode === 'local' || mode === 'online') { where.push('mode = ?'); args.push(mode); }
 			const rows = db.prepare(`SELECT * FROM games WHERE ${where.join(' AND ')} ORDER BY updated_at DESC, id DESC LIMIT ? OFFSET ?`).all(...args, limit, offset);
 			const total = db.prepare(`SELECT COUNT(*) AS n FROM games WHERE ${where.join(' AND ')}`).get(...args).n;
@@ -162,7 +162,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 			}
 			const g = ownedGame(user, m[1]);
 			if (method === 'DELETE') {
-				if (g.mode === 'online' && g.status !== 'finished') throw new HttpError(409, 'Finish the online game first');
+				if (g.mode === 'online' && g.status === 'active') throw new HttpError(409, 'Finish the online game first');
 				q.deleteGame.run(g.id, user.id);
 				return [200, { ok: true }];
 			}
