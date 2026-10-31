@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { openDb } from './db.js';
 import { createApp } from './app.js';
 
+process.env.ALLOWED_ORIGIN = 'https://game.example.am/';
 const server = createApp(openDb(':memory:'), { secret: 'test-secret' });
 await new Promise((r) => server.listen(0, r));
 const base = `http://localhost:${server.address().port}`;
@@ -53,5 +54,15 @@ assert.equal((await call('GET', '/api/games?status=active', null, tokenA)).body.
 assert.equal((await call('GET', '/api/games?status=finished&mode=local', null, tokenA)).body.total, 1);
 assert.equal((await call('DELETE', `/api/games/${id}`, null, tokenA)).status, 200);
 assert.equal((await call('GET', `/api/games/${id}`, null, tokenA)).status, 404);
+// the website on another address (Vercel) may call the API, nobody else
+assert.equal((await call('GET', '/api/health')).body.ok, true);
+{
+	const ok = await fetch(base + '/api/health', { headers: { Origin: 'https://game.example.am' } });
+	assert.equal(ok.headers.get('access-control-allow-origin'), 'https://game.example.am');
+	const no = await fetch(base + '/api/health', { headers: { Origin: 'https://evil.example' } });
+	assert.equal(no.headers.get('access-control-allow-origin'), null);
+	const pre = await fetch(base + '/api/games', { method: 'OPTIONS', headers: { Origin: 'https://game.example.am', 'Access-Control-Request-Method': 'GET' } });
+	assert.equal(pre.status, 204);
+}
 console.log('all server tests passed');
 server.close();

@@ -139,6 +139,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 			});
 			return [201, { game: gameSummary(q.game.get(id, user.id)) }];
 		}
+		if (method === 'GET' && path === '/api/health') return [200, { ok: true }];
 		if (method === 'GET' && path === '/api/games') {
 			const user = authUser(req);
 			const status = url.searchParams.get('status');
@@ -219,9 +220,19 @@ export function createApp(db, { secret, staticDir } = {}) {
 		}
 	}
 
+	// The website may be hosted elsewhere (Vercel): ALLOWED_ORIGIN = its address(es), comma separated.
+	const origins = (process.env.ALLOWED_ORIGIN || '').split(',').map((o) => o.trim().replace(/\/+$/, '')).filter(Boolean);
+
 	const server = createServer(async (req, res) => {
+		const cors = {};
+		const origin = req.headers.origin;
+		if (origin && origins.includes(origin)) {
+			Object.assign(cors, { 'Access-Control-Allow-Origin': origin, Vary: 'Origin',
+				'Access-Control-Allow-Headers': 'Content-Type, Authorization', 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS' });
+			if (req.method === 'OPTIONS') { res.writeHead(204, cors); res.end(); return; }
+		}
 		const send = (status, body) => {
-			res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+			res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...cors });
 			res.end(JSON.stringify(body));
 		};
 		try {

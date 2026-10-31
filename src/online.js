@@ -4,7 +4,7 @@
 // Messages are JSON: { t: 'create' | 'join' | 'leave' | 'color' | 'start' | 'act' | 'log' | 'end', ... }
 // and the server answers with 'hello', 'joined', 'room', 'started', 'act', 'ended', 'left', 'error'.
 import { useSyncExternalStore } from 'react';
-import { getToken } from './api.js';
+import { getToken, API_BASE } from './api.js';
 
 let state = { conn: 'closed', room: null, you: null, error: '', left: false };
 const listeners = new Set();
@@ -64,8 +64,9 @@ function open() {
 	if (opening) return opening;
 	set({ conn: 'connecting' });
 	opening = new Promise((resolve, reject) => {
-		const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-		const socket = new WebSocket(`${proto}://${window.location.host}/ws?token=${encodeURIComponent(getToken() || '')}`);
+		const origin = API_BASE ? new URL(API_BASE) : window.location;
+		const proto = origin.protocol === 'https:' ? 'wss' : 'ws';
+		const socket = new WebSocket(`${proto}://${origin.host}/ws?token=${encodeURIComponent(getToken() || '')}`);
 		ws = socket;
 		socket.onmessage = (e) => {
 			let msg;

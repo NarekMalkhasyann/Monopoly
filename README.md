@@ -176,6 +176,23 @@ The router is a small module (`src/router.jsx`, History API, no library). After 
 
 ---
 
+## ☁️ Deploying (Vercel + a Node host)
+
+Vercel runs the **website** only. The game server needs a long-lived process (WebSocket rooms) and a database file, which Vercel's serverless functions cannot provide, so it runs on a small Node host and the site talks to it.
+
+| Part | Where | Notes |
+|---|---|---|
+| Website (`dist/`) | Vercel | `vercel.json`: Vite build, every path falls back to `index.html` |
+| API + WebSocket + SQLite | Render / Railway / Fly (any host with Node ≥ 22.13) | `render.yaml` is a ready blueprint; start command `node server/index.js` |
+
+1. **Backend:** deploy the repo to the Node host. Environment variables: `JWT_SECRET` (long random string), `ALLOWED_ORIGIN` = your Vercel address, e.g. `https://game.example.am` (comma separated for several), `DB_FILE` on a persistent disk (`/var/data/monopoly.db`). Check `https://<backend>/api/health`.
+2. **Vercel:** Project → Settings → Environment Variables: `VITE_API_URL` = the backend address, e.g. `https://yerevanpoly-api.onrender.com` (no trailing slash; WebSockets use the same host). Redeploy, because Vite bakes it in at build time.
+3. **Domain:** add your domain to the Vercel project; if you also want a nice API address, give the backend its own sub-domain (`api.example.am`) and use that in `VITE_API_URL` and nothing else changes.
+
+Without a persistent disk the SQLite file resets on every deploy (accounts and history vanish). Moving to hosted PostgreSQL (Neon) is planned for M4.
+
+---
+
 ## 🚀 Getting Started
 
 Requires Node.js 22.13 or newer.
