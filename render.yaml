@@ -1,0 +1,23 @@
+# Backend (API + WebSocket + SQLite) for the Vercel site. Render: New > Blueprint > pick this repo.
+# A persistent disk keeps the database between deploys (disks need a paid instance; see README).
+services:
+  - type: web
+    name: yerevanpoly-api
+    runtime: node
+    plan: starter
+    buildCommand: echo "nothing to build"
+    startCommand: node server/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.13.0
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGIN
+        sync: false      # your Vercel address, e.g. https://monopoly.example.am
+      - key: DB_FILE
+        value: /var/data/monopoly.db
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1
