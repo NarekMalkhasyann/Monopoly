@@ -25,7 +25,7 @@ export default function GamePage({ id, user, live, onLive }) {
 		let stale = false;
 		api('GET', `/games/${id}`).then(({ game: g }) => {
 			if (stale) return;
-			if (g.status === 'finished') { navigate(`/history/${id}`, { replace: true }); return; }
+			if (g.status === 'finished' || g.status === 'abandoned') { navigate(`/history/${id}`, { replace: true }); return; }
 			setGame(g);
 			if (g.mode === 'online') {
 				joinById(id).catch((e) => setError(e.message));
