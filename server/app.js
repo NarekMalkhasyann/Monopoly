@@ -202,7 +202,12 @@ export function createApp(db, { secret, staticDir } = {}) {
 		if (!staticDir || (req.method !== 'GET' && req.method !== 'HEAD')) return false;
 		const clean = normalize(decodeURIComponent(url.pathname)).replace(/^(\.\.[/\\])+/, '');
 		let file = join(staticDir, clean);
-		if (!file.startsWith(staticDir) || !existsSync(file) || extname(file) === '') file = join(staticDir, 'index.html');
+		if (!file.startsWith(staticDir)) return false;
+		if (!existsSync(file) || extname(file) === '') {
+			// A missing file (/images/x.png) is a 404; a page address (/play/12) gets index.html.
+			if (extname(clean) !== '') return false;
+			file = join(staticDir, 'index.html');
+		}
 		try {
 			const body = await readFile(file);
 			const type = MIME[extname(file)] || 'application/octet-stream';

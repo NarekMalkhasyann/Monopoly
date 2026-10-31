@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { api, setToken } from '../api.js';
+import { navigate } from '../router.jsx';
 
 // Split layout from the design system: form on the left, brand panel on the right
 // (hidden below 1200px). Underline inputs, white submit button.
-export default function AuthScreen({ onLogin }) {
-	const [mode, setMode] = useState('login'); // login | register
+// `mode` comes from the address: /login or /register.
+export default function AuthScreen({ mode, onLogin }) {
 	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
@@ -43,14 +44,14 @@ export default function AuthScreen({ onLogin }) {
 						{busy && <span className="spinner" />}
 						{mode === 'login' ? 'Sign in' : 'Create account'}
 					</button>
-					<button type="button" className="link-btn" onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>
+					<button type="button" className="link-btn" onClick={() => { navigate(mode === 'login' ? '/register' : '/login'); setError(''); }}>
 						{mode === 'login' ? 'No account yet? Create one' : 'Already have an account? Sign in'}
 					</button>
 				</form>
 			</div>
 			<div className="auth-art">
 				<h2>Yerevan<span>Poly</span></h2>
-				<p>Buy, trade and bankrupt your friends. Play on one screen or, soon, across devices.</p>
+				<p>Buy, trade and bankrupt your friends. Play on one screen or across devices.</p>
 			</div>
 		</div>
 	);

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api.js';
+import { navigate } from '../router.jsx';
 import { fmtDate } from './format.js';
 import PlayerDots from './PlayerDots.jsx';
 
@@ -13,7 +14,7 @@ function Modal({ onClose, children }) {
 	);
 }
 
-function Details({ id, onClose }) {
+function Details({ id, onClose, onOpen }) {
 	const [game, setGame] = useState(null);
 	const [error, setError] = useState('');
 	useEffect(() => {
@@ -28,7 +29,7 @@ function Details({ id, onClose }) {
 			{game && (
 				<>
 					<p className="muted">
-						{game.mode === 'local' ? 'On this device' : 'Online'} · {game.status === 'finished' ? `finished ${fmtDate(game.finished_at)}` : 'in progress'} · {game.turn_count} turns
+						{game.mode === 'local' ? 'On this device' : `Online (room ${game.room_code})`} · {game.status === 'finished' ? `finished ${fmtDate(game.finished_at)}` : 'in progress'} · {game.turn_count} turns
 					</p>
 					<table className="table">
 						<thead><tr><th>#</th><th>Player</th><th>Money</th></tr></thead>
@@ -49,19 +50,22 @@ function Details({ id, onClose }) {
 					</div>
 				</>
 			)}
-			<button className="btn-ghost" onClick={onClose}>Close</button>
+			<div className="modal-actions">
+				{game && game.status === 'active' && <button className="btn-primary btn-sm" onClick={onOpen}>{game.mode === 'online' ? 'Rejoin' : 'Resume'}</button>}
+				<button className="btn-ghost" onClick={onClose}>Close</button>
+			</div>
 		</Modal>
 	);
 }
 
-export default function History({ onResume }) {
+// /history shows the list; /history/:id also opens that game's details.
+export default function History({ detailId }) {
 	const [status, setStatus] = useState('');
 	const [mode, setMode] = useState('');
 	const [games, setGames] = useState([]);
 	const [total, setTotal] = useState(0);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
-	const [details, setDetails] = useState(null);
 	const [toDelete, setToDelete] = useState(null);
 
 	const query = useCallback((offset) => {
@@ -126,7 +130,7 @@ export default function History({ onResume }) {
 					<div className="row row-history" key={g.id}>
 						<div className="row-main">
 							<div className="row-tags">
-								<span className="tag">{g.mode === 'local' ? 'This device' : 'Online'}</span>
+								<span className="tag">{g.mode === 'local' ? 'This device' : `Online · ${g.room_code}`}</span>
 								<span className={`badge ${g.status === 'finished' ? 'badge-done' : 'badge-pending'}`}>{g.status === 'finished' ? 'Finished' : 'In progress'}</span>
 							</div>
 							<PlayerDots players={g.players} winner={g.winner_name} />
@@ -135,8 +139,8 @@ export default function History({ onResume }) {
 							</span>
 						</div>
 						<div className="row-actions">
-							{g.status === 'active' && <button className="btn-primary btn-sm" onClick={() => onResume(g.id)}>Resume</button>}
-							<button className="btn-ghost" onClick={() => setDetails(g.id)}>Details</button>
+							{g.status === 'active' && <button className="btn-primary btn-sm" onClick={() => navigate(`/play/${g.id}`)}>{g.mode === 'online' ? 'Rejoin' : 'Resume'}</button>}
+							<button className="btn-ghost" onClick={() => navigate(`/history/${g.id}`)}>Details</button>
 							<button className="btn-ghost danger" onClick={() => setToDelete(g.id)} aria-label={`Delete game ${g.id}`}>Delete</button>
 						</div>
 					</div>
@@ -144,7 +148,7 @@ export default function History({ onResume }) {
 			</div>
 			{games.length < total && <button className="btn-ghost" onClick={more}>Load more ({total - games.length})</button>}
 
-			{details && <Details id={details} onClose={() => setDetails(null)} />}
+			{detailId && <Details id={detailId} onClose={() => navigate('/history')} onOpen={() => navigate(`/play/${detailId}`)} />}
 			{toDelete && (
 				<Modal onClose={() => setToDelete(null)}>
 					<h3 className="modal-title">Delete this game?</h3>

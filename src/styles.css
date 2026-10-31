@@ -1142,18 +1142,66 @@ a.statscellcolor {
 	font-size: 13px;
 }
 
-/* Trade modal */
+/* Trade: a pop-up panel over the board (not a separate page).
+   #trade is the full-screen dimmed overlay (the engine shows / hides it with
+   jQuery, which sets display: block), .trade-modal is the panel in the middle. */
 #trade {
-	border: 1px solid var(--gray);
 	display: none;
-	width: 650px;
-	margin: 20px auto;
-	background-color: var(--dark-gray);
+	position: fixed;
+	inset: 0;
+	z-index: 16; /* above the player panel and the dice, below the title deed */
+	background: #000000bf;
+	backdrop-filter: blur(4px);
 	color: var(--white);
+	overflow-y: auto;
+}
+
+.trade-modal {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	box-sizing: border-box;
+	width: min(680px, calc(100vw - 24px));
+	max-height: calc(100dvh - 24px);
+	overflow: auto;
+	background-color: var(--dark-gray);
+	border: 1px solid var(--line);
 	border-radius: var(--radius-xl);
 	box-shadow: var(--shadow-modal);
-	padding: 16px;
-	z-index: 14;
+	padding: 20px 20px 16px;
+}
+
+.trade-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12px;
+}
+
+.trade-head h3 {
+	margin: 0;
+	font-size: 20px;
+	font-weight: 700;
+}
+
+.trade-close {
+	background: transparent;
+	color: var(--gray);
+	border: 1px solid var(--line);
+	border-radius: 50%;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	margin: 0;
+	font-size: 16px;
+	line-height: 1;
+}
+
+.trade-close:hover {
+	background: transparent;
+	color: var(--white);
+	border-color: var(--white);
 }
 
 .trade-cell {
@@ -1173,6 +1221,7 @@ a.statscellcolor {
 
 #trade table {
 	border-spacing: 4px;
+	width: 100%;
 }
 
 /* ==========================================================================
@@ -1384,10 +1433,8 @@ a.statscellcolor {
 		margin-bottom: 10px;
 	}
 
-	#trade {
-		width: min(650px, calc(100vw - 24px));
-		margin: 8px auto;
-		overflow-x: auto;
+	.trade-modal {
+		padding: 14px 12px 12px;
 	}
 
 	/* Property card (title deed) and the small hover preview.
@@ -1676,3 +1723,7 @@ td.statscellname[title="Mortgaged"]::after {
 		box-sizing: border-box;
 	}
 }
+
+/* Tab links have no href (they are buttons), so give them the pointer cursor and a focus ring */
+.menu-item a { cursor: pointer; }
+.menu-item a:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }

@@ -196,3 +196,46 @@
 .save-state { font: 600 12px Montserrat, sans-serif; color: var(--gray); padding-right: 6px; }
 .save-state.saved { color: var(--green); }
 .save-state.offline { color: var(--orange); }
+
+/* ---------- online: home card, lobby, in-game hints ---------- */
+.join-form { display: flex; gap: 8px; margin-top: 12px; }
+.code-input {
+	flex: 1; min-width: 0; box-sizing: border-box; background: var(--dark-gray); color: var(--white);
+	border: 1px solid rgba(255, 255, 255, .72); border-radius: var(--radius); padding: 8px 12px;
+	font: 700 14px Montserrat, sans-serif; letter-spacing: .12em; text-transform: uppercase;
+}
+.code-input::placeholder { color: var(--gray); font-weight: 400; letter-spacing: 0; text-transform: none; }
+.code-input:focus-visible { outline: none; border-color: var(--green); }
+
+.lobby { max-width: 760px; }
+.lobby-code { text-align: center; }
+.lobby-code .code { font: 700 56px/1.1 Montserrat, sans-serif; letter-spacing: .25em; padding-left: .25em; margin: 10px 0 16px; color: var(--green); }
+.lobby-code .row-actions { justify-content: center; }
+.count { font-size: 16px; font-weight: 600; margin-left: 8px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+.swatch { width: 36px; height: 36px; min-width: 36px; min-height: 36px; flex: none; margin: 0; padding: 0; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+.swatch:hover:not(:disabled) { border-color: var(--white); background-clip: padding-box; }
+.swatch.on { border-color: var(--white); box-shadow: 0 0 0 2px var(--dark-gray), 0 0 0 4px var(--green); }
+.swatch:disabled { opacity: .2; cursor: not-allowed; }
+.lobby-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 24px; }
+.lobby-actions p { margin: 0; }
+@media (max-width: 560px) { .lobby-code .code { font-size: 40px; } }
+
+/* "It is Ben's turn": the shared buttons look inactive for everyone else */
+body.online-wait #nextbutton,
+body.online-wait #landed input[type="button"],
+body.online-wait #resignbutton,
+body.online-wait #popupclose,
+body.online-wait #popupyes,
+body.online-wait #popupno { opacity: .45; cursor: not-allowed; }
+/* Managing properties and trading come to online games later */
+body.online-game #manage-menu-item,
+body.online-game #trade-menu-item { opacity: .4; cursor: not-allowed; }
+body.online-game #setup { display: none !important; }
+
+#online-toast {
+	position: fixed; left: 50%; bottom: 70px; transform: translateX(-50%) translateY(8px); z-index: 70;
+	background: var(--dark); color: var(--white); border: 1px solid var(--line); border-radius: var(--radius);
+	padding: 10px 16px; font: 600 13px Montserrat, sans-serif; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+}
+#online-toast.show { opacity: 1; transform: translateX(-50%); }

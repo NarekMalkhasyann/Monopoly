@@ -197,7 +197,7 @@ function AITest(p) {
 		console.log("bid");
 		var bid;
 
-		bid = currentBid + Math.round(Math.random() * 20 + 10);
+		bid = currentBid + Math.round(gameRandom() * 20 + 10);
 
 		if (p.money < bid + 50 || bid > square[property].price * 1.5) {
 			return -1;

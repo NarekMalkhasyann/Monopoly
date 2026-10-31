@@ -1,4 +1,9 @@
 import { useState } from 'react';
+import { navigate } from '../router.jsx';
+import { setToken } from '../api.js';
+
+// Signing out reloads the page on /login, which also gives the next player a clean engine.
+const signOut = () => { setToken(null); window.location.assign('/login'); };
 
 const Icon = ({ d }) => (
 	<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>
@@ -13,9 +18,9 @@ const ICONS = {
 
 // App shell from the design system: 280px sidebar + scrolling page. Below 800px
 // the sidebar becomes a full-screen drawer opened from a sticky glass header.
-export default function Shell({ user, screen, onNavigate, onLogout, title, children }) {
+export default function Shell({ user, screen, onLogout = signOut, title, children }) {
 	const [open, setOpen] = useState(false);
-	const go = (s) => { setOpen(false); onNavigate(s); };
+	const go = (s) => { setOpen(false); navigate(s === 'home' ? '/play' : '/history'); };
 	const item = (id, label, icon) => (
 		<button className={`nav-link${screen === id ? ' green' : ''}`} onClick={() => go(id)}>
 			{icon}<span>{label}</span>

@@ -22,7 +22,14 @@ export default function ControlPanel() {
 										<tr>
 											{TABS.map((tab) => (
 												<td key={tab.id} className="menu-item" id={tab.id}>
-													<a href="javascript:void(0);" title={tab.title}>{tab.label}</a>
+													<a
+														role="button"
+														tabIndex={0}
+														title={tab.title}
+														onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
+													>
+														{tab.label}
+													</a>
 												</td>
 											))}
 										</tr>
