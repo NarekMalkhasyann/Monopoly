@@ -1,6 +1,6 @@
 # Monopoly Web Game
 
-An interactive, browser-based implementation of the classic **Monopoly** board game written in HTML, CSS, JavaScript, and jQuery. Play against other human players on one device or challenge AI opponents with full trading, mortgaging, and auction capabilities. Players sign in, and every game is saved to a history they can resume from. Online play across devices is planned (Milestone 2).
+An interactive, browser-based implementation of the classic **Monopoly** board game written in HTML, CSS, JavaScript, and jQuery. Play against other human players on one device or challenge AI opponents with full trading, mortgaging, and auction capabilities. Players sign in, and every game is saved to a history they can resume from. Friends can also play together online, each on their own device.
 
 (original project cloned from https://github.com/intrepidcoder/monopoly.git )
 
@@ -132,21 +132,29 @@ Players sign in (register / login), and every local game is saved to their accou
 | PUT | `/api/games/:id/checkpoint` | save checkpoint + log lines |
 | POST | `/api/games/:id/finish` | save result and final ranking |
 
-## 🌐 Online Play (Milestone 2)
+## 🌐 Online Play (Milestones 2 and 3)
 
 Each player opens the game on their own device. **Home → Create room** gives a 5-letter code (and a link `/join/CODE`); friends enter it under **Join**. In the lobby everyone picks a colour, and the host presses **Start game**.
 
-**How it stays in sync ("relay" model).** The game engine runs unchanged in every browser. Only the buttons that move the game forward are shared: *Roll / End turn, Buy, Pay $50, Use card, pop-up OK / Yes / No, Resign*. The player whose turn it is clicks one, the click goes to the server over a WebSocket, the server numbers it and sends it to everybody, and every browser presses the same button in that order. All randomness (dice, card decks, turn order) comes from one seed that the server hands out when the game starts (`window.seededRandom`), so everyone sees the same dice. The ordered click list is stored in `game_actions`: refreshing or rejoining replays the game from the start.
+**How it stays in sync ("relay" model).** The game engine runs unchanged in every browser. Only the buttons that change the game are shared: *Roll / End turn, Buy, Pay $50, Use card, pop-up OK / Yes / No, Resign, auction Bid / Pass / Exit, Buy / Sell house, Mortgage, trade Propose / Accept / Reject / Cancel*. The player whose turn it is clicks one, the click goes to the server over a WebSocket, the server numbers it and sends it to everybody, and every browser presses the same button in that order. All randomness (dice, card decks, turn order) comes from one seed that the server hands out when the game starts (`window.seededRandom`), so everyone sees the same dice. The ordered click list is stored in `game_actions`: refreshing or rejoining replays the game from the start.
 
 | Message (JSON over `/ws?token=JWT`) | Direction | Purpose |
 |---|---|---|
 | `create`, `join {code \| gameId, after}`, `leave` | client → server | open / enter / leave a room |
 | `color`, `start` | client → server | lobby: pick colour; host starts (2–8 players) |
-| `act {a:{id, turn}}` | client → server | a shared button click (members only) |
+| `act {a:{id, turn, v?, check?}}` | client → server | a shared button click (members only); `v` = bid amount or trade offer, `check` = selected property |
+| `forfeit {seat}` | client → server | remove a player who has been away for `forfeitAfterMs` (default 60 s) |
+| `abandon` | host → server | end a running game without a winner |
 | `log`, `end` | host → server | readable game log for History; final result |
 | `joined`, `room`, `started`, `act {seq}`, `ended`, `left`, `error` | server → client | state and the numbered action stream |
 
-**Limits in this milestone.** Managing properties (houses, mortgage), **Trade** and **auctions** are not shared yet (Milestone 3): their tabs are disabled online and a property that nobody buys stays unowned. The server checks membership but cannot check the rules (the engine lives in the browsers), so online games are meant for friends.
+**Who may press what.** The browsers apply the same rule: the player whose turn it is acts, except in an auction (the current bidder) and in a trade (the player named on the left of the trade window, so the other side can accept, reject or counter-offer). Everything is checked before a click is sent (bid too low, not enough money, nothing selected), so mistakes stay on your own screen. Drawing up a trade is private; the offer appears for everybody when it is proposed.
+
+**Reconnect and rejoin.** A lost connection reconnects by itself and asks for the clicks it missed. Refreshing the page, or opening the game from History, replays the stored clicks, including auctions, trades and building, and ends in exactly the same position.
+
+**Away and abandoned games.** If the player whose turn it is leaves, the others see a countdown and then a *Remove* button: the player is declared bankrupt to the bank (their properties are auctioned) and the game goes on, or ends if one player is left. The host can also *Abandon game* for everybody. A running game that nobody has opened for 30 minutes is marked *abandoned* by the server (`ABANDON_AFTER_MS`; `FORFEIT_AFTER_MS` and `SWEEP_EVERY_MS` can be set too). Abandoned games stay in History with their own badge.
+
+**Limits.** The server checks membership but cannot check the rules (the engine lives in the browsers), so online games are meant for friends. A player who goes away in the middle of an auction or trade (and whose turn it is not) can only be removed on their own turn, or the host can abandon the game.
 
 ---
 
