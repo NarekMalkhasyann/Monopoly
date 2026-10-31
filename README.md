@@ -37,17 +37,23 @@ An interactive, browser-based implementation of the classic **Monopoly** board g
 ├── vite.config.js          # Proxies /api to the API server in development
 ├── server/                 # Backend (plain Node, no extra packages)
 │   ├── index.js            # Starts the API (port 3001)
-│   ├── app.js              # Routes: auth, games, checkpoints, history
+│   ├── app.js              # REST routes, static files, WebSocket upgrade
+│   ├── ws.js               # WebSocket protocol (RFC 6455) on node:http
+│   ├── rooms.js            # Online rooms: lobby, seats, ordered action relay
 │   ├── auth.js             # scrypt password hashing, JWT
 │   ├── db.js               # SQLite schema
-│   └── test.js             # API tests (npm run test:server)
+│   ├── test.js             # REST tests
+│   └── test-ws.js          # WebSocket / room tests
 ├── scripts/dev.mjs         # Runs API + Vite together (npm run dev:all)
 ├── src/
 │   ├── main.jsx            # Mounts <App /> (synchronously, so the engine finds its elements)
-│   ├── App.jsx             # Screens: sign in -> Play / History -> game
+│   ├── App.jsx             # Pages by URL: sign in, Play, History, game, lobby
+│   ├── router.jsx          # Tiny History-API router
+│   ├── online.js           # WebSocket connection + room state (useOnline)
+│   ├── onlineGame.js       # Runs an online game on the engine: seeded start, shared clicks, replay
 │   ├── api.js              # fetch wrapper with the login token
 │   ├── session.js          # Saves checkpoints and log lines, resumes a game
-│   ├── portal/             # Sign in, Home, History, sidebar shell (+ portal.css)
+│   ├── portal/             # Sign in, Home, Lobby, History, sidebar shell (+ portal.css)
 │   ├── hooks/useFitBoard.js # Shrinks the board to fit narrow screens
 │   ├── vendor/dice-box-threejs/ # 3D dice library (MIT), copied as is
 │   ├── styles.css          # Design system (lime on charcoal, Montserrat)
@@ -60,9 +66,11 @@ An interactive, browser-based implementation of the classic **Monopoly** board g
 
 The page markup is React (JSX). The game rules and state still live in
 `public/engine/*.js`, which reads and updates the elements by their `id`s, so
-those ids must not be renamed. Beyond the original code, the engine has two
-small additions: the 3D dice hook in `roll()` and the save hooks (`onTurnStart`,
-`onGameEvent`, `onPlayerEliminated`, `onGameEnd`) used by `src/session.js`.
+those ids must not be renamed. Beyond the original code, the engine has a few
+small additions: the 3D dice hook in `roll()`, the save hooks (`onTurnStart`,
+`onGameEvent`, `onPlayerEliminated`, `onGameEnd`) used by `src/session.js`,
+`gameRandom()` (seedable randomness for online games), ids on the Buy / jail buttons so
+they can be shared, and Trade shown as a pop-up instead of replacing the board.
 
 ---
 
@@ -124,7 +132,39 @@ Players sign in (register / login), and every local game is saved to their accou
 | PUT | `/api/games/:id/checkpoint` | save checkpoint + log lines |
 | POST | `/api/games/:id/finish` | save result and final ranking |
 
-Online play (WebSocket rooms) is Milestone 2; the *Online* card on the home screen is disabled until then.
+## 🌐 Online Play (Milestone 2)
+
+Each player opens the game on their own device. **Home → Create room** gives a 5-letter code (and a link `/join/CODE`); friends enter it under **Join**. In the lobby everyone picks a colour, and the host presses **Start game**.
+
+**How it stays in sync ("relay" model).** The game engine runs unchanged in every browser. Only the buttons that move the game forward are shared: *Roll / End turn, Buy, Pay $50, Use card, pop-up OK / Yes / No, Resign*. The player whose turn it is clicks one, the click goes to the server over a WebSocket, the server numbers it and sends it to everybody, and every browser presses the same button in that order. All randomness (dice, card decks, turn order) comes from one seed that the server hands out when the game starts (`window.seededRandom`), so everyone sees the same dice. The ordered click list is stored in `game_actions`: refreshing or rejoining replays the game from the start.
+
+| Message (JSON over `/ws?token=JWT`) | Direction | Purpose |
+|---|---|---|
+| `create`, `join {code \| gameId, after}`, `leave` | client → server | open / enter / leave a room |
+| `color`, `start` | client → server | lobby: pick colour; host starts (2–8 players) |
+| `act {a:{id, turn}}` | client → server | a shared button click (members only) |
+| `log`, `end` | host → server | readable game log for History; final result |
+| `joined`, `room`, `started`, `act {seq}`, `ended`, `left`, `error` | server → client | state and the numbered action stream |
+
+**Limits in this milestone.** Managing properties (houses, mortgage), **Trade** and **auctions** are not shared yet (Milestone 3): their tabs are disabled online and a property that nobody buys stays unowned. The server checks membership but cannot check the rules (the engine lives in the browsers), so online games are meant for friends.
+
+---
+
+## 🧭 Pages (URLs)
+
+| Path | Page |
+|---|---|
+| `/login`, `/register` | Sign in / create account (signed-out visitors are redirected here) |
+| `/play` | Home: new local game, create / join an online room, continue playing |
+| `/play/local` | A new game on this device (it gets its own address after the first turn) |
+| `/play/:id` | A saved game: resumes a local game, or opens the online lobby / game |
+| `/join/:code` | Join an online room by its code, then continues at `/play/:id` |
+| `/history`, `/history/:id` | All games; details of one game |
+| anything else | Page not found |
+
+The router is a small module (`src/router.jsx`, History API, no library). After `npm run build`, `npm start` serves the site from `dist/` and answers every non-API path with `index.html`, so these addresses also work when typed in or reloaded.
+
+---
 
 ---
 
@@ -134,9 +174,10 @@ Requires Node.js 22.13 or newer.
 
 ```bash
 npm install
-npm run dev:all  # API on :3001 + site on http://localhost:5173
+npm run dev:all  # API + WebSocket on :3001, site on http://localhost:5173
 npm run build    # production build in dist/
-npm run test:server   # API tests
+npm run test:server   # REST + WebSocket tests
+npm run build && npm start   # production: one server for site, API and WebSocket (http://localhost:3001)
 ```
 
 `JWT_SECRET` (environment variable) should be set to a long random string outside development. The database file is `server/data/monopoly.db` (override with `DB_FILE`).

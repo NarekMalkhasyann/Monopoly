@@ -1,9 +1,15 @@
-// Trade window: two columns (one per player) with a cash field and a list of
-// properties. The engine fills in the names and property lists.
+// Trade pop-up: two columns (one per player) with a cash field and a list of
+// properties. The engine fills in the names and property lists and shows / hides
+// #trade (the dimmed overlay); .trade-modal is the panel itself.
 
 export default function TradePanel() {
 	return (
 		<div id="trade">
+			<div className="trade-modal" role="dialog" aria-modal="true" aria-label="Trade">
+			<div className="trade-head">
+				<h3>Trade</h3>
+				<button type="button" className="trade-close" aria-label="Close trade" title="Cancel the trade." onClick={() => window.game.cancelTrade()}>✕</button>
+			</div>
 			<table style={{ borderSpacing: 3 }}>
 				<tbody>
 					<tr>
@@ -32,6 +38,7 @@ export default function TradePanel() {
 					</tr>
 				</tbody>
 			</table>
+			</div>
 		</div>
 	);
 }

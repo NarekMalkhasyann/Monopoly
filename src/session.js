@@ -13,6 +13,7 @@
 //    in memory and is sent with the next checkpoint.
 
 import { api } from './api.js';
+import { navigate, gameKey } from './router.jsx';
 
 const PLAYER_FIELDS = ['name', 'color', 'position', 'money', 'creditor', 'jail', 'jailroll',
 	'communityChestJailCard', 'chanceJailCard', 'bidding', 'human'];
@@ -29,12 +30,31 @@ let eliminated = [];      // names, in the order they went bankrupt
 let ended = false;
 let chain = Promise.resolve();
 let status = 'idle';      // idle | saving | saved | offline
+let online = null;        // set for online games: { isHost, seats, roomId, send }
+let runningKey = null;    // which game this page load is playing ('local', or a game id)
 const listeners = new Set();
 
 function setStatus(s) {
 	status = s;
 	listeners.forEach((fn) => fn(s));
 }
+// The engine keeps its state in page-wide variables, so a page load can only play one
+// game. App.jsx reloads the page when the URL moves to a different game.
+export const getRunningKey = () => runningKey;
+export const setRunningKey = (key) => { runningKey = key; };
+
+// Online game: the log and the result go over the WebSocket instead of REST (host only).
+export function trackOnline(config) {
+	online = config;
+	gameId = config.roomId;
+	seats = config.seats;
+	turnNo = 0;
+	eliminated = [];
+	events = [];
+	ended = false;
+	runningKey = String(config.roomId);
+}
+
 export function subscribeStatus(fn) {
 	listeners.add(fn);
 	fn(status);
@@ -103,6 +123,9 @@ async function ensureGame() {
 	const { game } = await api('POST', '/games', { mode: 'local', edition: 'classic', players });
 	gameId = game.id;
 	seats = game.players.map((p) => ({ seat: p.seat, name: p.name }));
+	// The game now has a number: show it in the address bar (/play/local -> /play/12).
+	runningKey = String(game.id);
+	navigate(`/play/${game.id}`, { replace: true });
 }
 
 function checkpoint(snapshot) {
@@ -121,19 +144,24 @@ function checkpoint(snapshot) {
 	});
 }
 
+// Final ranking: the winner first, then the players in reverse order of bankruptcy.
+function buildResults(winner) {
+	const order = [winner, ...[...eliminated].reverse()]; // rank 1, 2, 3...
+	const used = new Set();
+	return order.map((name, i) => {
+		const seat = seats.find((s) => s.name === name && !used.has(s.seat));
+		if (seat) used.add(seat.seat);
+		const live = i === 0 ? win.player[1] : null;
+		return seat && { seat: seat.seat, rank: i + 1, money: live ? live.money : 0 };
+	}).filter(Boolean);
+}
+
 function finish(winner) {
 	return enqueue(async () => {
 		const batch = events.splice(0);
 		try {
 			await ensureGame();
-			const order = [winner, ...[...eliminated].reverse()]; // rank 1, 2, 3...
-			const used = new Set();
-			const results = order.map((name, i) => {
-				const seat = seats.find((s) => s.name === name && !used.has(s.seat));
-				if (seat) used.add(seat.seat);
-				const live = i === 0 ? win.player[1] : null;
-				return seat && { seat: seat.seat, rank: i + 1, money: live ? live.money : 0 };
-			}).filter(Boolean);
+			const results = buildResults(winner);
 			await api('POST', `/games/${gameId}/finish`, { winner_name: winner, turn_count: turnNo, players: results, events: batch });
 			setStatus('saved');
 		} catch (e) {
@@ -147,6 +175,13 @@ function finish(winner) {
 win.onTurnStart = () => {
 	if (ended) return;
 	turnNo += 1;
+	if (!runningKey) runningKey = gameKey(window.location.pathname + window.location.search);
+	if (online) {
+		// Online: no checkpoints (the action list rebuilds the game). The host uploads the log.
+		const batch = events.splice(0);
+		if (online.isHost && batch.length) online.send({ t: 'log', events: batch, turn_count: turnNo });
+		return;
+	}
 	checkpoint(takeSnapshot());
 };
 win.onGameEvent = (text) => {
@@ -155,6 +190,13 @@ win.onGameEvent = (text) => {
 win.onPlayerEliminated = (name) => { eliminated.push(name); };
 win.onGameEnd = (winner) => {
 	ended = true;
+	if (online) {
+		if (online.isHost) {
+			online.send({ t: 'log', events: events.splice(0), turn_count: turnNo });
+			online.send({ t: 'end', winner_name: winner, turn_count: turnNo, players: buildResults(winner) });
+		}
+		return;
+	}
 	finish(winner);
 };
 
@@ -164,6 +206,7 @@ export function resumeGame(game) {
 	const snap = game.snapshot;
 	if (!snap) throw new Error('This game has no saved position yet.');
 	gameId = game.id;
+	runningKey = String(game.id);
 	seats = game.players.map((p) => ({ seat: p.seat, name: p.name }));
 	turnNo = Math.max((snap.turnNo || 1) - 1, 0); // play() below starts this turn again and counts it
 	eliminated = snap.eliminated || [];

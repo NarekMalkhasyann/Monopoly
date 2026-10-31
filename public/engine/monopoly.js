@@ -1,3 +1,10 @@
+// All game randomness (dice, card shuffles, turn order) goes through gameRandom().
+// Online games install a seeded generator (window.seededRandom, see src/online.js) so
+// every player's browser draws exactly the same numbers; otherwise it is Math.random.
+function gameRandom() {
+	return typeof window.seededRandom === "function" ? window.seededRandom() : Math.random();
+}
+
 function Game() {
 	var die1;
 	var die2;
@@ -10,8 +17,8 @@ function Game() {
 	var auctionproperty;
 
 	this.rollDice = function() {
-		die1 = Math.floor(Math.random() * 6) + 1;
-		die2 = Math.floor(Math.random() * 6) + 1;
+		die1 = Math.floor(gameRandom() * 6) + 1;
+		die2 = Math.floor(gameRandom() * 6) + 1;
 		areDiceRolled = true;
 	};
 
@@ -706,8 +713,7 @@ function Game() {
 	};
 
 	this.trade = function(tradeObj) {
-		$("#board").hide();
-		$("#control").hide();
+		// Trade is a pop-up panel (see styles.css #trade); the board stays visible behind it.
 		$("#trade").show();
 		$("#proposetradebutton").show();
 		$("#canceltradebutton").show();
@@ -730,9 +736,8 @@ function Game() {
 
 
 	this.cancelTrade = function() {
-		$("#board").show();
-		$("#control").show();
 		$("#trade").hide();
+		$("#buy-menu-item").click(); // back to the first tab
 
 
 		if (!player[turn].human) {
@@ -852,9 +857,8 @@ function Game() {
 		updateOwned();
 		updateMoney();
 
-		$("#board").show();
-		$("#control").show();
 		$("#trade").hide();
+		$("#buy-menu-item").click(); // back to the first tab
 
 		if (!player[turn].human) {
 			player[turn].AI.alertList = "";
@@ -1193,7 +1197,7 @@ Array.prototype.randomize = function(length) {
 
 	for (var i = 0; i < length; i++) {
 		// Generate random number between 0 and indexArray.length - 1.
-		num = Math.floor(Math.random() * indexArray.length);
+		num = Math.floor(gameRandom() * indexArray.length);
 		this[i] = indexArray[num] + 1;
 
 		indexArray.splice(num, 1);
@@ -2309,7 +2313,7 @@ function land(increasedRent) {
 				buy();
 			}
 		} else {
-			document.getElementById("landed").innerHTML = "<div>You landed on <a href='javascript:void(0);' onmouseover='showdeed(" + p.position + ");' onmouseout='hidedeed();' class='statscellcolor'>" + s.name + "</a>.<input type='button' onclick='buy();' value='Buy ($" + s.price + ")' title='Buy " + s.name + " for " + s.pricetext + ".'/></div>";
+			document.getElementById("landed").innerHTML = "<div>You landed on <a href='javascript:void(0);' onmouseover='showdeed(" + p.position + ");' onmouseout='hidedeed();' class='statscellcolor'>" + s.name + "</a>.<input type='button' id='buybutton' onclick='buy();' value='Buy ($" + s.price + ")' title='Buy " + s.name + " for " + s.pricetext + ".'/></div>";
 		}
 
 
@@ -2615,7 +2619,7 @@ function play() {
 
 	if (p.jail) {
 		$("#landed").show();
-		document.getElementById("landed").innerHTML = "You are in jail.<input type='button' title='Pay $50 fine to get out of jail immediately.' value='Pay $50 fine' onclick='payfifty();' />";
+		document.getElementById("landed").innerHTML = "You are in jail.<input type='button' id='payfiftybutton' title='Pay $50 fine to get out of jail immediately.' value='Pay $50 fine' onclick='payfifty();' />";
 
 		if (p.communityChestJailCard || p.chanceJailCard) {
 			document.getElementById("landed").innerHTML += "<input type='button' id='gojfbutton' title='Use &quot;Get Out of Jail Free&quot; card.' onclick='useJailCard();' value='Use Card' />";
@@ -2800,8 +2804,8 @@ window.onload = function() {
 	}
 
 	// Shuffle Chance and Community Chest decks.
-	chanceCards.deck.sort(function() {return Math.random() - 0.5;});
-	communityChestCards.deck.sort(function() {return Math.random() - 0.5;});
+	chanceCards.deck.sort(function() {return gameRandom() - 0.5;});
+	communityChestCards.deck.sort(function() {return gameRandom() - 0.5;});
 
 	$("#playernumber").on("change", playernumber_onchange);
 	playernumber_onchange();

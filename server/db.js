@@ -21,7 +21,7 @@ export function openDb(file = process.env.DB_FILE || 'server/data/monopoly.db') 
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			owner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			mode TEXT NOT NULL DEFAULT 'local',          -- local | online
-			status TEXT NOT NULL DEFAULT 'active',       -- active | finished
+			status TEXT NOT NULL DEFAULT 'active',       -- waiting (online lobby) | active | finished
 			edition TEXT NOT NULL DEFAULT 'classic',
 			winner_name TEXT,
 			turn_count INTEGER NOT NULL DEFAULT 0,
@@ -50,6 +50,16 @@ export function openDb(file = process.env.DB_FILE || 'server/data/monopoly.db') 
 			PRIMARY KEY (game_id, seq)
 		);
 		CREATE INDEX IF NOT EXISTS games_owner ON games(owner_id, updated_at DESC);
+	`);
+
+	// Columns added in Milestone 2 (online play). Older database files get them here.
+	const has = (table, col) => db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col);
+	if (!has('games', 'room_code')) db.exec('ALTER TABLE games ADD COLUMN room_code TEXT');
+	if (!has('games', 'seed')) db.exec('ALTER TABLE games ADD COLUMN seed INTEGER');
+	if (!has('game_players', 'user_id')) db.exec('ALTER TABLE game_players ADD COLUMN user_id INTEGER');
+	db.exec(`
+		CREATE UNIQUE INDEX IF NOT EXISTS games_room_code ON games(room_code) WHERE room_code IS NOT NULL;
+		CREATE INDEX IF NOT EXISTS players_user ON game_players(user_id);
 	`);
 	return db;
 }

@@ -13,65 +13,91 @@ import Shell from './portal/Shell.jsx';
 import Home from './portal/Home.jsx';
 import History from './portal/History.jsx';
 import GameBar from './portal/GameBar.jsx';
+import GamePage from './portal/GamePage.jsx';
+import JoinPage from './portal/JoinPage.jsx';
+import NotFound from './portal/NotFound.jsx';
 import { api, getToken, setToken } from './api.js';
-import { resumeGame } from './session.js';
+import { getRunningKey } from './session.js';
+import { useLocation, matchRoute, navigate, gameKey } from './router.jsx';
 import './portal/portal.css';
 
-const TITLES = { home: 'Play', history: 'History' };
+const TITLES = { home: 'Play', history: 'History', historyDetail: 'History', join: 'Join a game', notfound: 'Not found' };
 
-// Screens: login -> home / history (portal shell) -> game (the original engine UI).
+// Every page has its own address (see router.jsx):
+//   /login  /register  /play  /play/local  /play/:id  /join/:code  /history  /history/:id
 //
-// The game markup is always mounted: the engine (public/engine/monopoly.js)
-// wires up its elements by id when the page loads, so it cannot be created
-// later. It is simply hidden while a portal screen is showing.
+// The game markup is always mounted: the engine (public/engine/monopoly.js) wires up
+// its elements by id when the page loads, so it cannot be created later. It is simply
+// hidden while a portal page is showing.
 //
 // The board sits in #stage > #stage-inner so useFitBoard can shrink it on small
-// screens. The control panel and money bar stay outside, at normal size: on
-// wide screens they overlay / sit beside the board (see styles.css), on narrow
-// screens they stack below it (Roll Dice first, then the players).
+// screens. The control panel and money bar stay outside, at normal size: on wide
+// screens they overlay / sit beside the board (see styles.css), on narrow screens
+// they stack below it (Roll Dice first, then the players).
 export default function App() {
 	useFitBoard();
 
+	const location = useLocation();
+	const route = matchRoute(location);
 	const [user, setUser] = useState(getToken() ? undefined : null); // undefined = checking the saved login
-	const [screen, setScreen] = useState('home');
-	const [pending, setPending] = useState(null); // saved game waiting to be loaded into the engine
-	const [notice, setNotice] = useState('');
+	const [gameLive, setGameLive] = useState(false); // /play/:id is showing the board
 
 	useEffect(() => {
 		if (user !== undefined) return;
 		api('GET', '/me').then((r) => setUser(r.user)).catch(() => { setToken(null); setUser(null); });
 	}, [user]);
 
+	// Redirects: / -> /play, signed out -> /login, signed in on /login -> where you were going.
 	useEffect(() => {
-		if (screen !== 'game' || !pending) return;
-		try {
-			resumeGame(pending);
-		} catch (e) {
-			setNotice(e.message);
-			setScreen('home');
+		if (user === undefined) return;
+		const isAuthPage = route.name === 'login' || route.name === 'register';
+		if (route.name === 'root') navigate(user ? '/play' : '/login', { replace: true });
+		else if (!user && !isAuthPage) navigate(`/login?next=${encodeURIComponent(location)}`, { replace: true });
+		else if (user && isAuthPage) {
+			const next = route.search.get('next');
+			navigate(next && next.startsWith('/') && !next.startsWith('//') ? next : '/play', { replace: true });
 		}
-		setPending(null);
-	}, [screen, pending]);
+	}, [user, location]);
 
-	const logout = () => { setToken(null); setUser(null); setScreen('home'); };
+	// One page load can play one game (the engine keeps its state in page-wide variables):
+	// moving to another game, or away from this one, reloads the page on the new address.
+	useEffect(() => {
+		const running = getRunningKey();
+		if (running && gameKey(location) !== running) window.location.reload();
+	}, [location]);
 
-	const resume = async (id) => {
-		setNotice('');
-		try {
-			const { game } = await api('GET', `/games/${id}`);
-			if (!game.snapshot) throw new Error('This game has no saved position yet.');
-			setPending(game);
-			setScreen('game');
-		} catch (e) {
-			setNotice(e.message);
+	useEffect(() => {
+		document.title = `${TITLES[route.name] || (route.name === 'login' ? 'Sign in' : route.name === 'register' ? 'Create account' : 'Game')} · YerevanPoly`;
+	}, [route.name]);
+
+	// The game already running on this page (e.g. a new local game just got its number: /play/local -> /play/12)
+	const running = getRunningKey();
+	const showGame = !!user && (route.name === 'local' || (route.name === 'game' && (gameLive || running === route.params.id)));
+
+	let page = null;
+	if (user === undefined) {
+		page = <div className="boot">Loading…</div>;
+	} else if (user === null) {
+		if (route.name === 'login' || route.name === 'register') {
+			page = <AuthScreen mode={route.name} onLogin={(u) => setUser(u)} />;
 		}
-	};
-
-	const inGame = !!user && screen === 'game';
+	} else if (route.name === 'game') {
+		if (running !== route.params.id) page = <GamePage id={route.params.id} user={user} live={gameLive} onLive={setGameLive} />;
+	} else if (route.name === 'join') {
+		page = <JoinPage code={route.params.code} user={user} />;
+	} else if (route.name === 'home' || route.name === 'history' || route.name === 'historyDetail' || route.name === 'notfound') {
+		page = (
+			<Shell user={user} screen={route.name === 'home' ? 'home' : route.name === 'notfound' ? '' : 'history'} title={TITLES[route.name]}>
+				{route.name === 'home' && <Home user={user} />}
+				{(route.name === 'history' || route.name === 'historyDetail') && <History detailId={route.params.id} />}
+				{route.name === 'notfound' && <NotFound />}
+			</Shell>
+		);
+	}
 
 	return (
 		<>
-			<div id="game-root" style={inGame ? undefined : { display: 'none' }}>
+			<div id="game-root" style={showGame ? undefined : { display: 'none' }}>
 				<Popups />
 				<Deed />
 				<div id="stage">
@@ -83,19 +109,10 @@ export default function App() {
 				<MoneyBar />
 				<Setup />
 				<TradePanel />
-				<Dice3D active={inGame} />
-				{inGame && <GameBar />}
+				<Dice3D active={showGame} />
+				{showGame && <GameBar />}
 			</div>
-
-			{user === undefined && <div className="boot">Loading…</div>}
-			{user === null && <AuthScreen onLogin={(u) => { setUser(u); setScreen('home'); }} />}
-			{user && !inGame && (
-				<Shell user={user} screen={screen} onNavigate={(s) => { setNotice(''); setScreen(s); }} onLogout={logout} title={TITLES[screen]}>
-					{notice && <div className="notice" role="alert">{notice}</div>}
-					{screen === 'home' && <Home user={user} onNewLocal={() => setScreen('game')} onResume={resume} onHistory={() => setScreen('history')} />}
-					{screen === 'history' && <History onResume={resume} />}
-				</Shell>
-			)}
+			{page}
 		</>
 	);
 }
