@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { autoEndTurn, isReplaying } from '../onlineGame.js';
 
-// 30 seconds after "End turn" appears, the turn ends by itself. A ring beside the button empties clockwise
-// and shows the seconds left. The clock waits while something else needs attention: a pop-up, an auction,
+// 30 seconds after "End turn" appears, the turn ends by itself. A radial sweep inside the button darkens it
+// clockwise from 12 o'clock, like a clock hand, until the button is full. The clock waits while something else needs attention: a pop-up, an auction,
 // the trade window, the stats window, or while an online game is still catching up on clicks.
 // (Tests can shorten it with window.turnTimerSeconds.)
 const TOTAL_SECONDS = 30;
-const R = 18;
-const C = 2 * Math.PI * R;
 
 const visible = (el) => !!(el && (el.offsetWidth || el.offsetHeight));
 
@@ -40,10 +38,9 @@ export default function TurnTimer() {
 				autoEndTurn();
 			}
 			const r = btn.getBoundingClientRect();
-			let x = r.right + 10;
-			if (x + 44 > window.innerWidth - 8) x = Math.max(8, r.left - 54);
-			const next = { left: Math.round(c.left * 10) / 10, total, paused, name, x: Math.round(x), y: Math.round(r.top + r.height / 2 - 22) };
-			setView((v) => (v && v.left === next.left && v.paused === paused && v.x === next.x && v.y === next.y && v.name === name ? v : next));
+			const radius = getComputedStyle(btn).borderRadius;
+			const next = { left: Math.round(c.left * 10) / 10, total, paused, name, x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), radius };
+			setView((v) => (v && v.left === next.left && v.paused === paused && v.x === next.x && v.y === next.y && v.w === next.w && v.h === next.h && v.name === name ? v : next));
 		}, 100);
 		return () => clearInterval(id);
 	}, []);
@@ -51,14 +48,10 @@ export default function TurnTimer() {
 	if (!view) return null;
 	const secs = Math.ceil(view.left);
 	const tone = view.left <= 5 ? 'danger' : view.left <= 10 ? 'warn' : 'ok';
+	const done = 360 * (1 - view.left / view.total); // degrees already swept, clockwise from the top
 	return (
-		<div className={`turn-timer ${tone}${view.paused ? ' paused' : ''}`} style={{ left: view.x, top: view.y }}
-			role="timer" aria-label={`${view.name}'s turn ends in ${secs} seconds`} title="The turn ends by itself when the time is up">
-			<svg viewBox="0 0 44 44" width="44" height="44" aria-hidden="true">
-				<circle className="tt-track" cx="22" cy="22" r={R} />
-				<circle className="tt-ring" cx="22" cy="22" r={R} strokeDasharray={C} strokeDashoffset={C * (1 - view.left / view.total)} />
-			</svg>
-			<span className="tt-num">{secs}</span>
-		</div>
+		<div className={`turn-timer ${tone}${view.paused ? ' paused' : ''}`}
+			style={{ left: view.x, top: view.y, width: view.w, height: view.h, borderRadius: view.radius, '--done': `${done.toFixed(1)}deg` }}
+			role="timer" aria-label={`${view.name}'s turn ends in ${secs} seconds`} title={`The turn ends by itself in ${secs} s`} />
 	);
 }
