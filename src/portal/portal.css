@@ -257,20 +257,17 @@ body.online-game #setup { display: none !important; }
 .replay-tally td, .replay-tally th { text-align: left; }
 @media (max-width: 560px) { .filters label { flex: 1 1 120px; } .filters input, .filters select { width: 100%; box-sizing: border-box; } }
 
-/* ---------- turn timer: ring beside "End turn" that empties clockwise ---------- */
+/* ---------- turn timer: radial sweep inside the "End turn" button, clockwise ---------- */
 .turn-timer {
-	position: fixed; z-index: 14; width: 44px; height: 44px; pointer-events: none;
-	display: grid; place-items: center; color: var(--green);
-	background: #000a; border-radius: 50%; backdrop-filter: blur(3px);
+	position: fixed; z-index: 14; pointer-events: none; overflow: hidden;
+	--sweep: #06401cd9; /* translucent dark green */
+	/* the part of the button already used up, drawn clockwise from 12 o'clock around the button's centre */
+	background: conic-gradient(from 0deg, var(--sweep) 0 var(--done), transparent var(--done) 360deg);
 }
-.turn-timer.warn { color: var(--orange); }
-.turn-timer.danger { color: var(--red); }
-.turn-timer.paused { opacity: .55; }
-.turn-timer svg { position: absolute; inset: 0; transform: rotate(-90deg); } /* the ring starts at the top */
-.tt-track, .tt-ring { fill: none; stroke-width: 4; }
-.tt-track { stroke: #ffffff2e; }
-.tt-ring { stroke: currentColor; stroke-linecap: round; transition: stroke-dashoffset .1s linear; }
-.tt-num { position: relative; font: 700 14px Montserrat, sans-serif; color: var(--white); font-variant-numeric: tabular-nums; }
-.turn-timer.danger:not(.paused) .tt-num { animation: tt-pulse 1s ease-in-out infinite; }
-@keyframes tt-pulse { 50% { transform: scale(1.2); } }
-@media (prefers-reduced-motion: reduce) { .turn-timer.danger:not(.paused) .tt-num { animation: none; } .tt-ring { transition: none; } }
+.turn-timer.warn { --sweep: #06401cd9; }
+.turn-timer.danger { --sweep: #06401cd9; } /* stays green; the pulsing red border is the warning */
+.turn-timer.paused { opacity: .5; }
+.turn-timer::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 2px #ffffff40; }
+.turn-timer.danger:not(.paused)::after { animation: tt-pulse 1s ease-in-out infinite; box-shadow: inset 0 0 0 2px var(--red); }
+@keyframes tt-pulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .turn-timer.danger:not(.paused)::after { animation: none; } }
