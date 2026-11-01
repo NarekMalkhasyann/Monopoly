@@ -256,3 +256,21 @@ body.online-game #setup { display: none !important; }
 .replay-now { color: var(--green); font-weight: 600; }
 .replay-tally td, .replay-tally th { text-align: left; }
 @media (max-width: 560px) { .filters label { flex: 1 1 120px; } .filters input, .filters select { width: 100%; box-sizing: border-box; } }
+
+/* ---------- turn timer: ring beside "End turn" that empties clockwise ---------- */
+.turn-timer {
+	position: fixed; z-index: 14; width: 44px; height: 44px; pointer-events: none;
+	display: grid; place-items: center; color: var(--green);
+	background: #000a; border-radius: 50%; backdrop-filter: blur(3px);
+}
+.turn-timer.warn { color: var(--orange); }
+.turn-timer.danger { color: var(--red); }
+.turn-timer.paused { opacity: .55; }
+.turn-timer svg { position: absolute; inset: 0; transform: rotate(-90deg); } /* the ring starts at the top */
+.tt-track, .tt-ring { fill: none; stroke-width: 4; }
+.tt-track { stroke: #ffffff2e; }
+.tt-ring { stroke: currentColor; stroke-linecap: round; transition: stroke-dashoffset .1s linear; }
+.tt-num { position: relative; font: 700 14px Montserrat, sans-serif; color: var(--white); font-variant-numeric: tabular-nums; }
+.turn-timer.danger:not(.paused) .tt-num { animation: tt-pulse 1s ease-in-out infinite; }
+@keyframes tt-pulse { 50% { transform: scale(1.2); } }
+@media (prefers-reduced-motion: reduce) { .turn-timer.danger:not(.paused) .tt-num { animation: none; } .tt-ring { transition: none; } }

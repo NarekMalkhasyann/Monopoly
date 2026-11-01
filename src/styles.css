@@ -958,7 +958,7 @@ input[type="checkbox"] {
 	left: 0px;
 	width: 100%;
 	display: none;
-	z-index: 15;
+	z-index: 19; /* above #statsbackground (18), so only the page behind it is blurred */
 }
 
 .statsplayername {
