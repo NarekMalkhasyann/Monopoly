@@ -4,7 +4,8 @@ import { openDb } from './db.js';
 import { createApp } from './app.js';
 
 process.env.ALLOWED_ORIGIN = 'https://game.example.am/';
-const server = createApp(openDb(':memory:'), { secret: 'test-secret' });
+const db = await openDb(process.env.TEST_DATABASE_URL || ':memory:');
+const server = createApp(db, { secret: 'test-secret' });
 await new Promise((r) => server.listen(0, r));
 const base = `http://localhost:${server.address().port}`;
 const call = async (method, path, body, token) => {
@@ -54,6 +55,29 @@ assert.equal((await call('GET', '/api/games?status=active', null, tokenA)).body.
 assert.equal((await call('GET', '/api/games?status=finished&mode=local', null, tokenA)).body.total, 1);
 assert.equal((await call('DELETE', `/api/games/${id}`, null, tokenA)).status, 200);
 assert.equal((await call('GET', `/api/games/${id}`, null, tokenA)).status, 404);
+// ---- History filters ----
+{
+	const mk = async (names, turns) => {
+		const g = (await call('POST', '/api/games', { players: names.map((n) => ({ name: n, color: 'red' })) }, tokenA)).body.game;
+		await call('PUT', `/api/games/${g.id}/checkpoint`, { snapshot: { a: 1 }, turn_count: turns, events: [] }, tokenA);
+		return g.id;
+	};
+	const g1 = await mk(['Zed', 'Yan'], 5); const g2 = await mk(['Quill', 'Ruth'], 40);
+	await call('POST', `/api/games/${g2}/finish`, { winner_name: 'Ruth', turn_count: 41, players: [] }, tokenA);
+	const list = async (qs) => (await call('GET', `/api/games?${qs}`, null, tokenA)).body;
+	assert.deepEqual((await list('q=zed')).games.map((g) => g.id), [g1]);
+	assert.deepEqual((await list('q=RUTH')).games.map((g) => g.id), [g2]);          // players and winner, any case
+	assert.equal((await list('q=%25')).total, 0);                                   // % is text, not a wildcard
+	assert.equal((await list('q=nobody')).total, 0);
+	assert.deepEqual((await list('q=ruth&status=active')).games, []);
+	assert.deepEqual((await list('sort=turns&dir=desc&limit=2')).games.map((g) => g.id), [g2, g1]);
+	assert.deepEqual((await list('sort=turns&dir=asc&limit=1')).games.map((g) => g.id), [(await list('sort=turns&dir=asc&limit=1')).games[0].id]);
+	assert.equal((await list('from=2999-01-01')).total, 0);
+	assert.equal((await list('to=2000-01-01')).total, 0);
+	const today = new Date().toISOString().slice(0, 10);
+	assert.ok((await list(`from=${today}&to=${today}`)).total >= 2);
+	assert.equal((await list('status=bogus')).total, (await list('')).total);        // unknown filter values are ignored
+}
 // the website on another address (Vercel) may call the API, nobody else
 assert.equal((await call('GET', '/api/health')).body.ok, true);
 {
@@ -66,3 +90,4 @@ assert.equal((await call('GET', '/api/health')).body.ok, true);
 }
 console.log('all server tests passed');
 server.close();
+await db.close();

@@ -6,6 +6,7 @@
 // to everyone, in that order, and (4) stores it so a player who refreshes or
 // joins late can replay the game from the start.
 import { randomBytes, randomInt } from 'node:crypto';
+import { now } from './db.js';
 
 export const COLORS = ['yellow', 'blue', 'red', 'lime', 'green', 'aqua', 'orange', 'purple',
 	'fuchsia', 'teal', 'maroon', 'navy', 'olive', 'silver', 'gray', 'black'];
@@ -46,27 +47,40 @@ const ABANDON_AFTER_MS = () => num(process.env.ABANDON_AFTER_MS, 30 * 60_000);
 const SWEEP_EVERY_MS = () => num(process.env.SWEEP_EVERY_MS, 30_000);
 
 export function createRooms(db) {
+	// SQL is portable between SQLite and PostgreSQL (see db.js).
 	const q = {
-		insertGame: db.prepare("INSERT INTO games (owner_id, mode, status, room_code, seed) VALUES (?, 'online', 'waiting', ?, NULL)"),
-		codeTaken: db.prepare('SELECT 1 FROM games WHERE room_code = ?'),
-		gameByCode: db.prepare("SELECT * FROM games WHERE room_code = ? AND mode = 'online'"),
-		gameById: db.prepare("SELECT * FROM games WHERE id = ? AND mode = 'online'"),
-		members: db.prepare('SELECT seat, name, color, user_id FROM game_players WHERE game_id = ? AND user_id IS NOT NULL ORDER BY seat'),
-		insertMember: db.prepare('INSERT INTO game_players (game_id, seat, name, color, is_ai, user_id) VALUES (?, ?, ?, ?, 0, ?)'),
-		deleteMember: db.prepare('DELETE FROM game_players WHERE game_id = ? AND user_id = ?'),
-		setSeat: db.prepare('UPDATE game_players SET seat = ? WHERE game_id = ? AND user_id = ?'),
-		setColor: db.prepare('UPDATE game_players SET color = ? WHERE game_id = ? AND user_id = ?'),
-		setOwner: db.prepare('UPDATE games SET owner_id = ? WHERE id = ?'),
-		activate: db.prepare("UPDATE games SET status = 'active', seed = ?, updated_at = datetime('now') WHERE id = ?"),
-		deleteGame: db.prepare('DELETE FROM games WHERE id = ?'),
-		lastSeq: db.prepare('SELECT COALESCE(MAX(seq), 0) AS n FROM game_actions WHERE game_id = ?'),
-		insertAction: db.prepare('INSERT INTO game_actions (game_id, seq, turn, type, text) VALUES (?, ?, ?, ?, ?)'),
-		clicksAfter: db.prepare("SELECT seq, text FROM game_actions WHERE game_id = ? AND type = 'click' AND seq > ? ORDER BY seq"),
-		touch: db.prepare("UPDATE games SET updated_at = datetime('now'), turn_count = ? WHERE id = ?"),
-		finish: db.prepare("UPDATE games SET status = 'finished', winner_name = ?, turn_count = ?, finished_at = datetime('now'), updated_at = datetime('now') WHERE id = ?"),
-		abandon: db.prepare("UPDATE games SET status = 'abandoned', updated_at = datetime('now') WHERE id = ? AND status IN ('active','waiting')"),
-		bump: db.prepare("UPDATE games SET updated_at = datetime('now') WHERE id = ?"),
-		finalPlayer: db.prepare('UPDATE game_players SET final_money = ?, final_rank = ? WHERE game_id = ? AND seat = ?'),
+		insertGame: (ownerId, code) => db.insert("INSERT INTO games (owner_id, mode, status, room_code, seed, created_at, updated_at) VALUES (?, 'online', 'waiting', ?, NULL, ?, ?)", [ownerId, code, now(), now()]),
+		codeTaken: (code) => db.get('SELECT 1 AS x FROM games WHERE room_code = ?', [code]),
+		gameByCode: (code) => db.get("SELECT * FROM games WHERE room_code = ? AND mode = 'online'", [code]),
+		gameById: (id) => db.get("SELECT * FROM games WHERE id = ? AND mode = 'online'", [id]),
+		members: (gameId) => db.all('SELECT seat, name, color, user_id FROM game_players WHERE game_id = ? AND user_id IS NOT NULL ORDER BY seat', [gameId]),
+		insertMember: (gameId, seat, name, color, userId) => db.run('INSERT INTO game_players (game_id, seat, name, color, is_ai, user_id) VALUES (?, ?, ?, ?, 0, ?)', [gameId, seat, name, color, userId]),
+		deleteMember: (gameId, userId) => db.run('DELETE FROM game_players WHERE game_id = ? AND user_id = ?', [gameId, userId]),
+		setSeat: (seat, gameId, userId) => db.run('UPDATE game_players SET seat = ? WHERE game_id = ? AND user_id = ?', [seat, gameId, userId]),
+		setColor: (color, gameId, userId) => db.run('UPDATE game_players SET color = ? WHERE game_id = ? AND user_id = ?', [color, gameId, userId]),
+		setOwner: (userId, gameId) => db.run('UPDATE games SET owner_id = ? WHERE id = ?', [userId, gameId]),
+		activate: (seed, gameId) => db.run("UPDATE games SET status = 'active', seed = ?, updated_at = ? WHERE id = ?", [seed, now(), gameId]),
+		deleteGame: (gameId) => db.run('DELETE FROM games WHERE id = ?', [gameId]),
+		lastSeq: async (gameId) => (await db.get('SELECT COALESCE(MAX(seq), 0) AS n FROM game_actions WHERE game_id = ?', [gameId])).n,
+		insertAction: (gameId, seq, turn, type, text) => db.run('INSERT INTO game_actions (game_id, seq, turn, type, text, created_at) VALUES (?, ?, ?, ?, ?, ?)', [gameId, seq, turn, type, text, now()]),
+		clicksAfter: (gameId, after) => db.all("SELECT seq, text FROM game_actions WHERE game_id = ? AND type = 'click' AND seq > ? ORDER BY seq", [gameId, after]),
+		touch: (turns, gameId) => db.run('UPDATE games SET updated_at = ?, turn_count = ? WHERE id = ?', [now(), turns, gameId]),
+		finish: (winner, turns, gameId) => db.run("UPDATE games SET status = 'finished', winner_name = ?, turn_count = ?, finished_at = ?, updated_at = ? WHERE id = ?", [winner, turns, now(), now(), gameId]),
+		abandon: (gameId) => db.run("UPDATE games SET status = 'abandoned', updated_at = ? WHERE id = ? AND status IN ('active','waiting')", [now(), gameId]),
+		bump: (gameId) => db.run('UPDATE games SET updated_at = ? WHERE id = ?', [now(), gameId]),
+		finalPlayer: (money, rank, gameId, seat) => db.run('UPDATE game_players SET final_money = ?, final_rank = ? WHERE game_id = ? AND seat = ?', [money, rank, gameId, seat]),
+		staleActive: (cutoffText) => db.all("SELECT id FROM games WHERE mode = 'online' AND status = 'active' AND updated_at < ?", [cutoffText]),
+	};
+
+	// Database writes of one room are done one after the other, in the order they were made,
+	// while the game itself runs from memory (so a click is relayed at once, not after the write).
+	const pending = new Map(); // game id -> its last write, also after the room left memory
+	const written = (room, fn) => {
+		const job = room.writes.then(fn).catch((e) => console.error('database write failed:', e.message));
+		room.writes = job;
+		pending.set(room.id, job);
+		job.then(() => { if (pending.get(room.id) === job) pending.delete(room.id); });
+		return job;
 	};
 
 	/** @type {Map<number, any>} */
@@ -76,33 +90,43 @@ export function createRooms(db) {
 	const send = (conn, msg) => { try { conn.send(JSON.stringify(msg)); } catch { /* socket gone */ } };
 	const err = (conn, message) => send(conn, { t: 'error', message });
 
-	function newCode() {
+	async function newCode() {
 		for (let i = 0; i < 50; i++) {
 			let code = '';
 			for (let k = 0; k < 5; k++) code += CODE_CHARS[randomInt(CODE_CHARS.length)];
-			if (!q.codeTaken.get(code)) return code;
+			if (!(await q.codeTaken(code))) return code;
 		}
 		throw new Error('no free room code');
 	}
 
 	// ---- loading rooms (also after a server restart) ------------------------
-	function hydrate(row) {
-		if (!row || (row.status !== 'waiting' && row.status !== 'active')) return null;
-		let room = rooms.get(row.id);
-		if (room) return room;
-		room = {
-			id: row.id, code: row.room_code, hostId: row.owner_id, status: row.status, seed: row.seed,
-			seq: q.lastSeq.get(row.id).n, turnCount: row.turn_count || 0,
-			members: new Map(), // userId -> { seat, name, color, sessions:Set }
-		};
-		for (const m of q.members.all(row.id)) {
-			room.members.set(m.user_id, { userId: m.user_id, seat: m.seat, name: m.name, color: m.color, sessions: new Set(), offlineSince: Date.now() });
+	const loading = new Map(); // game id -> promise, so two players opening the same room load it once
+	async function hydrate(row, reread) {
+		if (row && pending.has(row.id) && !rooms.has(row.id)) { // a room that was just closed: let its writes finish first
+			await pending.get(row.id);
+			row = await reread(row.id);
 		}
-		rooms.set(row.id, room);
-		return room;
+		if (!row || (row.status !== 'waiting' && row.status !== 'active')) return null;
+		const known = rooms.get(row.id);
+		if (known) return known;
+		if (loading.has(row.id)) return loading.get(row.id);
+		const job = (async () => {
+			const room = {
+				id: row.id, code: row.room_code, hostId: row.owner_id, status: row.status, seed: row.seed,
+				seq: await q.lastSeq(row.id), turnCount: row.turn_count || 0, writes: Promise.resolve(),
+				members: new Map(), // userId -> { seat, name, color, sessions:Set }
+			};
+			for (const m of await q.members(row.id)) {
+				room.members.set(m.user_id, { userId: m.user_id, seat: m.seat, name: m.name, color: m.color, sessions: new Set(), offlineSince: Date.now() });
+			}
+			rooms.set(row.id, room);
+			return room;
+		})();
+		loading.set(row.id, job);
+		try { return await job; } finally { loading.delete(row.id); }
 	}
-	const roomByCode = (code) => hydrate(q.gameByCode.get(String(code || '').toUpperCase().trim()));
-	const roomById = (id) => hydrate(q.gameById.get(Number(id)));
+	const roomByCode = async (code) => hydrate(await q.gameByCode(String(code || '').toUpperCase().trim()), q.gameById);
+	const roomById = async (id) => hydrate(await q.gameById(Number(id)), q.gameById);
 
 	// ---- what clients may see -------------------------------------------------
 	function publicRoom(room) {
@@ -138,7 +162,7 @@ export function createRooms(db) {
 		const used = new Set([...room.members.values()].map((m) => m.color));
 		const color = COLORS.find((c) => !used.has(c)) || COLORS[0];
 		const m = { userId: user.id, seat: room.members.size + 1, name: uniqueName(room, user.name), color, sessions: new Set(), offlineSince: null };
-		q.insertMember.run(room.id, m.seat, m.name, m.color, user.id);
+		written(room, () => q.insertMember(room.id, m.seat, m.name, m.color, user.id));
 		room.members.set(user.id, m);
 		return m;
 	}
@@ -174,48 +198,49 @@ export function createRooms(db) {
 
 	function removeMember(room, userId) {
 		if (!room.members.has(userId)) return;
-		q.deleteMember.run(room.id, userId);
+		written(room, () => q.deleteMember(room.id, userId));
 		room.members.delete(userId);
 		if (room.members.size === 0) {
-			q.deleteGame.run(room.id);
+			written(room, () => q.deleteGame(room.id));
 			rooms.delete(room.id);
 			return;
 		}
 		// close the gap in the seat numbers and pass the host role on if needed
 		[...room.members.values()].sort((a, b) => a.seat - b.seat).forEach((m, i) => {
-			if (m.seat !== i + 1) { m.seat = i + 1; q.setSeat.run(m.seat, room.id, m.userId); }
+			if (m.seat !== i + 1) { m.seat = i + 1; written(room, () => q.setSeat(i + 1, room.id, m.userId)); }
 		});
 		if (room.hostId === userId) {
 			const next = [...room.members.values()].sort((a, b) => a.seat - b.seat)[0];
 			room.hostId = next.userId;
-			q.setOwner.run(next.userId, room.id);
+			written(room, () => q.setOwner(next.userId, room.id));
 		}
 		broadcastRoom(room);
 	}
 
 	// ---- message handlers ------------------------------------------------------
-	function joinedPayload(room, member, after) {
+	async function joinedPayload(room, member, after) {
 		const msg = { t: 'joined', room: publicRoom(room), you: { seat: member.seat, userId: member.userId } };
 		if (room.status === 'active') {
-			msg.actions = q.clicksAfter.all(room.id, Number(after) || 0).map((r) => ({ seq: r.seq, ...JSON.parse(r.text) }));
+			await room.writes; // everything already relayed must be readable before we answer
+			msg.actions = (await q.clicksAfter(room.id, Number(after) || 0)).map((r) => ({ seq: r.seq, ...JSON.parse(r.text) }));
 		}
 		return msg;
 	}
 
 	const handlers = {
-		create(s) {
+		async create(s) {
 			if (s.room) leaveRoom(s);
-			const code = newCode();
-			const id = Number(q.insertGame.run(s.user.id, code).lastInsertRowid);
-			const room = roomById(id);
+			const code = await newCode();
+			const id = await q.insertGame(s.user.id, code);
+			const room = await roomById(id);
 			const m = addMember(room, s.user);
 			attach(s, room);
-			send(s.conn, joinedPayload(room, m));
+			send(s.conn, await joinedPayload(room, m));
 		},
 
 		// By code (new player or returning) or by game id (returning member only).
-		join(s, msg) {
-			const room = msg.code ? roomByCode(msg.code) : roomById(msg.gameId);
+		async join(s, msg) {
+			const room = msg.code ? await roomByCode(msg.code) : await roomById(msg.gameId);
 			if (!room) return err(s.conn, msg.code ? 'No room with this code' : 'This online game is not available');
 			let m = room.members.get(s.user.id);
 			if (!m) {
@@ -225,7 +250,7 @@ export function createRooms(db) {
 				m = addMember(room, s.user);
 			}
 			attach(s, room);
-			send(s.conn, joinedPayload(room, m, msg.after));
+			send(s.conn, await joinedPayload(room, m, msg.after));
 			broadcastRoom(room);
 		},
 
@@ -238,7 +263,7 @@ export function createRooms(db) {
 			if (!COLORS.includes(color)) return err(s.conn, 'Unknown colour');
 			if ([...room.members.values()].some((m) => m.userId !== s.user.id && m.color === color)) return err(s.conn, 'That colour is taken');
 			room.members.get(s.user.id).color = color;
-			q.setColor.run(color, room.id, s.user.id);
+			written(room, () => q.setColor(color, room.id, s.user.id));
 			broadcastRoom(room);
 		},
 
@@ -249,7 +274,8 @@ export function createRooms(db) {
 			if (room.members.size < 2) return err(s.conn, 'At least 2 players are needed');
 			room.seed = randomBytes(4).readUInt32BE();
 			room.status = 'active';
-			q.activate.run(room.seed, room.id);
+			const seed = room.seed;
+			written(room, () => q.activate(seed, room.id));
 			broadcast(room, { t: 'started', room: publicRoom(room) });
 		},
 
@@ -264,8 +290,7 @@ export function createRooms(db) {
 			const member = room.members.get(s.user.id);
 			const action = { seat: member.seat, a: cleanPayload(a) };
 			const seq = ++room.seq;
-			q.insertAction.run(room.id, seq, action.a.turn, 'click', JSON.stringify(action));
-			q.bump.run(room.id);
+			written(room, async () => { await q.insertAction(room.id, seq, action.a.turn, 'click', JSON.stringify(action)); await q.bump(room.id); });
 			broadcast(room, { t: 'act', seq, ...action });
 		},
 
@@ -281,8 +306,7 @@ export function createRooms(db) {
 			const member = room.members.get(s.user.id);
 			const action = { seat: member.seat, a: { id: 'forfeit', turn: Number(msg.turn) || 0, v: target.seat } };
 			const seq = ++room.seq;
-			q.insertAction.run(room.id, seq, action.a.turn, 'click', JSON.stringify(action));
-			q.bump.run(room.id);
+			written(room, async () => { await q.insertAction(room.id, seq, action.a.turn, 'click', JSON.stringify(action)); await q.bump(room.id); });
 			broadcast(room, { t: 'act', seq, ...action });
 		},
 
@@ -301,19 +325,26 @@ export function createRooms(db) {
 			let seq = room.seq;
 			const events = Array.isArray(msg.events) ? msg.events.slice(0, 200) : [];
 			// log lines share the seq counter with actions (clients only look at 'click' rows)
-			for (const e of events) q.insertAction.run(room.id, ++seq, Number(e.turn) || 0, 'alert', String(e.text || '').slice(0, 500));
+			const rows = events.map((e) => [++seq, Number(e.turn) || 0, String(e.text || '').slice(0, 500)]);
 			room.seq = seq;
-			q.touch.run(Number(msg.turn_count) || room.turnCount, room.id);
+			const turns = Number(msg.turn_count) || room.turnCount;
+			written(room, async () => {
+				for (const [n, turn, text] of rows) await q.insertAction(room.id, n, turn, 'alert', text);
+				await q.touch(turns, room.id);
+			});
 		},
 
 		end(s, msg) {
 			const room = s.room;
 			if (!room || room.status !== 'active' || room.hostId !== s.user.id) return;
 			room.status = 'finished';
-			q.finish.run(String(msg.winner_name || '').slice(0, 16) || null, Number(msg.turn_count) || room.turnCount, room.id);
-			for (const r of Array.isArray(msg.players) ? msg.players : []) {
-				q.finalPlayer.run(Math.round(Number(r.money) || 0), Number(r.rank) || null, room.id, Number(r.seat));
-			}
+			const winner = String(msg.winner_name || '').slice(0, 16) || null;
+			const turns = Number(msg.turn_count) || room.turnCount;
+			const results = Array.isArray(msg.players) ? msg.players : [];
+			written(room, async () => {
+				await q.finish(winner, turns, room.id);
+				for (const r of results) await q.finalPlayer(Math.round(Number(r.money) || 0), Number(r.rank) || null, room.id, Number(r.seat));
+			});
 			broadcast(room, { t: 'ended', room: publicRoom(room) });
 			rooms.delete(room.id);
 		},
@@ -321,13 +352,13 @@ export function createRooms(db) {
 
 	function abandonRoom(room) {
 		room.status = 'abandoned';
-		q.abandon.run(room.id);
+		written(room, () => q.abandon(room.id));
 		broadcast(room, { t: 'ended', room: publicRoom(room) });
 		rooms.delete(room.id);
 	}
 
 	// Games nobody has opened for a long time are marked abandoned (also after a server restart).
-	function sweep() {
+	async function sweep() {
 		const cutoff = Date.now() - ABANDON_AFTER_MS();
 		for (const room of [...rooms.values()]) {
 			if (room.status !== 'active') continue;
@@ -336,9 +367,9 @@ export function createRooms(db) {
 			if (people.every((m) => (m.offlineSince || 0) < cutoff)) abandonRoom(room);
 		}
 		// rooms that are not loaded (server restarted): judge by the last save
-		const stale = db.prepare("SELECT id FROM games WHERE mode = 'online' AND status = 'active' AND updated_at < datetime(?, 'unixepoch')")
-			.all(Math.floor(cutoff / 1000));
-		for (const g of stale) if (!rooms.has(g.id)) q.abandon.run(g.id);
+		try {
+			for (const g of await q.staleActive(now(cutoff))) if (!rooms.has(g.id)) await q.abandon(g.id);
+		} catch (e) { console.error('sweep failed:', e.message); }
 	}
 	const sweeper = setInterval(sweep, SWEEP_EVERY_MS());
 	sweeper.unref();
@@ -356,14 +387,16 @@ export function createRooms(db) {
 			const session = { conn, user, room: null };
 			sessions.add(session);
 			send(conn, { t: 'hello', user: { id: user.id, name: user.name } });
+			// Messages of one connection are handled one after the other, even though handlers may wait for the database.
+			session.queue = Promise.resolve();
 			conn.on('message', (text) => {
 				let msg;
 				try { msg = JSON.parse(text); } catch { return err(conn, 'Bad message'); }
 				const fn = msg && typeof msg.t === 'string' && Object.hasOwn(handlers, msg.t) ? handlers[msg.t] : null;
 				if (!fn) return err(conn, 'Unknown message');
-				try { fn(session, msg); } catch (e) { console.error(e); err(conn, 'Server error'); }
+				session.queue = session.queue.then(() => fn(session, msg)).catch((e) => { console.error(e); err(conn, 'Server error'); });
 			});
-			conn.on('close', () => { sessions.delete(session); detach(session); });
+			conn.on('close', () => { session.queue = session.queue.then(() => { sessions.delete(session); detach(session); }); });
 		},
 		sweep,
 		connections: () => [...sessions].map((s) => s.conn),
