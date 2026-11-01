@@ -332,4 +332,17 @@ export const playerIndexOfSeat = (room, seat) => {
 };
 
 export const isOnlineGameRunning = () => started;
+// Still catching up on clicks (rejoin, or a click is on its way): the turn timer waits.
+export const isReplaying = () => queue.length > 0;
+
+// The turn timer ran out: end the turn for the player, exactly as if they had pressed "End turn".
+// Online, only the player whose turn it is sends it (it goes through the server like any click).
+export function autoEndTurn() {
+	if (started) {
+		if (win.turn === myIndex && queue.length === 0) share('nextbutton', {});
+		return;
+	}
+	const el = document.getElementById('nextbutton');
+	if (el && !el.disabled) el.click();
+}
 export const currentRoomId = () => (getOnline().room ? getOnline().room.id : null);
