@@ -1,11 +1,12 @@
-# Backend (API + WebSocket + SQLite) for the Vercel site. Render: New > Blueprint > pick this repo.
-# A persistent disk keeps the database between deploys (disks need a paid instance; see README).
+# Backend (API + WebSocket) for the Vercel site. Render: New > Blueprint > pick this repo.
+# Data lives in PostgreSQL (Neon): create a project at neon.tech and paste its connection string as DATABASE_URL.
+# No disk is needed. (The free Render plan "sleeps" when idle, which interrupts running games: use starter.)
 services:
   - type: web
     name: yerevanpoly-api
     runtime: node
     plan: starter
-    buildCommand: echo "nothing to build"
+    buildCommand: npm install --omit=dev
     startCommand: node server/index.js
     healthCheckPath: /api/health
     envVars:
@@ -13,11 +14,7 @@ services:
         value: 22.13.0
       - key: JWT_SECRET
         generateValue: true
+      - key: DATABASE_URL
+        sync: false      # Neon connection string
       - key: ALLOWED_ORIGIN
         sync: false      # your Vercel address, e.g. https://monopoly.example.am
-      - key: DB_FILE
-        value: /var/data/monopoly.db
-    disk:
-      name: data
-      mountPath: /var/data
-      sizeGB: 1

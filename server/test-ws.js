@@ -6,7 +6,8 @@ import { createApp } from './app.js';
 process.env.FORFEIT_AFTER_MS = '400';
 process.env.ABANDON_AFTER_MS = '700';
 process.env.SWEEP_EVERY_MS = '200';
-const server = createApp(openDb(':memory:'), { secret: 'test-secret' });
+const db = await openDb(process.env.TEST_DATABASE_URL || ':memory:');
+const server = createApp(db, { secret: 'test-secret' });
 await new Promise((r) => server.listen(0, r));
 const port = server.address().port;
 const base = `http://localhost:${port}`;
@@ -35,7 +36,7 @@ function open(token) {
 				if (hit) { hit._seen = true; return res(hit); }
 				const w = { test, resolve: (m) => { m._seen = true; res(m); } };
 				waiters.push(w);
-				setTimeout(() => rej(new Error('timeout waiting for ' + type)), 3000);
+				setTimeout(() => rej(new Error('timeout waiting for ' + type + '; got ' + JSON.stringify(inbox.slice(-3).map((m) => m.t + ':' + (m.message || ''))))), 3000);
 			}),
 			close: () => ws.close(),
 		};
@@ -192,4 +193,5 @@ assert.equal((await call('GET', '/api/nope')).status, 404);
 console.log('all websocket tests passed');
 for (const x of [a, b2s, c]) x.close();
 server.close();
+await db.close();
 setTimeout(() => process.exit(0), 100);

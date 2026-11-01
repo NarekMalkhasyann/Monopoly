@@ -9,6 +9,7 @@ const port = Number(process.env.PORT) || 3001;
 // After `npm run build` the API also serves the website from dist/ (used by `npm start`).
 const dist = resolve('dist');
 const staticDir = existsSync(dist) ? dist : undefined;
-createApp(openDb(), { secret, staticDir }).listen(port, () => {
-	console.log(`API + WebSocket on http://localhost:${port}${staticDir ? ' (serving dist/)' : ''}`);
+const db = await openDb();
+createApp(db, { secret, staticDir }).listen(port, () => {
+	console.log(`API + WebSocket on http://localhost:${port} (${db.dialect}${staticDir ? ', serving dist/' : ''})`);
 });

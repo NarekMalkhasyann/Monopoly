@@ -6,7 +6,7 @@
 //   /play/local        a new game on this device
 //   /play/:id          a saved game: resumes a local game, or opens the online lobby / game
 //   /join/:code        join an online room by its code, then goes to /play/:id
-//   /history           all games;  /history/:id  one game's details
+//   /history           all games;  /history/:id  one game's details;  /history/:id/replay  step through it
 //
 // The node server answers every non-API path with index.html, so each of these also
 // works when typed in or reloaded.
@@ -39,6 +39,7 @@ const ROUTES = [
 	[/^\/join\/([A-Za-z0-9]{3,10})\/?$/, 'join', ['code']],
 	[/^\/history\/?$/, 'history'],
 	[/^\/history\/(\d+)\/?$/, 'historyDetail', ['id']],
+	[/^\/history\/(\d+)\/replay\/?$/, 'historyReplay', ['id']],
 ];
 
 // "/play/12?x=1" -> { name: 'game', params: { id: '12' }, search: URLSearchParams }

@@ -41,7 +41,7 @@ An interactive, browser-based implementation of the classic **Monopoly** board g
 │   ├── ws.js               # WebSocket protocol (RFC 6455) on node:http
 │   ├── rooms.js            # Online rooms: lobby, seats, ordered action relay
 │   ├── auth.js             # scrypt password hashing, JWT
-│   ├── db.js               # SQLite schema
+│   ├── db.js               # Async database layer: SQLite (local) or PostgreSQL (DATABASE_URL)
 │   ├── test.js             # REST tests
 │   └── test-ws.js          # WebSocket / room tests
 ├── scripts/dev.mjs         # Runs API + Vite together (npm run dev:all)
@@ -117,17 +117,20 @@ round pips (see `src/vendor/dice-box-threejs/README.md`).
 Players sign in (register / login), and every local game is saved to their account.
 
 - **Sign in / Create account** – email + password. Passwords are hashed with scrypt, the session is a signed JWT kept in `localStorage`.
+- **Replay** – *History → Details → Replay* steps through a saved game line by line (play / pause, speed up to 8×, slider, jump to a turn) with a running count of purchases and rent paid. Address: `/history/:id/replay`.
+- **History filters** – search by player, winner or room code, filter by mode, status and date, sort by activity, date or number of turns.
 - **Play** – start a new game on this device (2–8 players, humans and AI) or resume an unfinished one.
 - **History** – every game with its mode, players, winner, turns and date; filter by mode and status; open *Details* for the final ranking and the full game log; delete a game.
 - **Saving** – the engine calls small hooks (`onTurnStart`, `onGameEvent`, `onPlayerEliminated`, `onGameEnd`). At the start of every turn the browser uploads a checkpoint (players, properties, card decks) plus the new log lines (`src/session.js`). Resume copies the checkpoint back into the engine and continues.
-- **Backend** – `server/` is plain Node (`node:http`, `node:sqlite`, `node:crypto`), so there is nothing extra to install. SQLite for now; the tables (`users`, `games`, `game_players`, `game_actions`) map directly to PostgreSQL for deployment.
+- **Backend** – `server/` is plain Node (`node:http`, `node:crypto`). Without any setting it stores everything in a SQLite file (`node:sqlite`, nothing to install). With `DATABASE_URL` set it uses PostgreSQL (Neon, Supabase, Render...) through the `pg` package. The same SQL runs on both (`server/db.js`); tables: `users`, `games`, `game_players`, `game_actions`.
 
 | Method | Path | Purpose |
 |---|---|---|
 | POST | `/api/auth/register`, `/api/auth/login` | create account / sign in, returns a token |
 | GET | `/api/me` | current user |
 | POST | `/api/games` | create a game record |
-| GET | `/api/games?status=&mode=&limit=&offset=` | history (paged, filtered) |
+| GET | `/api/games?status=&mode=&q=&from=&to=&sort=&dir=&limit=&offset=` | history, paged. `status` active / finished / abandoned; `q` searches player names, winner and room code; `from`/`to` are dates (`YYYY-MM-DD`); `sort` updated / created / turns, `dir` asc / desc |
+| GET | `/api/health` | `{ ok, db }` – the server and its database answer |
 | GET / DELETE | `/api/games/:id` | game with checkpoint and log / delete |
 | PUT | `/api/games/:id/checkpoint` | save checkpoint + log lines |
 | POST | `/api/games/:id/finish` | save result and final ranking |
@@ -183,13 +186,15 @@ Vercel runs the **website** only. The game server needs a long-lived process (We
 | Part | Where | Notes |
 |---|---|---|
 | Website (`dist/`) | Vercel | `vercel.json`: Vite build, every path falls back to `index.html` |
-| API + WebSocket + SQLite | Render / Railway / Fly (any host with Node ≥ 22.13) | `render.yaml` is a ready blueprint; start command `node server/index.js` |
+| API + WebSocket | Render / Railway / Fly (any host with Node ≥ 22.13) | `render.yaml` is a ready blueprint; start command `node server/index.js` |
+| Database | Neon (PostgreSQL, free plan) | the backend reads `DATABASE_URL`; the host needs no disk |
 
-1. **Backend:** deploy the repo to the Node host. Environment variables: `JWT_SECRET` (long random string), `ALLOWED_ORIGIN` = your Vercel address, e.g. `https://game.example.am` (comma separated for several), `DB_FILE` on a persistent disk (`/var/data/monopoly.db`). Check `https://<backend>/api/health`.
-2. **Vercel:** Project → Settings → Environment Variables: `VITE_API_URL` = the backend address, e.g. `https://yerevanpoly-api.onrender.com` (no trailing slash; WebSockets use the same host). Redeploy, because Vite bakes it in at build time.
-3. **Domain:** add your domain to the Vercel project; if you also want a nice API address, give the backend its own sub-domain (`api.example.am`) and use that in `VITE_API_URL` and nothing else changes.
+1. **Database:** create a project at neon.tech and copy its connection string (`postgresql://user:password@host/db?sslmode=require`). The tables are created automatically on the first start.
+2. **Backend:** deploy the repo to the Node host. Environment variables: `DATABASE_URL` (the Neon string), `JWT_SECRET` (long random string), `ALLOWED_ORIGIN` = your Vercel address, e.g. `https://game.example.am` (comma separated for several). Check `https://<backend>/api/health`: it should answer `{"ok":true,"db":"pg"}`.
+3. **Vercel:** Project → Settings → Environment Variables: `VITE_API_URL` = the backend address, e.g. `https://yerevanpoly-api.onrender.com` (no trailing slash; WebSockets use the same host). Redeploy, because Vite bakes it in at build time.
+4. **Domain:** add your domain to the Vercel project; if you also want a nice API address, give the backend its own sub-domain (`api.example.am`) and use that in `VITE_API_URL` and nothing else changes.
 
-Without a persistent disk the SQLite file resets on every deploy (accounts and history vanish). Moving to hosted PostgreSQL (Neon) is planned for M4.
+Accounts and history live in PostgreSQL, so redeploying or restarting the backend loses nothing. (Without `DATABASE_URL` the backend falls back to a SQLite file, which a host without a persistent disk resets on every deploy.)
 
 ---
 
@@ -205,7 +210,7 @@ npm run test:server   # REST + WebSocket tests
 npm run build && npm start   # production: one server for site, API and WebSocket (http://localhost:3001)
 ```
 
-`JWT_SECRET` (environment variable) should be set to a long random string outside development. The database file is `server/data/monopoly.db` (override with `DB_FILE`).
+`JWT_SECRET` (environment variable) should be set to a long random string outside development. Locally the database is the file `server/data/monopoly.db` (override with `DB_FILE`); set `DATABASE_URL` to use PostgreSQL instead. `npm run test:server` uses an in-memory SQLite; set `TEST_DATABASE_URL` to an empty PostgreSQL database to run the same tests on PostgreSQL.
 
 ---
 
@@ -228,7 +233,8 @@ To switch between the **Classic Edition** and the **New York City Edition**, edi
 ## 🛠️ Built With
 
 - **React 19 + Vite** – Page markup and dev/build tooling.
-- **Node.js 22 (`node:http`, `node:sqlite`, `node:crypto`)** – API, SQLite storage, password hashing and JWT.
+- **Node.js 22 (`node:http`, `node:crypto`)** – API, password hashing and JWT.
+- **SQLite (`node:sqlite`) / PostgreSQL (`pg`)** – storage; SQLite for local use, PostgreSQL (Neon) when deployed.
 - **three.js + cannon-es** – 3D dice.
 - **HTML5 & CSS3** – Board layout, styling, and typography.
 - **JavaScript (ES5/Vanilla)** – Game state management and business logic.

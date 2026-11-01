@@ -3,6 +3,7 @@ import { api } from '../api.js';
 import { navigate } from '../router.jsx';
 import { fmtDate } from './format.js';
 import PlayerDots from './PlayerDots.jsx';
+import Replay from './Replay.jsx';
 
 const PAGE = 10;
 
@@ -14,12 +15,20 @@ function Modal({ onClose, children }) {
 	);
 }
 
-function Details({ id, onClose, onOpen }) {
+function Details({ id, replay, onClose, onOpen }) {
 	const [game, setGame] = useState(null);
 	const [error, setError] = useState('');
 	useEffect(() => {
 		api('GET', `/games/${id}`).then((r) => setGame(r.game)).catch((e) => setError(e.message));
 	}, [id]);
+
+	if (replay && game) {
+		return (
+			<Modal onClose={onClose}>
+				<Replay events={game.events} players={game.players} onClose={() => navigate(`/history/${id}`)} />
+			</Modal>
+		);
+	}
 
 	return (
 		<Modal onClose={onClose}>
@@ -52,6 +61,7 @@ function Details({ id, onClose, onOpen }) {
 			)}
 			<div className="modal-actions">
 				{game && game.status === 'active' && <button className="btn-primary btn-sm" onClick={onOpen}>{game.mode === 'online' ? 'Rejoin' : 'Resume'}</button>}
+				{game && game.events.length > 0 && <button className="btn-ghost btn-sm" onClick={() => navigate(`/history/${id}/replay`)}>Replay</button>}
 				<button className="btn-ghost" onClick={onClose}>Close</button>
 			</div>
 		</Modal>
@@ -59,9 +69,14 @@ function Details({ id, onClose, onOpen }) {
 }
 
 // /history shows the list; /history/:id also opens that game's details.
-export default function History({ detailId }) {
+export default function History({ detailId, replay }) {
 	const [status, setStatus] = useState('');
 	const [mode, setMode] = useState('');
+	const [text, setText] = useState('');
+	const [search, setSearch] = useState('');   // `text` after the typing pause
+	const [from, setFrom] = useState('');
+	const [to, setTo] = useState('');
+	const [sort, setSort] = useState('updated:desc');
 	const [games, setGames] = useState([]);
 	const [total, setTotal] = useState(0);
 	const [loading, setLoading] = useState(true);
@@ -72,8 +87,20 @@ export default function History({ detailId }) {
 		const qs = new URLSearchParams({ limit: PAGE, offset });
 		if (status) qs.set('status', status);
 		if (mode) qs.set('mode', mode);
+		if (search.trim()) qs.set('q', search.trim());
+		if (from) qs.set('from', from);
+		if (to) qs.set('to', to);
+		const [by, dir] = sort.split(':');
+		qs.set('sort', by); qs.set('dir', dir);
 		return api('GET', `/games?${qs}`);
-	}, [status, mode]);
+	}, [status, mode, search, from, to, sort]);
+
+	useEffect(() => { // wait a moment after typing before asking the server
+		const t = setTimeout(() => setSearch(text), 300);
+		return () => clearTimeout(t);
+	}, [text]);
+	const filtered = !!(status || mode || search || from || to || sort !== 'updated:desc');
+	const clear = () => { setStatus(''); setMode(''); setText(''); setSearch(''); setFrom(''); setTo(''); setSort('updated:desc'); };
 
 	useEffect(() => {
 		let stale = false;
@@ -122,9 +149,27 @@ export default function History({ detailId }) {
 				{pill('abandoned', status, setStatus, 'Abandoned')}
 			</div>
 
+			<div className="filters">
+				<input className="filter-search" type="search" placeholder="Search player, winner or room code" value={text}
+					onChange={(e) => setText(e.target.value)} aria-label="Search games" maxLength={40} />
+				<label>From <input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} /></label>
+				<label>To <input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} /></label>
+				<label>Sort
+					<select value={sort} onChange={(e) => setSort(e.target.value)}>
+						<option value="updated:desc">Latest activity</option>
+						<option value="created:desc">Newest</option>
+						<option value="created:asc">Oldest</option>
+						<option value="turns:desc">Most turns</option>
+						<option value="turns:asc">Fewest turns</option>
+					</select>
+				</label>
+				{filtered && <button className="btn-ghost btn-sm" onClick={clear}>Clear filters</button>}
+			</div>
+
 			{error && <p className="auth-error">{error}</p>}
 			{loading && <p className="muted">Loading…</p>}
-			{!loading && games.length === 0 && <p className="muted">No games here yet. Play one and it will show up.</p>}
+			{!loading && games.length === 0 && <p className="muted">{filtered ? 'No games match these filters.' : 'No games here yet. Play one and it will show up.'}</p>}
+			{!loading && games.length > 0 && <p className="muted">{total} game{total === 1 ? '' : 's'}</p>}
 
 			<div className="rows">
 				{games.map((g) => (
@@ -149,7 +194,7 @@ export default function History({ detailId }) {
 			</div>
 			{games.length < total && <button className="btn-ghost" onClick={more}>Load more ({total - games.length})</button>}
 
-			{detailId && <Details id={detailId} onClose={() => navigate('/history')} onOpen={() => navigate(`/play/${detailId}`)} />}
+			{detailId && <Details id={detailId} replay={replay} onClose={() => navigate('/history')} onOpen={() => navigate(`/play/${detailId}`)} />}
 			{toDelete && (
 				<Modal onClose={() => setToDelete(null)}>
 					<h3 className="modal-title">Delete this game?</h3>

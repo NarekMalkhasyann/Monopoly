@@ -21,7 +21,7 @@ import { getRunningKey } from './session.js';
 import { useLocation, matchRoute, navigate, gameKey } from './router.jsx';
 import './portal/portal.css';
 
-const TITLES = { home: 'Play', history: 'History', historyDetail: 'History', join: 'Join a game', notfound: 'Not found' };
+const TITLES = { home: 'Play', history: 'History', historyDetail: 'History', historyReplay: 'History', join: 'Join a game', notfound: 'Not found' };
 
 // Every page has its own address (see router.jsx):
 //   /login  /register  /play  /play/local  /play/:id  /join/:code  /history  /history/:id
@@ -85,11 +85,11 @@ export default function App() {
 		if (running !== route.params.id) page = <GamePage id={route.params.id} user={user} live={gameLive} onLive={setGameLive} />;
 	} else if (route.name === 'join') {
 		page = <JoinPage code={route.params.code} user={user} />;
-	} else if (route.name === 'home' || route.name === 'history' || route.name === 'historyDetail' || route.name === 'notfound') {
+	} else if (route.name === 'home' || route.name === 'history' || route.name === 'historyDetail' || route.name === 'historyReplay' || route.name === 'notfound') {
 		page = (
 			<Shell user={user} screen={route.name === 'home' ? 'home' : route.name === 'notfound' ? '' : 'history'} title={TITLES[route.name]}>
 				{route.name === 'home' && <Home user={user} />}
-				{(route.name === 'history' || route.name === 'historyDetail') && <History detailId={route.params.id} />}
+				{(route.name === 'history' || route.name === 'historyDetail' || route.name === 'historyReplay') && <History detailId={route.params.id} replay={route.name === 'historyReplay'} />}
 				{route.name === 'notfound' && <NotFound />}
 			</Shell>
 		);
