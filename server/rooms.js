@@ -142,7 +142,8 @@ export function createRooms(db) {
 	}
 	function broadcast(room, msg) {
 		const text = JSON.stringify(msg);
-		for (const m of room.members.values()) for (const s of m.sessions) { try { s.conn.send(text); } catch { /* gone */ } }
+		// A session that is still joining gets live messages only after its backlog (see attachAndSend).
+		for (const m of room.members.values()) for (const s of m.sessions) { if (s.hold) { s.hold.push(text); continue; } try { s.conn.send(text); } catch { /* gone */ } }
 	}
 	const broadcastRoom = (room) => broadcast(room, { t: 'room', room: publicRoom(room) });
 
@@ -227,6 +228,25 @@ export function createRooms(db) {
 		return msg;
 	}
 
+	// Adds the session to the room and answers with the room plus the clicks it missed. Clicks relayed
+	// while the backlog is being read from the database are held back and sent right after it, in order;
+	// otherwise a live click could arrive first and the client would then drop the older backlog clicks.
+	async function attachAndSend(s, room, m, after) {
+		attach(s, room);
+		s.hold = [];
+		try {
+			const payload = await joinedPayload(room, m, after);
+			send(s.conn, payload);
+			const upTo = (payload.actions || []).reduce((mx, a) => Math.max(mx, a.seq), Number(after) || 0);
+			const held = s.hold; s.hold = null;
+			for (const text of held) {
+				let seq = 0;
+				try { const o = JSON.parse(text); if (o.t === 'act') seq = o.seq; } catch { /* keep it */ }
+				if (!seq || seq > upTo) { try { s.conn.send(text); } catch { /* gone */ } }
+			}
+		} finally { s.hold = null; }
+	}
+
 	const handlers = {
 		async create(s) {
 			if (s.room) leaveRoom(s);
@@ -234,8 +254,7 @@ export function createRooms(db) {
 			const id = await q.insertGame(s.user.id, code);
 			const room = await roomById(id);
 			const m = addMember(room, s.user);
-			attach(s, room);
-			send(s.conn, await joinedPayload(room, m));
+			await attachAndSend(s, room, m);
 		},
 
 		// By code (new player or returning) or by game id (returning member only).
@@ -249,8 +268,7 @@ export function createRooms(db) {
 				if (room.members.size >= MAX_PLAYERS) return err(s.conn, 'This room is full');
 				m = addMember(room, s.user);
 			}
-			attach(s, room);
-			send(s.conn, await joinedPayload(room, m, msg.after));
+			await attachAndSend(s, room, m, msg.after);
 			broadcastRoom(room);
 		},
 

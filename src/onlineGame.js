@@ -23,6 +23,8 @@ const MANAGE = new Set(['buyhousebutton', 'sellhousebutton', 'mortgagebutton']);
 const TRADE_BUTTONS = new Set(['proposetradebutton', 'accepttradebutton', 'rejecttradebutton', 'canceltradebutton']);
 const AUCTION_BUTTONS = new Set(['auctionbid', 'auctionpass', 'auctionexit']);
 
+const STALE_AFTER_MS = 1500;
+
 const win = window;
 const queue = [];
 let started = false;
@@ -30,6 +32,8 @@ let myIndex = 0;         // my player number inside the engine
 let bypass = false;      // true while we press a button for a relayed action
 let timer = null;
 let waitingSince = 0;
+let idleSince = 0;      // since when the screen has been still while the next click cannot be pressed
+let lastTick = 0;
 let savedDice = null;
 let tradeShared = false; // a trade offer is on everybody's screen (not just being edited by one player)
 let originalConfirm = null;
@@ -41,6 +45,10 @@ export function subscribeGameInfo(fn) {
 	infoListeners.add(fn);
 	fn(info);
 	return () => infoListeners.delete(fn);
+}
+function markDesync(why, kind = 'stuck') {
+	console.warn('[online] out of sync:', why);
+	setInfo({ desync: true, desyncKind: kind, desyncWhy: why });
 }
 function setInfo(patch) {
 	const next = { ...info, ...patch };
@@ -143,8 +151,14 @@ function prepare(id) {
 }
 
 // ---- sending: stop the click, share it instead -------------------------------
+// One click of mine at a time: until the server has sent my previous click back, a second one would be
+// based on a screen that has not changed yet (a double click, or "End turn" pressed just as the turn timer
+// fires, would end two turns and every browser would then report "Out of sync").
+let inflightSince = 0;
 function share(id, extra) {
-	send({ t: 'act', a: { id, turn: win.turn, ...extra } }).catch(() => toast('Connection lost. Reconnecting...'));
+	if (inflightSince && Date.now() - inflightSince < 4000) return;
+	inflightSince = Date.now();
+	send({ t: 'act', a: { id, turn: win.turn, ...extra } }).catch(() => { inflightSince = 0; toast('Connection lost. Reconnecting...'); });
 }
 
 function onClickCapture(e) {
@@ -216,15 +230,38 @@ function tick() {
 	if (direct) ready = !(win.jQuery && win.jQuery(':animated').length);
 	else if (manage) ready = !!el && !el.disabled && el.style.display !== 'none';
 	else ready = !!el && !el.disabled && isVisible(el);
+	const nowMs = Date.now();
+	// A hidden tab (or a sleeping laptop) runs timers and animations very slowly: that is not a broken game,
+	// so the "stuck" clock only counts time in which this loop really ran in a visible page.
+	const throttled = document.hidden || nowMs - lastTick > 1000;
+	lastTick = nowMs;
 	if (!ready) {
+		// Nothing is moving (no animation, no dice) and the button is still not there: it never will be. This is a
+		// stale duplicate (an impatient second click on "OK" that was sent before the first one reached the
+		// screen). Every browser sees the same still screen, so every browser drops it the same way, and the
+		// clicks behind it are not held up for 12 seconds.
+		const moving = (win.jQuery && win.jQuery(':animated').length > 0) || document.getElementById('dice-scene')?.classList.contains('visible');
+		if (moving || throttled) idleSince = 0;
+		else {
+			if (!idleSince) idleSince = nowMs;
+			if (nowMs - idleSince > STALE_AFTER_MS) {
+				console.warn(`[online] dropped a stale click "${id}" (turn ${win.turn}, not pressable on a still screen)`);
+				queue.shift();
+				if (m.seat === mySeat) inflightSince = 0;
+				idleSince = 0; waitingSince = 0;
+				return;
+			}
+		}
 		// The engine is not ready for this click yet (dice still rolling, pop-up fading in).
-		if (!waitingSince) waitingSince = Date.now();
-		if (Date.now() - waitingSince > 12000) setInfo({ desync: true });
+		if (!waitingSince || throttled) waitingSince = nowMs;
+		if (nowMs - waitingSince > 12000) markDesync(`the game could not press "${id}" for 12 seconds (turn ${win.turn}, ${queue.length} click(s) waiting)`);
 		return;
 	}
-	waitingSince = 0;
+	waitingSince = 0; idleSince = 0;
+	if (m.seat === mySeat) inflightSince = 0; // my click reached the screen: the next one may be sent
+	if (info.desync && info.desyncKind === 'stuck') setInfo({ desync: false, desyncKind: '', desyncWhy: '' });
 	queue.shift();
-	if (m.a.turn && win.turn !== m.a.turn) setInfo({ desync: true });
+	if (m.a.turn && win.turn !== m.a.turn) markDesync(`"${id}" was sent during turn ${m.a.turn} but this browser is on turn ${win.turn}`, 'mismatch');
 	bypass = true;
 	try {
 		if (id === 'proposetradebutton') { win.game.applyTrade(m.a.v); tradeShared = true; }
@@ -263,7 +300,8 @@ function refreshInfo() {
 		turnIndex: win.turn, players: win.pcount });
 }
 
-onAction((a) => queue.push(a));
+let mySeat = -1;
+onAction((a) => { queue.push(a); });
 
 // ---- starting -------------------------------------------------------------
 function capitalise(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -310,6 +348,7 @@ export function startOnlineGame(room, you) {
 	win.setup();
 
 	const me = players.find((p) => p.userId === you.userId);
+	mySeat = me.seat; inflightSince = 0;
 	for (let i = 1; i <= win.pcount; i++) if (win.player[i].name === me.name) myIndex = i;
 	setInfo({ me: me.name });
 
