@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { autoEndTurn, isReplaying } from '../onlineGame.js';
 
 // 30 seconds after "End turn" appears, the turn ends by itself. A radial sweep inside the button darkens it
@@ -6,6 +7,17 @@ import { autoEndTurn, isReplaying } from '../onlineGame.js';
 // the trade window, the stats window, or while an online game is still catching up on clicks.
 // (Tests can shorten it with window.turnTimerSeconds.)
 const TOTAL_SECONDS = 30;
+
+// The overlay is absolutely positioned inside the nearest positioned ancestor of the button (or the page), so it
+// scrolls with the button. Returns that element and where its padding box starts on screen.
+function anchorFor(btn) {
+	let el = btn.parentElement;
+	while (el && el !== document.body && el !== document.documentElement && getComputedStyle(el).position === 'static') el = el.parentElement;
+	const root = !el || el === document.documentElement || (el === document.body && getComputedStyle(el).position === 'static');
+	if (root) return { host: document.body, ox: -window.scrollX, oy: -window.scrollY };
+	const r = el.getBoundingClientRect();
+	return { host: el, ox: r.left + el.clientLeft - el.scrollLeft, oy: r.top + el.clientTop - el.scrollTop };
+}
 
 const visible = (el) => !!(el && (el.offsetWidth || el.offsetHeight));
 
@@ -37,10 +49,11 @@ export default function TurnTimer() {
 				c.firedAt = now;
 				autoEndTurn();
 			}
+			const { host, ox, oy } = anchorFor(btn);
 			const r = btn.getBoundingClientRect();
 			const radius = getComputedStyle(btn).borderRadius;
-			const next = { left: Math.round(c.left * 10) / 10, total, paused, name, x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), radius };
-			setView((v) => (v && v.left === next.left && v.paused === paused && v.x === next.x && v.y === next.y && v.w === next.w && v.h === next.h && v.name === name ? v : next));
+			const next = { left: Math.round(c.left * 10) / 10, total, paused, name, host, x: Math.round(r.left - ox), y: Math.round(r.top - oy), w: Math.round(r.width), h: Math.round(r.height), radius };
+			setView((v) => (v && v.left === next.left && v.paused === paused && v.host === host && v.x === next.x && v.y === next.y && v.w === next.w && v.h === next.h && v.name === name ? v : next));
 		}, 100);
 		return () => clearInterval(id);
 	}, []);
@@ -49,9 +62,10 @@ export default function TurnTimer() {
 	const secs = Math.ceil(view.left);
 	const tone = view.left <= 5 ? 'danger' : view.left <= 10 ? 'warn' : 'ok';
 	const done = 360 * (1 - view.left / view.total); // degrees already swept, clockwise from the top
-	return (
+	return createPortal(
 		<div className={`turn-timer ${tone}${view.paused ? ' paused' : ''}`}
 			style={{ left: view.x, top: view.y, width: view.w, height: view.h, borderRadius: view.radius, '--done': `${done.toFixed(1)}deg` }}
-			role="timer" aria-label={`${view.name}'s turn ends in ${secs} seconds`} title={`The turn ends by itself in ${secs} s`} />
+			role="timer" aria-label={`${view.name}'s turn ends in ${secs} seconds`} title={`The turn ends by itself in ${secs} s`} />,
+		view.host,
 	);
 }
