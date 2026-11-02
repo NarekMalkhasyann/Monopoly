@@ -52,7 +52,7 @@ export default function GameBar() {
 			{isOnline ? (
 				<>
 					{info.desync ? (
-						<button className="btn-danger" onClick={() => window.location.reload()} title="Replays the game from the start">Out of sync – reload</button>
+						<button className="btn-danger" onClick={() => window.location.reload()} title={`${info.desyncWhy || 'The game screens differ'}. Reloading replays the game from the start.`}>Out of sync – reload</button>
 					) : (
 						<span className={`save-state ${info.myTurn ? 'saved' : ''}`}>
 							{info.turnName ? (info.myTurn ? 'Your turn' : `${info.turnName}'s turn`) : ''}
