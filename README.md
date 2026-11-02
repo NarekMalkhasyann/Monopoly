@@ -192,7 +192,7 @@ Vercel runs the **website** only. The game server needs a long-lived process (We
 | Database | Neon (PostgreSQL, free plan) | the backend reads `DATABASE_URL`; the host needs no disk |
 
 1. **Database:** create a project at neon.tech and copy its connection string (`postgresql://user:password@host/db?sslmode=require`). The tables are created automatically on the first start.
-2. **Backend:** deploy the repo to the Node host. Environment variables: `DATABASE_URL` (the Neon string), `JWT_SECRET` (long random string), `ALLOWED_ORIGIN` = your Vercel address, e.g. `https://game.example.am` (comma separated for several). Check `https://<backend>/api/health`: it should answer `{"ok":true,"db":"pg"}`.
+2. **Backend:** deploy the repo to the Node host. Environment variables: `DATABASE_URL` (the Neon string), `JWT_SECRET` (long random string), `ALLOWED_ORIGIN` = your Vercel address, e.g. `https://game.example.am` (comma separated for several). Optional: `ADMIN_EMAILS` = your account's e-mail (comma separated for several) to get the **Admin** panel. Check `https://<backend>/api/health`: it should answer `{"ok":true,"db":"pg"}`.
 3. **Vercel:** Project → Settings → Environment Variables: `VITE_API_URL` = the backend address, e.g. `https://yerevanpoly-api.onrender.com` (no trailing slash; WebSockets use the same host). Redeploy, because Vite bakes it in at build time.
 4. **Domain:** add your domain to the Vercel project; if you also want a nice API address, give the backend its own sub-domain (`api.example.am`) and use that in `VITE_API_URL` and nothing else changes.
 
@@ -241,3 +241,13 @@ To switch between the **Classic Edition** and the **New York City Edition**, edi
 - **HTML5 & CSS3** – Board layout, styling, and typography.
 - **JavaScript (ES5/Vanilla)** – Game state management and business logic.
 - **jQuery (1.11.1)** – DOM interactions, drag-and-drop modals, and event handling.
+
+## Admin panel
+
+Open **Admin** in the sidebar (only administrators see it; the server checks the role on every request). It shows:
+
+- **Overview:** totals (users, games, in progress, finished, turns, open connections) and the last 14 days of games and sign-ups.
+- **Users:** every account with search, role filter and sorting; a user page shows their games, lets you make them admin / player or delete the account.
+- **Games:** every game of every player with the same filters as History plus the creator's name or e-mail; open any game (details, replay), end a running online game, or delete a finished one.
+
+To become an administrator, set the environment variable `ADMIN_EMAILS` (e.g. `ADMIN_EMAILS=me@example.am`) on the backend, restart it and log in again. Admins can then promote others in the panel. You cannot change or delete your own account there.

@@ -3,70 +3,9 @@ import { api } from '../api.js';
 import { navigate } from '../router.jsx';
 import { fmtDate } from './format.js';
 import PlayerDots from './PlayerDots.jsx';
-import Replay from './Replay.jsx';
+import { Modal, Details } from './GameDetails.jsx';
 
 const PAGE = 10;
-
-function Modal({ onClose, children }) {
-	return (
-		<div className="overlay" onClick={onClose}>
-			<div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>{children}</div>
-		</div>
-	);
-}
-
-function Details({ id, replay, onClose, onOpen }) {
-	const [game, setGame] = useState(null);
-	const [error, setError] = useState('');
-	useEffect(() => {
-		api('GET', `/games/${id}`).then((r) => setGame(r.game)).catch((e) => setError(e.message));
-	}, [id]);
-
-	if (replay && game) {
-		return (
-			<Modal onClose={onClose}>
-				<Replay events={game.events} players={game.players} onClose={() => navigate(`/history/${id}`)} />
-			</Modal>
-		);
-	}
-
-	return (
-		<Modal onClose={onClose}>
-			<h3 className="modal-title">Game #{id}</h3>
-			{error && <p className="auth-error">{error}</p>}
-			{!game && !error && <p className="muted">Loading…</p>}
-			{game && (
-				<>
-					<p className="muted">
-						{game.mode === 'local' ? 'On this device' : `Online (room ${game.room_code})`} · {game.status === 'finished' ? `finished ${fmtDate(game.finished_at)}` : game.status === 'abandoned' ? 'abandoned' : 'in progress'} · {game.turn_count} turns
-					</p>
-					<table className="table">
-						<thead><tr><th>#</th><th>Player</th><th>Money</th></tr></thead>
-						<tbody>
-							{[...game.players].sort((a, b) => (a.final_rank || 99) - (b.final_rank || 99) || a.seat - b.seat).map((p) => (
-								<tr key={p.seat}>
-									<td>{p.final_rank || '–'}</td>
-									<td><span className="player-chip"><i style={{ background: p.color }} />{p.name}{p.is_ai ? ' (AI)' : ''}</span></td>
-									<td>{p.final_money == null ? '–' : `$${p.final_money}`}</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-					<h4 className="log-title">Game log</h4>
-					<div className="log">
-						{game.events.length === 0 && <p className="muted">Nothing recorded yet.</p>}
-						{game.events.map((e) => <div key={e.seq}><span className="log-turn">T{e.turn}</span>{e.text}</div>)}
-					</div>
-				</>
-			)}
-			<div className="modal-actions">
-				{game && game.status === 'active' && <button className="btn-primary btn-sm" onClick={onOpen}>{game.mode === 'online' ? 'Rejoin' : 'Resume'}</button>}
-				{game && game.events.length > 0 && <button className="btn-ghost btn-sm" onClick={() => navigate(`/history/${id}/replay`)}>Replay</button>}
-				<button className="btn-ghost" onClick={onClose}>Close</button>
-			</div>
-		</Modal>
-	);
-}
 
 // /history shows the list; /history/:id also opens that game's details.
 export default function History({ detailId, replay }) {
@@ -194,7 +133,7 @@ export default function History({ detailId, replay }) {
 			</div>
 			{games.length < total && <button className="btn-ghost" onClick={more}>Load more ({total - games.length})</button>}
 
-			{detailId && <Details id={detailId} replay={replay} onClose={() => navigate('/history')} onOpen={() => navigate(`/play/${detailId}`)} />}
+			{detailId && <Details id={detailId} replay={replay} onClose={() => navigate('/history')} onReplay={(on) => navigate(on ? `/history/${detailId}/replay` : `/history/${detailId}`)} onOpen={() => navigate(`/play/${detailId}`)} />}
 			{toDelete && (
 				<Modal onClose={() => setToDelete(null)}>
 					<h3 className="modal-title">Delete this game?</h3>

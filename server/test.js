@@ -4,6 +4,7 @@ import { openDb } from './db.js';
 import { createApp } from './app.js';
 
 process.env.ALLOWED_ORIGIN = 'https://game.example.am/';
+process.env.ADMIN_EMAILS = ' Boss@x.am , nobody@x.am ';
 const db = await openDb(process.env.TEST_DATABASE_URL || ':memory:');
 const server = createApp(db, { secret: 'test-secret' });
 await new Promise((r) => server.listen(0, r));
@@ -77,6 +78,83 @@ assert.equal((await call('GET', `/api/games/${id}`, null, tokenA)).status, 404);
 	const today = new Date().toISOString().slice(0, 10);
 	assert.ok((await list(`from=${today}&to=${today}`)).total >= 2);
 	assert.equal((await list('status=bogus')).total, (await list('')).total);        // unknown filter values are ignored
+}
+// ---- admin panel ----
+{
+	// players cannot reach it, and a role in the list is applied when that person signs up
+	assert.equal((await call('GET', '/api/admin/stats')).status, 401);
+	assert.equal((await call('GET', '/api/admin/stats', null, tokenA)).status, 403);
+	assert.equal((await call('GET', '/api/admin/users', null, tokenA)).status, 403);
+	assert.equal((await call('GET', '/api/admin/games', null, tokenA)).status, 403);
+	assert.equal((await call('GET', '/api/me', null, tokenA)).body.user.role, 'player');
+	r = await call('POST', '/api/auth/register', { name: 'Boss', email: 'boss@x.am', password: 'password3' });
+	assert.equal(r.body.user.role, 'admin');
+	const tokenX = r.body.token;
+	const bossId = r.body.user.id;
+
+	// a game by Anna (local) that the admin can see in full
+	const gid = (await call('POST', '/api/games', { players: [{ name: 'Anna', color: 'red' }, { name: 'Zoe', color: 'blue' }] }, tokenA)).body.game.id;
+	await call('PUT', `/api/games/${gid}/checkpoint`, { snapshot: { a: 1 }, turn_count: 7, events: [{ type: 'alert', turn: 1, text: 'Anna rolled 5' }] }, tokenA);
+	assert.equal((await call('GET', `/api/games/${gid}`, null, tokenB)).status, 404);          // other players still cannot
+	r = await call('GET', `/api/games/${gid}`, null, tokenX);
+	assert.equal(r.status, 200);
+	assert.equal(r.body.game.owner.email, 'a@x.am');
+	assert.equal(r.body.game.events.length, 1);
+
+	r = await call('GET', '/api/admin/stats', null, tokenX);
+	assert.equal(r.status, 200);
+	assert.equal(r.body.users.total, 3);
+	assert.equal(r.body.users.admins, 1);
+	assert.ok(r.body.games.total >= 3 && r.body.games.active >= 1);
+	assert.equal(r.body.gamesPerDay.length, 14);
+	assert.ok(r.body.gamesPerDay[13].n >= 3);                                                    // today is the last bar
+	assert.equal(r.body.signupsPerDay.reduce((a, d) => a + d.n, 0), 3);
+
+	r = await call('GET', '/api/admin/users', null, tokenX);
+	assert.equal(r.body.total, 3);
+	const anna = r.body.users.find((u) => u.email === 'a@x.am');
+	assert.ok(anna.games >= 3 && anna.last_active);
+	assert.equal(r.body.users.find((u) => u.email === 'b@x.am').games, 0);
+	assert.equal(r.body.users.find((u) => u.email === 'b@x.am').last_active, null);
+	assert.deepEqual((await call('GET', '/api/admin/users?q=BEN', null, tokenX)).body.users.map((u) => u.name), ['Ben']);
+	assert.deepEqual((await call('GET', '/api/admin/users?q=x.am&role=admin', null, tokenX)).body.users.map((u) => u.name), ['Boss']);
+	assert.equal((await call('GET', '/api/admin/users?q=%25', null, tokenX)).body.total, 0);
+	assert.deepEqual((await call('GET', '/api/admin/users?sort=name&dir=asc&limit=2', null, tokenX)).body.users.map((u) => u.name), ['Anna', 'Ben']);
+	assert.equal((await call('GET', '/api/admin/users?sort=games&dir=desc&limit=1', null, tokenX)).body.users[0].name, 'Anna');
+	assert.equal((await call('GET', `/api/admin/users/${anna.id}`, null, tokenX)).body.user.email, 'a@x.am');
+	assert.equal((await call('GET', '/api/admin/users/99999', null, tokenX)).status, 404);
+
+	// every game, filtered by user / text / owner name
+	r = await call('GET', '/api/admin/games', null, tokenX);
+	assert.ok(r.body.total >= 3);
+	assert.ok(r.body.games.every((g) => g.owner && g.owner.email === 'a@x.am'));
+	assert.equal((await call('GET', `/api/admin/games?user=${anna.id}`, null, tokenX)).body.total, r.body.total);
+	assert.equal((await call('GET', `/api/admin/games?user=${bossId}`, null, tokenX)).body.total, 0);
+	assert.deepEqual((await call('GET', '/api/admin/games?q=zoe', null, tokenX)).body.games.map((g) => g.id), [gid]);
+	assert.equal((await call('GET', '/api/admin/games?q=a@x.am', null, tokenX)).body.total, r.body.total); // the owner's e-mail finds their games
+	assert.equal((await call('GET', '/api/admin/games?status=active', null, tokenX)).body.games.every((g) => g.status === 'active'), true);
+
+	// roles: promote, demote, never yourself, only known roles
+	assert.equal((await call('PUT', `/api/admin/users/${bossId}`, { role: 'player' }, tokenX)).status, 409);
+	assert.equal((await call('DELETE', `/api/admin/users/${bossId}`, null, tokenX)).status, 409);
+	const benId = (await call('GET', '/api/me', null, tokenB)).body.user.id;
+	assert.equal((await call('PUT', `/api/admin/users/${benId}`, { role: 'king' }, tokenX)).status, 400);
+	assert.equal((await call('PUT', `/api/admin/users/${benId}`, { role: 'admin' }, tokenX)).body.user.role, 'admin');
+	assert.equal((await call('GET', '/api/admin/stats', null, tokenB)).status, 200);              // takes effect at once
+	assert.equal((await call('PUT', `/api/admin/users/${benId}`, { role: 'player' }, tokenX)).body.user.role, 'player');
+	assert.equal((await call('GET', '/api/admin/stats', null, tokenB)).status, 403);
+	assert.equal((await call('PUT', `/api/admin/users/${benId}`, { role: 'admin' }, tokenA)).status, 403);
+
+	// delete one game, then a whole user with their games
+	assert.equal((await call('DELETE', `/api/admin/games/${gid}`, null, tokenA)).status, 403);
+	assert.equal((await call('DELETE', `/api/admin/games/${gid}`, null, tokenX)).status, 200);
+	assert.equal((await call('DELETE', `/api/admin/games/${gid}`, null, tokenX)).status, 404);
+	assert.equal((await call('POST', `/api/admin/games/${gid}/abandon`, null, tokenX)).status, 409);  // not an online game
+	assert.equal((await call('DELETE', `/api/admin/users/${benId}`, null, tokenX)).status, 200);
+	assert.equal((await call('GET', '/api/me', null, tokenB)).status, 401);                        // deleted users are signed out
+	assert.equal((await call('DELETE', `/api/admin/users/${anna.id}`, null, tokenX)).status, 200);
+	assert.equal((await call('GET', '/api/admin/games', null, tokenX)).body.total, 0);
+	assert.equal((await call('GET', '/api/admin/users', null, tokenX)).body.total, 1);
 }
 // the website on another address (Vercel) may call the API, nobody else
 assert.equal((await call('GET', '/api/health')).body.ok, true);

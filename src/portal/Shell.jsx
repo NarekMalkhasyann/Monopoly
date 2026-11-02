@@ -12,6 +12,7 @@ const ICONS = {
 	home: <Icon d={<><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="8.5" cy="8.5" r="1" fill="currentColor" /><circle cx="15.5" cy="15.5" r="1" fill="currentColor" /><circle cx="12" cy="12" r="1" fill="currentColor" /></>} />,
 	history: <Icon d={<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>} />,
 	out: <Icon d={<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></>} />,
+	admin: <Icon d={<><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z" /><path d="M9 12l2 2 4-4" /></>} />,
 	menu: <Icon d={<><path d="M4 6h16M4 12h16M4 18h16" /></>} />,
 	close: <Icon d={<><path d="M6 6l12 12M18 6L6 18" /></>} />,
 };
@@ -20,7 +21,8 @@ const ICONS = {
 // the sidebar becomes a full-screen drawer opened from a sticky glass header.
 export default function Shell({ user, screen, onLogout = signOut, title, children }) {
 	const [open, setOpen] = useState(false);
-	const go = (s) => { setOpen(false); navigate(s === 'home' ? '/play' : '/history'); };
+	const PATHS = { home: '/play', history: '/history', admin: '/admin' };
+	const go = (s) => { setOpen(false); navigate(PATHS[s]); };
 	const item = (id, label, icon) => (
 		<button className={`nav-link${screen === id ? ' green' : ''}`} onClick={() => go(id)}>
 			{icon}<span>{label}</span>
@@ -43,7 +45,8 @@ export default function Shell({ user, screen, onLogout = signOut, title, childre
 				<nav>
 					{item('home', 'Play', ICONS.home)}
 					{item('history', 'History', ICONS.history)}
-					<button className="nav-link" onClick={onLogout}>{ICONS.out}<span>Log out</span></button>
+					{user.role === 'admin' && item('admin', 'Admin', ICONS.admin)}
+					<button className="nav-link nav-bottom" onClick={onLogout}>{ICONS.out}<span>Log out</span></button>
 				</nav>
 			</aside>
 			<main className="page">{children}</main>

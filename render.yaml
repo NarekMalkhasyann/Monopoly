@@ -18,3 +18,5 @@ services:
         sync: false      # Neon connection string
       - key: ALLOWED_ORIGIN
         sync: false      # your Vercel address, e.g. https://monopoly.example.am
+      - key: ADMIN_EMAILS
+        sync: false      # e-mail(s) of the administrator(s), comma separated; they get the Admin panel at /admin
