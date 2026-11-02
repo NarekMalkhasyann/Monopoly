@@ -13,6 +13,7 @@ import AuthScreen from './portal/AuthScreen.jsx';
 import Shell from './portal/Shell.jsx';
 import Home from './portal/Home.jsx';
 import History from './portal/History.jsx';
+import Admin from './portal/Admin.jsx';
 import GameBar from './portal/GameBar.jsx';
 import GamePage from './portal/GamePage.jsx';
 import JoinPage from './portal/JoinPage.jsx';
@@ -22,7 +23,7 @@ import { getRunningKey } from './session.js';
 import { useLocation, matchRoute, navigate, gameKey } from './router.jsx';
 import './portal/portal.css';
 
-const TITLES = { home: 'Play', history: 'History', historyDetail: 'History', historyReplay: 'History', join: 'Join a game', notfound: 'Not found' };
+const TITLES = { home: 'Play', history: 'History', historyDetail: 'History', historyReplay: 'History', admin: 'Admin', adminUsers: 'Admin', adminUser: 'Admin', adminGames: 'Admin', join: 'Join a game', notfound: 'Not found' };
 
 // Every page has its own address (see router.jsx):
 //   /login  /register  /play  /play/local  /play/:id  /join/:code  /history  /history/:id
@@ -86,11 +87,13 @@ export default function App() {
 		if (running !== route.params.id) page = <GamePage id={route.params.id} user={user} live={gameLive} onLive={setGameLive} />;
 	} else if (route.name === 'join') {
 		page = <JoinPage code={route.params.code} user={user} />;
-	} else if (route.name === 'home' || route.name === 'history' || route.name === 'historyDetail' || route.name === 'historyReplay' || route.name === 'notfound') {
+	} else if (['home', 'history', 'historyDetail', 'historyReplay', 'admin', 'adminUsers', 'adminUser', 'adminGames', 'notfound'].includes(route.name)) {
+		const isAdmin = route.name.startsWith('admin');
 		page = (
-			<Shell user={user} screen={route.name === 'home' ? 'home' : route.name === 'notfound' ? '' : 'history'} title={TITLES[route.name]}>
+			<Shell user={user} screen={route.name === 'home' ? 'home' : route.name === 'notfound' ? '' : isAdmin ? 'admin' : 'history'} title={TITLES[route.name]}>
 				{route.name === 'home' && <Home user={user} />}
 				{(route.name === 'history' || route.name === 'historyDetail' || route.name === 'historyReplay') && <History detailId={route.params.id} replay={route.name === 'historyReplay'} />}
+				{isAdmin && <Admin view={route.name} id={route.params.id} user={user} />}
 				{route.name === 'notfound' && <NotFound />}
 			</Shell>
 		);

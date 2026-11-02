@@ -418,5 +418,14 @@ export function createRooms(db) {
 		},
 		sweep,
 		connections: () => [...sessions].map((s) => s.conn),
+		// An admin ends a running online game for everybody (same result as the host abandoning it). Returns false if there was nothing to end.
+		async adminAbandon(id) {
+			const room = rooms.get(id);
+			if (room) { if (room.status !== 'active') return false; abandonRoom(room); return true; }
+			const g = await db.get("SELECT status FROM games WHERE id = ? AND mode = 'online'", [id]);
+			if (!g || g.status !== 'active') return false;
+			await q.abandon(id);
+			return true;
+		},
 	};
 }

@@ -6,6 +6,7 @@ import { createApp } from './app.js';
 process.env.FORFEIT_AFTER_MS = '400';
 process.env.ABANDON_AFTER_MS = '700';
 process.env.SWEEP_EVERY_MS = '200';
+process.env.ADMIN_EMAILS = 'root@x.am';
 const db = await openDb(process.env.TEST_DATABASE_URL || ':memory:');
 const server = createApp(db, { secret: 'test-secret' });
 await new Promise((r) => server.listen(0, r));
@@ -187,11 +188,38 @@ a.send({ t: 'join', code: ja.room.code }); assert.match((await a.next('error', (
 	assert.equal((await call('GET', `/api/games/${jp.room.id}`, null, tP)).body.game.status, 'abandoned');
 }
 
+// ---- admin: end a running online game for everybody ----
+{
+	const tR = await register('Rita'); const tS = await register('Sam'); const tRoot = await register('Root');
+	const r1 = await open(tR); await r1.next('hello'); const s1 = await open(tS); await s1.next('hello');
+	r1.send({ t: 'create' }); const jr = await r1.next('joined');
+	s1.send({ t: 'join', code: jr.room.code }); await s1.next('joined');
+	r1.send({ t: 'start' }); await r1.next('started'); await s1.next('started');
+	const gid = jr.room.id;
+	const ritaId = (await call('GET', '/api/me', null, tR)).body.user.id;
+
+	assert.equal((await call('POST', `/api/admin/games/${gid}/abandon`, null, tS)).status, 403);   // players cannot
+	assert.equal((await call('DELETE', `/api/admin/games/${gid}`, null, tRoot)).status, 409);       // a running game must be ended first
+	assert.equal((await call('DELETE', `/api/admin/users/${ritaId}`, null, tRoot)).status, 409);    // ...and so must its players' accounts
+	assert.ok((await call('GET', '/api/admin/stats', null, tRoot)).body.connected >= 2);
+	assert.equal((await call('GET', `/api/admin/games?user=${ritaId}&status=active`, null, tRoot)).body.total, 1);
+
+	assert.equal((await call('POST', `/api/admin/games/${gid}/abandon`, null, tRoot)).status, 200);
+	assert.equal((await r1.next('ended')).room.status, 'abandoned');
+	assert.equal((await s1.next('ended')).room.status, 'abandoned');
+	assert.equal((await call('GET', `/api/games/${gid}`, null, tR)).body.game.status, 'abandoned');
+	assert.equal((await call('POST', `/api/admin/games/${gid}/abandon`, null, tRoot)).status, 409);  // already over
+	assert.equal((await call('DELETE', `/api/admin/games/${gid}`, null, tRoot)).status, 200);
+	assert.equal((await call('GET', `/api/games/${gid}`, null, tR)).status, 404);
+	r1.close(); s1.close();
+	// Sam's seat in someone else's game is cleared (not left pointing at nobody) when an account is deleted
+	assert.equal((await call('DELETE', `/api/admin/users/${ritaId}`, null, tRoot)).status, 200);
+}
+
 // the SPA fallback is only active when a build exists, API 404s stay JSON
 assert.equal((await call('GET', '/api/nope')).status, 404);
 
 console.log('all websocket tests passed');
 for (const x of [a, b2s, c]) x.close();
 server.close();
-await db.close();
-setTimeout(() => process.exit(0), 100);
+process.exit(0); // exit at once: the 200 ms test sweeper must not run against a closed database

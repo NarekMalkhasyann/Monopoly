@@ -41,6 +41,11 @@ function readJson(req) {
 
 const publicUser = (u) => ({ id: u.id, name: u.name, email: u.email, role: u.role });
 
+// Who is an administrator: ADMIN_EMAILS (comma separated) is applied at start-up, at sign-up and at every login,
+// and an admin can make other people admins in the panel. Everybody else is a 'player'.
+const adminEmails = () => (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+const ROLES = ['player', 'admin'];
+
 export function createApp(db, { secret, staticDir } = {}) {
 	if (!secret) throw new Error('JWT secret is required');
 	const rooms = createRooms(db);
@@ -65,6 +70,16 @@ export function createApp(db, { secret, staticDir } = {}) {
 		return user;
 	};
 
+	const requireAdmin = async (req) => {
+		const user = await authUser(req);
+		if (user.role !== 'admin') throw new HttpError(403, 'Administrators only');
+		return user;
+	};
+	async function promoteConfigured() {
+		for (const email of adminEmails()) await db.run("UPDATE users SET role = 'admin' WHERE email = ? AND role != 'admin'", [email]);
+	}
+	promoteConfigured().catch((e) => console.error('ADMIN_EMAILS failed:', e.message));
+
 	const gameSummary = async (g) => ({
 		id: g.id, mode: g.mode, status: g.status, edition: g.edition, room_code: g.room_code, owner_id: g.owner_id,
 		winner_name: g.winner_name, turn_count: g.turn_count,
@@ -88,7 +103,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 
 	// History list: filters (status, mode, text, dates) and sorting, all optional.
 	const SORTS = { updated: 'g.updated_at', created: 'g.created_at', turns: 'g.turn_count' };
-	async function listGames(user, params) {
+	async function listGames(user, params, { all = false } = {}) {
 		const status = params.get('status');
 		const mode = params.get('mode');
 		const text = String(params.get('q') || '').trim().toLowerCase().slice(0, 40);
@@ -99,22 +114,124 @@ export function createApp(db, { secret, staticDir } = {}) {
 		const sort = SORTS[params.get('sort')] || SORTS.updated;
 		const dir = params.get('dir') === 'asc' ? 'ASC' : 'DESC';
 
-		const where = ["g.status != 'waiting'", '(g.owner_id = ? OR g.id IN (SELECT game_id FROM game_players WHERE user_id = ?))'];
-		const args = [user.id, user.id];
+		const where = ["g.status != 'waiting'"];
+		const args = [];
+		// everybody sees their own games; an admin (all = true) sees every game, optionally those of one user
+		const only = all ? Number(params.get('user')) || 0 : user.id;
+		if (only) { where.push('(g.owner_id = ? OR g.id IN (SELECT game_id FROM game_players WHERE user_id = ?))'); args.push(only, only); }
 		if (['active', 'finished', 'abandoned'].includes(status)) { where.push('g.status = ?'); args.push(status); }
 		if (mode === 'local' || mode === 'online') { where.push('g.mode = ?'); args.push(mode); }
 		if (text) {
 			const like = `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 			where.push(`(LOWER(COALESCE(g.winner_name, '')) LIKE ? ESCAPE '\\' OR LOWER(COALESCE(g.room_code, '')) LIKE ? ESCAPE '\\'
-				OR g.id IN (SELECT game_id FROM game_players WHERE LOWER(name) LIKE ? ESCAPE '\\'))`);
+				OR g.id IN (SELECT game_id FROM game_players WHERE LOWER(name) LIKE ? ESCAPE '\\')
+				${all ? "OR g.owner_id IN (SELECT id FROM users WHERE LOWER(name) LIKE ? ESCAPE '\\' OR LOWER(email) LIKE ? ESCAPE '\\')" : ''})`);
 			args.push(like, like, like);
+			if (all) args.push(like, like);
 		}
 		if (from) { where.push('g.created_at >= ?'); args.push(`${from} 00:00:00`); }
 		if (to) { where.push('g.created_at <= ?'); args.push(`${to} 23:59:59`); }
 
 		const rows = await db.all(`SELECT g.* FROM games g WHERE ${where.join(' AND ')} ORDER BY ${sort} ${dir}, g.id ${dir} LIMIT ? OFFSET ?`, [...args, limit, offset]);
 		const total = (await db.get(`SELECT COUNT(*) AS n FROM games g WHERE ${where.join(' AND ')}`, args)).n;
-		return { total, games: await Promise.all(rows.map(gameSummary)) };
+		const games = await Promise.all(rows.map(gameSummary));
+		if (all) await addOwners(games);
+		return { total, games };
+	}
+
+	// For the admin lists: who created each game.
+	async function addOwners(games) {
+		const ids = [...new Set(games.map((g) => g.owner_id))];
+		if (!ids.length) return games;
+		const users = await db.all(`SELECT id, name, email FROM users WHERE id IN (${ids.map(() => '?').join(',')})`, ids);
+		const byId = new Map(users.map((u) => [u.id, u]));
+		for (const g of games) g.owner = byId.get(g.owner_id) || null;
+		return games;
+	}
+
+	// ---- admin ----------------------------------------------------------------
+	const day = (offset) => new Date(Date.now() - offset * 864e5).toISOString().slice(0, 10);
+	async function adminStats() {
+		const n = async (sql, p = []) => (await db.get(sql, p)).n;
+		const since = now(Date.now() - 14 * 864e5);
+		const perDay = async (table) => {
+			const rows = await db.all(`SELECT SUBSTR(created_at, 1, 10) AS d, COUNT(*) AS n FROM ${table} WHERE created_at >= ?${table === 'games' ? " AND status != 'waiting'" : ''} GROUP BY SUBSTR(created_at, 1, 10)`, [since]);
+			const m = new Map(rows.map((r) => [r.d, r.n]));
+			return Array.from({ length: 14 }, (_, i) => ({ day: day(13 - i), n: m.get(day(13 - i)) || 0 }));
+		};
+		const byStatus = Object.fromEntries((await db.all("SELECT status, COUNT(*) AS n FROM games WHERE status != 'waiting' GROUP BY status")).map((r) => [r.status, r.n]));
+		const byMode = Object.fromEntries((await db.all("SELECT mode, COUNT(*) AS n FROM games WHERE status != 'waiting' GROUP BY mode")).map((r) => [r.mode, r.n]));
+		return {
+			users: { total: await n('SELECT COUNT(*) AS n FROM users'), admins: await n("SELECT COUNT(*) AS n FROM users WHERE role = 'admin'"), new7: await n('SELECT COUNT(*) AS n FROM users WHERE created_at >= ?', [now(Date.now() - 7 * 864e5)]) },
+			games: { total: await n("SELECT COUNT(*) AS n FROM games WHERE status != 'waiting'"), active: byStatus.active || 0, finished: byStatus.finished || 0, abandoned: byStatus.abandoned || 0, local: byMode.local || 0, online: byMode.online || 0, turns: await n("SELECT COALESCE(SUM(turn_count), 0) AS n FROM games WHERE status != 'waiting'"), waitingRooms: await n("SELECT COUNT(*) AS n FROM games WHERE status = 'waiting'") },
+			connected: rooms.connections().length,
+			gamesPerDay: await perDay('games'),
+			signupsPerDay: await perDay('users'),
+		};
+	}
+
+	const USER_SORTS = { created: 'u.created_at', name: 'LOWER(u.name)', games: 'games', active: 'last_active' };
+	const likeOf = (t) => `%${t.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+	const userRow = (u) => ({ ...u, last_active: u.last_active || null });
+	const USER_COLS = `u.id, u.name, u.email, u.role, u.created_at,
+		(SELECT COUNT(*) FROM games g WHERE g.status != 'waiting' AND (g.owner_id = u.id OR g.id IN (SELECT game_id FROM game_players WHERE user_id = u.id))) AS games,
+		(SELECT COUNT(*) FROM game_players p WHERE p.user_id = u.id AND p.final_rank = 1) AS wins,
+		COALESCE((SELECT MAX(g.updated_at) FROM games g WHERE g.owner_id = u.id OR g.id IN (SELECT game_id FROM game_players WHERE user_id = u.id)), '') AS last_active`;
+	async function listUsers(params) {
+		const text = String(params.get('q') || '').trim().toLowerCase().slice(0, 40);
+		const role = params.get('role');
+		const limit = Math.min(Math.max(Number(params.get('limit')) || 20, 1), 100);
+		const offset = Math.max(Number(params.get('offset')) || 0, 0);
+		const sort = USER_SORTS[params.get('sort')] || USER_SORTS.created;
+		const dir = params.get('dir') === 'asc' ? 'ASC' : 'DESC';
+		const where = ['1 = 1'], args = [];
+		if (ROLES.includes(role)) { where.push('u.role = ?'); args.push(role); }
+		if (text) { where.push("(LOWER(u.name) LIKE ? ESCAPE '\\' OR LOWER(u.email) LIKE ? ESCAPE '\\')"); args.push(likeOf(text), likeOf(text)); }
+		const total = (await db.get(`SELECT COUNT(*) AS n FROM users u WHERE ${where.join(' AND ')}`, args)).n;
+		const rows = await db.all(`SELECT ${USER_COLS} FROM users u WHERE ${where.join(' AND ')} ORDER BY ${sort} ${dir}, u.id ${dir} LIMIT ? OFFSET ?`, [...args, limit, offset]);
+		return { total, users: rows.map(userRow) };
+	}
+	const busyOnline = (id) => db.get("SELECT COUNT(*) AS n FROM games g WHERE g.mode = 'online' AND g.status IN ('waiting', 'active') AND (g.owner_id = ? OR g.id IN (SELECT game_id FROM game_players WHERE user_id = ?))", [id, id]);
+
+	async function adminRoute(req, method, path, url) {
+		let m;
+		const admin = await requireAdmin(req);
+		if (method === 'GET' && path === '/api/admin/stats') return [200, await adminStats()];
+		if (method === 'GET' && path === '/api/admin/users') return [200, await listUsers(url.searchParams)];
+		if ((m = /^\/api\/admin\/users\/(\d+)$/.exec(path))) {
+			const id = Number(m[1]);
+			const u = await db.get(`SELECT ${USER_COLS} FROM users u WHERE u.id = ?`, [id]);
+			if (!u) throw new HttpError(404, 'User not found');
+			if (method === 'GET') return [200, { user: userRow(u) }];
+			if (id === admin.id) throw new HttpError(409, 'You cannot change or delete your own account here');
+			if (method === 'PUT') {
+				const b = await readJson(req);
+				if (!ROLES.includes(b.role)) throw new HttpError(400, 'Role must be player or admin');
+				await db.run('UPDATE users SET role = ? WHERE id = ?', [b.role, id]);
+				return [200, { user: userRow(await db.get(`SELECT ${USER_COLS} FROM users u WHERE u.id = ?`, [id])) }];
+			}
+			if (method === 'DELETE') {
+				if ((await busyOnline(id)).n > 0) throw new HttpError(409, 'This user is in an online room or game. End or abandon it first.');
+				await db.tx(async (t) => {
+					await t.run('UPDATE game_players SET user_id = NULL WHERE user_id = ?', [id]); // keep other people's history
+					await t.run('DELETE FROM users WHERE id = ?', [id]);                           // their own games go with them
+				});
+				return [200, { ok: true }];
+			}
+		}
+		if (method === 'GET' && path === '/api/admin/games') return [200, await listGames(admin, url.searchParams, { all: true })];
+		if ((m = /^\/api\/admin\/games\/(\d+)$/.exec(path)) && method === 'DELETE') {
+			const g = await db.get('SELECT * FROM games WHERE id = ?', [Number(m[1])]);
+			if (!g) throw new HttpError(404, 'Game not found');
+			if (g.mode === 'online' && (g.status === 'active' || g.status === 'waiting')) throw new HttpError(409, 'Abandon the online game first');
+			await db.run('DELETE FROM games WHERE id = ?', [g.id]);
+			return [200, { ok: true }];
+		}
+		if ((m = /^\/api\/admin\/games\/(\d+)\/abandon$/.exec(path)) && method === 'POST') {
+			if (!(await rooms.adminAbandon(Number(m[1])))) throw new HttpError(409, 'This is not a running online game');
+			return [200, { ok: true }];
+		}
+		throw new HttpError(404, 'Not found');
 	}
 
 	async function route(req, res, url) {
@@ -137,6 +254,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 				if (/UNIQUE|unique|23505/.test(`${e.code} ${e.message}`)) throw new HttpError(409, 'This email is already registered'); // two sign-ups at the same moment
 				throw e;
 			}
+			await promoteConfigured();
 			const user = await q.userById(id);
 			return [201, { token: signToken({ sub: user.id }, secret), user: publicUser(user) }];
 		}
@@ -144,11 +262,13 @@ export function createApp(db, { secret, staticDir } = {}) {
 			const b = await readJson(req);
 			const user = await q.userByEmail(String(b.email || '').trim().toLowerCase());
 			if (!user || !verifyPassword(String(b.password || ''), user.password_hash)) throw new HttpError(401, 'Wrong email or password');
-			return [200, { token: signToken({ sub: user.id }, secret), user: publicUser(user) }];
+			await promoteConfigured();
+			return [200, { token: signToken({ sub: user.id }, secret), user: publicUser(await q.userById(user.id)) }];
 		}
 		if (method === 'GET' && path === '/api/me') {
 			return [200, { user: publicUser(await authUser(req)) }];
 		}
+		if (path.startsWith('/api/admin/')) return adminRoute(req, method, path, url);
 		if (method === 'GET' && path === '/api/health') {
 			await db.get('SELECT 1 AS ok'); // also proves the database answers
 			return [200, { ok: true, db: db.dialect }];
@@ -180,10 +300,12 @@ export function createApp(db, { secret, staticDir } = {}) {
 		if ((m = /^\/api\/games\/(\d+)$/.exec(path))) {
 			const user = await authUser(req);
 			if (method === 'GET') {
-				const g = await q.visibleGame(Number(m[1]), user.id);
+				// an admin may open any game (read only); everybody else only their own
+				const g = user.role === 'admin' ? await db.get('SELECT * FROM games WHERE id = ?', [Number(m[1])]) : await q.visibleGame(Number(m[1]), user.id);
 				if (!g) throw new HttpError(404, 'Game not found');
 				const seat = await q.mySeat(g.id, user.id);
-				return [200, { game: { ...await gameSummary(g), you: seat ? seat.seat : null, snapshot: g.snapshot ? JSON.parse(g.snapshot) : null, events: await q.actions(g.id) } }];
+				const owner = user.role === 'admin' ? (await addOwners([{ owner_id: g.owner_id }]))[0].owner : undefined;
+				return [200, { game: { ...await gameSummary(g), owner, you: seat ? seat.seat : null, snapshot: g.snapshot ? JSON.parse(g.snapshot) : null, events: await q.actions(g.id) } }];
 			}
 			const g = await ownedGame(user, m[1]);
 			if (method === 'DELETE') {

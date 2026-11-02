@@ -6,6 +6,7 @@
 //   /play/local        a new game on this device
 //   /play/:id          a saved game: resumes a local game, or opens the online lobby / game
 //   /join/:code        join an online room by its code, then goes to /play/:id
+//   /admin             admin panel (administrators only): /admin/users, /admin/users/:id, /admin/games
 //   /history           all games;  /history/:id  one game's details;  /history/:id/replay  step through it
 //
 // The node server answers every non-API path with index.html, so each of these also
@@ -37,6 +38,10 @@ const ROUTES = [
 	[/^\/play\/local\/?$/, 'local'],
 	[/^\/play\/(\d+)\/?$/, 'game', ['id']],
 	[/^\/join\/([A-Za-z0-9]{3,10})\/?$/, 'join', ['code']],
+	[/^\/admin\/?$/, 'admin'],
+	[/^\/admin\/users\/?$/, 'adminUsers'],
+	[/^\/admin\/users\/(\d+)\/?$/, 'adminUser', ['id']],
+	[/^\/admin\/games\/?$/, 'adminGames'],
 	[/^\/history\/?$/, 'history'],
 	[/^\/history\/(\d+)\/?$/, 'historyDetail', ['id']],
 	[/^\/history\/(\d+)\/replay\/?$/, 'historyReplay', ['id']],
