@@ -259,7 +259,7 @@ body.online-game #setup { display: none !important; }
 
 /* ---------- turn timer: radial sweep inside the "End turn" button, clockwise ---------- */
 .turn-timer {
-	position: fixed; z-index: 14; pointer-events: none; overflow: hidden;
+	position: absolute; z-index: 1; pointer-events: none; overflow: hidden;
 	--sweep: #06401cd9; /* translucent dark green */
 	/* the part of the button already used up, drawn clockwise from 12 o'clock around the button's centre */
 	background: conic-gradient(from 0deg, var(--sweep) 0 var(--done), transparent var(--done) 360deg);
