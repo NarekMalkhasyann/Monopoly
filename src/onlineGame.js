@@ -384,4 +384,14 @@ export function autoEndTurn() {
 	const el = document.getElementById('nextbutton');
 	if (el && !el.disabled) el.click();
 }
+// The auction timer ran out: press "Pass" for the bidder, exactly as if they had pressed it.
+// Online, only the bidder's own browser sends it.
+export function autoPass() {
+	if (started) {
+		if (win.game.getCurrentBidder() === myIndex && queue.length === 0) share('auctionpass', {});
+		return;
+	}
+	const el = document.getElementById('auctionpass');
+	if (el && !el.disabled) el.click();
+}
 export const currentRoomId = () => (getOnline().room ? getOnline().room.id : null);
