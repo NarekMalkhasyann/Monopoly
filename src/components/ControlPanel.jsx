@@ -1,3 +1,5 @@
+import TurnPresence from './TurnPresence.jsx';
+
 // The centre panel on the board: Buy / Manage / Trade tabs, the message box,
 // the current player's cash, the dice and the Roll / Resign buttons.
 // Tab switching and button wiring (#nextbutton, #buyhousebutton, ...) are done
@@ -55,7 +57,7 @@ export default function ControlPanel() {
 
 						<td style={{ verticalAlign: 'top', border: 'none' }}>
 							<div id="quickstats">
-								<div><span id="pname">Player 1</span>:</div>
+								<div className="qs-name"><TurnPresence /><span id="pname">Player 1</span><span>:</span></div>
 								<div><span id="pmoney">$1500</span></div>
 							</div>
 							<div>
