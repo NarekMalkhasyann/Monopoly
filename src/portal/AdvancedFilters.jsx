@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 // The "Advanced" filter of the History page (and of the admin games list): a button in the row of status
 // buttons that opens a panel with more detailed questions. Every field is optional; the server combines them
-// with the normal filters (see listGames in server/app.js).
+// with the normal filters (see listGames in server/app.js). On the History page it also holds the dates and the sort order (`when`).
 
 export const NO_ADVANCED = { player: '', winner: '', room: '', minTurns: '', maxTurns: '', size: '', ai: '', result: '' };
 export const countAdvanced = (a) => Object.values(a).filter((v) => String(v).trim() !== '').length;
@@ -31,7 +31,7 @@ export function AdvancedToggle({ open, onToggle, count }) {
 	);
 }
 
-export function AdvancedPanel({ value, onChange, showResult = true }) {
+export function AdvancedPanel({ value, onChange, showResult = true, when = null }) {
 	const set = (k) => (e) => onChange({ ...value, [k]: e.target.value });
 	const text = (k, label, ph, max = 30) => (
 		<label>{label}<input type="text" value={value[k]} onChange={set(k)} placeholder={ph} maxLength={max} /></label>
@@ -40,12 +40,13 @@ export function AdvancedPanel({ value, onChange, showResult = true }) {
 		<label>{label}<input type="number" min="0" max="100000" inputMode="numeric" value={value[k]} onChange={set(k)} placeholder="any" /></label>
 	);
 	const count = countAdvanced(value);
+	const dates = when ? (when.from ? 1 : 0) + (when.to ? 1 : 0) : 0;
 	return (
 		<section className="adv-panel" id="advanced-panel" aria-label="Advanced filters">
 			<div className="adv-head">
 				<h3>Advanced filters</h3>
-				<span className="muted">{count ? `${count} on` : 'All optional; they combine with the buttons above'}</span>
-				{count > 0 && <button className="btn-ghost btn-sm" onClick={() => onChange(NO_ADVANCED)}>Reset advanced</button>}
+				<span className="muted">{count + dates ? `${count + dates} on` : 'All optional; they combine with the buttons above'}</span>
+				{count + dates > 0 && <button className="btn-ghost btn-sm" onClick={() => { onChange(NO_ADVANCED); if (when) { when.setFrom(''); when.setTo(''); } }}>Reset advanced</button>}
 			</div>
 			<div className="adv-grid">
 				<fieldset className="adv-group">
@@ -84,6 +85,24 @@ export function AdvancedPanel({ value, onChange, showResult = true }) {
 						</label>
 					)}
 				</fieldset>
+				{when && (
+					<fieldset className="adv-group">
+						<legend>When and order</legend>
+						<div className="adv-pair">
+							<label>From<input type="date" value={when.from} max={when.to || undefined} onChange={(e) => when.setFrom(e.target.value)} /></label>
+							<label>To<input type="date" value={when.to} min={when.from || undefined} onChange={(e) => when.setTo(e.target.value)} /></label>
+						</div>
+						<label>Sort
+							<select value={when.sort} onChange={(e) => when.setSort(e.target.value)}>
+								<option value="updated:desc">Latest activity</option>
+								<option value="created:desc">Newest</option>
+								<option value="created:asc">Oldest</option>
+								<option value="turns:desc">Most turns</option>
+								<option value="turns:asc">Fewest turns</option>
+							</select>
+						</label>
+					</fieldset>
+				)}
 			</div>
 		</section>
 	);

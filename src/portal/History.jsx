@@ -12,8 +12,6 @@ const PAGE = 10;
 export default function History({ detailId, replay }) {
 	const [status, setStatus] = useState('');
 	const [mode, setMode] = useState('');
-	const [text, setText] = useState('');
-	const [search, setSearch] = useState('');   // `text` after the typing pause
 	const [from, setFrom] = useState('');
 	const [to, setTo] = useState('');
 	const [sort, setSort] = useState('updated:desc');
@@ -30,22 +28,17 @@ export default function History({ detailId, replay }) {
 		const qs = new URLSearchParams({ limit: PAGE, offset });
 		if (status) qs.set('status', status);
 		if (mode) qs.set('mode', mode);
-		if (search.trim()) qs.set('q', search.trim());
 		if (from) qs.set('from', from);
 		if (to) qs.set('to', to);
 		applyAdvanced(qs, advQ);
 		const [by, dir] = sort.split(':');
 		qs.set('sort', by); qs.set('dir', dir);
 		return api('GET', `/games?${qs}`);
-	}, [status, mode, search, from, to, sort, advQ]);
+	}, [status, mode, from, to, sort, advQ]);
 
-	useEffect(() => { // wait a moment after typing before asking the server
-		const t = setTimeout(() => setSearch(text), 300);
-		return () => clearTimeout(t);
-	}, [text]);
-	const advCount = countAdvanced(adv);
-	const filtered = !!(status || mode || search || from || to || advCount || sort !== 'updated:desc');
-	const clear = () => { setStatus(''); setMode(''); setText(''); setSearch(''); setFrom(''); setTo(''); setSort('updated:desc'); setAdv(NO_ADVANCED); };
+	const advCount = countAdvanced(adv) + (from ? 1 : 0) + (to ? 1 : 0); // what the badge on "Advanced" counts
+	const filtered = !!(status || mode || advCount || sort !== 'updated:desc');
+	const clear = () => { setStatus(''); setMode(''); setFrom(''); setTo(''); setSort('updated:desc'); setAdv(NO_ADVANCED); };
 
 	useEffect(() => {
 		let stale = false;
@@ -94,29 +87,12 @@ export default function History({ detailId, replay }) {
 				{pill('abandoned', status, setStatus, 'Abandoned')}
 				<AdvancedToggle open={advOpen} onToggle={() => setAdvOpen((o) => !o)} count={advCount} />
 			</div>
-			{advOpen && <AdvancedPanel value={adv} onChange={setAdv} />}
-
-			<div className="filters">
-				<input className="filter-search" type="search" placeholder="Search player, winner or room code" value={text}
-					onChange={(e) => setText(e.target.value)} aria-label="Search games" maxLength={40} />
-				<label>From <input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} /></label>
-				<label>To <input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} /></label>
-				<label>Sort
-					<select value={sort} onChange={(e) => setSort(e.target.value)}>
-						<option value="updated:desc">Latest activity</option>
-						<option value="created:desc">Newest</option>
-						<option value="created:asc">Oldest</option>
-						<option value="turns:desc">Most turns</option>
-						<option value="turns:asc">Fewest turns</option>
-					</select>
-				</label>
-				{filtered && <button className="btn-ghost btn-sm" onClick={clear}>Clear filters</button>}
-			</div>
+			{advOpen && <AdvancedPanel value={adv} onChange={setAdv} when={{ from, to, setFrom, setTo, sort, setSort }} />}
 
 			{error && <p className="auth-error">{error}</p>}
 			{loading && <p className="muted">Loading…</p>}
-			{!loading && games.length === 0 && <p className="muted">{filtered ? 'No games match these filters.' : 'No games here yet. Play one and it will show up.'}</p>}
-			{!loading && games.length > 0 && <p className="muted">{total} game{total === 1 ? '' : 's'}</p>}
+			{!loading && games.length === 0 && <p className="muted result-line">{filtered ? 'No games match these filters.' : 'No games here yet. Play one and it will show up.'}{filtered && <button className="btn-ghost btn-sm" onClick={clear}>Clear filters</button>}</p>}
+			{!loading && games.length > 0 && <p className="muted result-line">{total} game{total === 1 ? '' : 's'}{filtered && <button className="btn-ghost btn-sm" onClick={clear}>Clear filters</button>}</p>}
 
 			<div className="rows">
 				{games.map((g) => (
