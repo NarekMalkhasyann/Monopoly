@@ -78,6 +78,33 @@ assert.equal((await call('GET', `/api/games/${id}`, null, tokenA)).status, 404);
 	const today = new Date().toISOString().slice(0, 10);
 	assert.ok((await list(`from=${today}&to=${today}`)).total >= 2);
 	assert.equal((await list('status=bogus')).total, (await list('')).total);        // unknown filter values are ignored
+
+	// advanced filters
+	const ids = async (qs) => (await list(qs)).games.map((g) => g.id).sort((a, b) => a - b);
+	assert.deepEqual(await ids('player=quill'), [g2]);                              // a player's name only (not the winner field)
+	assert.deepEqual(await ids('winner=ruth'), [g2]);
+	assert.deepEqual(await ids('winner=zed'), []);                                 // Zed plays in g1 but won nothing
+	assert.equal((await list('player=%25')).total, 0);                              // % is text here too
+	assert.equal((await list('room=zzzzz')).total, 0);
+	assert.ok((await ids('minTurns=30')).includes(g2) && !(await ids('minTurns=30')).includes(g1));
+	assert.ok((await ids('maxTurns=10')).includes(g1) && !(await ids('maxTurns=10')).includes(g2));
+	assert.deepEqual(await ids('minTurns=6&maxTurns=39'), []);                      // between the two
+	assert.ok((await ids('size=2')).includes(g1));
+	assert.equal((await list('size=7')).total, 0);
+	assert.equal((await list('minTurns=abc&maxTurns=')).total, (await list('')).total); // garbage is ignored
+	assert.ok((await ids('ai=no')).includes(g1));
+	assert.equal((await list('ai=yes')).total, 0);
+	// my result: only where my account sits at a seat (online games); set up here by hand
+	const meId = (await call('GET', '/api/me', null, tokenA)).body.user.id;
+	await db.run('UPDATE game_players SET user_id = ?, final_rank = 1 WHERE game_id = ? AND seat = 2', [meId, g2]);
+	assert.deepEqual(await ids('result=won'), [g2]);
+	assert.deepEqual(await ids('result=lost'), []);
+	await db.run('UPDATE game_players SET final_rank = 2 WHERE game_id = ? AND seat = 2', [g2]);
+	assert.deepEqual(await ids('result=won'), []);
+	assert.deepEqual(await ids('result=lost'), [g2]);
+	assert.deepEqual(await ids('result=lost&player=ruth&minTurns=40'), [g2]);       // filters combine
+	assert.deepEqual(await ids('result=lost&status=active'), []);
+	await db.run('UPDATE game_players SET user_id = NULL, final_rank = NULL WHERE game_id = ? AND seat = 2', [g2]);
 }
 // ---- admin panel ----
 {

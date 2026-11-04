@@ -4,6 +4,7 @@ import { navigate } from '../router.jsx';
 import { fmtDate } from './format.js';
 import PlayerDots from './PlayerDots.jsx';
 import { Modal, Details } from './GameDetails.jsx';
+import { AdvancedToggle, AdvancedPanel, NO_ADVANCED, countAdvanced, applyAdvanced, useDebounced } from './AdvancedFilters.jsx';
 
 const PAGE = 10;
 
@@ -16,6 +17,9 @@ export default function History({ detailId, replay }) {
 	const [from, setFrom] = useState('');
 	const [to, setTo] = useState('');
 	const [sort, setSort] = useState('updated:desc');
+	const [advOpen, setAdvOpen] = useState(false);
+	const [adv, setAdv] = useState(NO_ADVANCED);
+	const advQ = useDebounced(adv);          // `adv` after the typing pause
 	const [games, setGames] = useState([]);
 	const [total, setTotal] = useState(0);
 	const [loading, setLoading] = useState(true);
@@ -29,17 +33,19 @@ export default function History({ detailId, replay }) {
 		if (search.trim()) qs.set('q', search.trim());
 		if (from) qs.set('from', from);
 		if (to) qs.set('to', to);
+		applyAdvanced(qs, advQ);
 		const [by, dir] = sort.split(':');
 		qs.set('sort', by); qs.set('dir', dir);
 		return api('GET', `/games?${qs}`);
-	}, [status, mode, search, from, to, sort]);
+	}, [status, mode, search, from, to, sort, advQ]);
 
 	useEffect(() => { // wait a moment after typing before asking the server
 		const t = setTimeout(() => setSearch(text), 300);
 		return () => clearTimeout(t);
 	}, [text]);
-	const filtered = !!(status || mode || search || from || to || sort !== 'updated:desc');
-	const clear = () => { setStatus(''); setMode(''); setText(''); setSearch(''); setFrom(''); setTo(''); setSort('updated:desc'); };
+	const advCount = countAdvanced(adv);
+	const filtered = !!(status || mode || search || from || to || advCount || sort !== 'updated:desc');
+	const clear = () => { setStatus(''); setMode(''); setText(''); setSearch(''); setFrom(''); setTo(''); setSort('updated:desc'); setAdv(NO_ADVANCED); };
 
 	useEffect(() => {
 		let stale = false;
@@ -86,7 +92,9 @@ export default function History({ detailId, replay }) {
 				{pill('active', status, setStatus, 'In progress')}
 				{pill('finished', status, setStatus, 'Finished')}
 				{pill('abandoned', status, setStatus, 'Abandoned')}
+				<AdvancedToggle open={advOpen} onToggle={() => setAdvOpen((o) => !o)} count={advCount} />
 			</div>
+			{advOpen && <AdvancedPanel value={adv} onChange={setAdv} />}
 
 			<div className="filters">
 				<input className="filter-search" type="search" placeholder="Search player, winner or room code" value={text}

@@ -4,6 +4,7 @@ import { navigate } from '../router.jsx';
 import { fmtDate } from './format.js';
 import PlayerDots from './PlayerDots.jsx';
 import { Modal, Details } from './GameDetails.jsx';
+import { AdvancedToggle, AdvancedPanel, NO_ADVANCED, countAdvanced, applyAdvanced } from './AdvancedFilters.jsx';
 
 // Admin panel (administrators only; the server checks the role on every request, this page only hides things).
 //   /admin             overview: totals and the last 14 days
@@ -92,6 +93,9 @@ function AdminGames({ userId }) {
 	const [from, setFrom] = useState('');
 	const [to, setTo] = useState('');
 	const [sort, setSort] = useState('updated:desc');
+	const [advOpen, setAdvOpen] = useState(false);
+	const [adv, setAdv] = useState(NO_ADVANCED);
+	const advQ = useDebounced(adv);
 	const search = useDebounced(text);
 	const [games, setGames] = useState([]);
 	const [total, setTotal] = useState(0);
@@ -108,10 +112,11 @@ function AdminGames({ userId }) {
 		if (search.trim()) qs.set('q', search.trim());
 		if (from) qs.set('from', from);
 		if (to) qs.set('to', to);
+		applyAdvanced(qs, advQ);
 		const [by, dir] = sort.split(':');
 		qs.set('sort', by); qs.set('dir', dir);
 		return api('GET', `/admin/games?${qs}`);
-	}, [userId, status, mode, search, from, to, sort]);
+	}, [userId, status, mode, search, from, to, sort, advQ]);
 
 	useEffect(() => {
 		let stale = false;
@@ -124,8 +129,9 @@ function AdminGames({ userId }) {
 	const more = async () => {
 		try { const r = await query(games.length); setGames((g) => [...g, ...r.games]); setTotal(r.total); } catch (e) { setError(e.message); }
 	};
-	const filtered = !!(status || mode || search || from || to || sort !== 'updated:desc');
-	const clear = () => { setStatus(''); setMode(''); setText(''); setFrom(''); setTo(''); setSort('updated:desc'); };
+	const advCount = countAdvanced(adv);
+	const filtered = !!(status || mode || search || from || to || advCount || sort !== 'updated:desc');
+	const clear = () => { setStatus(''); setMode(''); setText(''); setFrom(''); setTo(''); setSort('updated:desc'); setAdv(NO_ADVANCED); };
 	const pill = (value, current, set, label) => <button className={`pill${current === value ? ' active' : ''}`} onClick={() => set(value)}>{label}</button>;
 
 	return (
@@ -134,7 +140,10 @@ function AdminGames({ userId }) {
 				{pill('', status, setStatus, 'All')}{pill('active', status, setStatus, 'In progress')}{pill('finished', status, setStatus, 'Finished')}{pill('abandoned', status, setStatus, 'Abandoned')}
 				<span className="pill-gap" />
 				{pill('', mode, setMode, 'Any mode')}{pill('local', mode, setMode, 'This device')}{pill('online', mode, setMode, 'Online')}
+				<span className="pill-gap" />
+				<AdvancedToggle open={advOpen} onToggle={() => setAdvOpen((o) => !o)} count={advCount} />
 			</div>
+			{advOpen && <AdvancedPanel value={adv} onChange={setAdv} showResult={!!userId} />}
 			<div className="filters">
 				<input className="filter-search" type="search" placeholder="Search player, winner, room code, creator name or e-mail" value={text} onChange={(e) => setText(e.target.value)} aria-label="Search games" maxLength={40} />
 				<label>From <input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} /></label>
