@@ -23,7 +23,10 @@ const MANAGE = new Set(['buyhousebutton', 'sellhousebutton', 'mortgagebutton']);
 const TRADE_BUTTONS = new Set(['proposetradebutton', 'accepttradebutton', 'rejecttradebutton', 'canceltradebutton']);
 const AUCTION_BUTTONS = new Set(['auctionbid', 'auctionpass', 'auctionexit']);
 
+import { startLoading, setLoading, finishLoading } from './loading.js';
+
 const STALE_AFTER_MS = 1500;
+const LOAD_MIN_MOVES = 10; // a backlog this long (rejoining a game) gets the loading screen with a progress bar
 
 const win = window;
 const queue = [];
@@ -48,6 +51,7 @@ export function subscribeGameInfo(fn) {
 }
 function markDesync(why, kind = 'stuck') {
 	console.warn('[online] out of sync:', why);
+	if (loadingOn) { loadingOn = false; finishLoading(0); }
 	setInfo({ desync: true, desyncKind: kind, desyncWhy: why });
 }
 function setInfo(patch) {
@@ -201,8 +205,9 @@ function onKeyCapture(e) {
 
 // ---- receiving: press the same button, in the server's order -----------------
 function tick() {
+	if (loadingOn && Date.now() - loadStart > 90000) { loadingOn = false; finishLoading(0); } // never trap the player behind it
 	const m = queue[0];
-	if (!m) { restoreFast(); return; }
+	if (!m) { restoreFast(); if (loadingOn) endLoad(); return; }
 
 	// A long backlog (rejoining) is replayed without animations.
 	if (queue.length > 1) {
@@ -246,7 +251,7 @@ function tick() {
 			if (!idleSince) idleSince = nowMs;
 			if (nowMs - idleSince > STALE_AFTER_MS) {
 				console.warn(`[online] dropped a stale click "${id}" (turn ${win.turn}, not pressable on a still screen)`);
-				queue.shift();
+				queue.shift(); noteMove();
 				if (m.seat === mySeat) inflightSince = 0;
 				idleSince = 0; waitingSince = 0;
 				return;
@@ -260,7 +265,7 @@ function tick() {
 	waitingSince = 0; idleSince = 0;
 	if (m.seat === mySeat) inflightSince = 0; // my click reached the screen: the next one may be sent
 	if (info.desync && info.desyncKind === 'stuck') setInfo({ desync: false, desyncKind: '', desyncWhy: '' });
-	queue.shift();
+	queue.shift(); noteMove();
 	if (m.a.turn && win.turn !== m.a.turn) markDesync(`"${id}" was sent during turn ${m.a.turn} but this browser is on turn ${win.turn}`, 'mismatch');
 	bypass = true;
 	try {
@@ -355,10 +360,40 @@ export function startOnlineGame(room, you) {
 	document.addEventListener('click', onClickCapture, true);
 	document.addEventListener('keydown', onKeyCapture, true);
 	timer = setInterval(() => { tick(); refreshInfo(); }, 40);
+
+	// Rejoining a long game replays every stored move: show how far it is instead of letting it flash by on the board.
+	if (queue.length >= LOAD_MIN_MOVES) {
+		loadingOn = true; loadStart = Date.now(); applied = 0;
+		startLoading('Loading your game', `Replaying ${queue.length} moves…`);
+		setLoading(0.15);
+	} else finishLoading();
+}
+
+// ---- loading screen while a long backlog is replayed
+let loadingOn = false;
+let loadStart = 0;
+let applied = 0;
+let lastPaint = 0;
+function noteMove() {
+	applied++;
+	if (!loadingOn) return;
+	const now = Date.now();
+	if (now - lastPaint < 80) return;
+	lastPaint = now;
+	const total = applied + queue.length;
+	setLoading(0.15 + 0.85 * (applied / Math.max(1, total)), `Move ${applied} of ${total}`);
+}
+function endLoad() {
+	const moving = (win.jQuery && win.jQuery(':animated').length > 0) || document.getElementById('dice-scene')?.classList.contains('visible');
+	if (moving) return; // the last move is still being drawn
+	loadingOn = false;
+	setLoading(1, `Move ${applied} of ${applied}`);
+	finishLoading();
 }
 
 export function stopOnlineGame() {
 	clearInterval(timer);
+	loadingOn = false; finishLoading(0);
 	document.removeEventListener('click', onClickCapture, true);
 	document.removeEventListener('keydown', onKeyCapture, true);
 }

@@ -15,6 +15,7 @@ import Home from './portal/Home.jsx';
 import History from './portal/History.jsx';
 import Admin from './portal/Admin.jsx';
 import GameBar from './portal/GameBar.jsx';
+import LoadingScreen from './components/LoadingScreen.jsx';
 import GamePage from './portal/GamePage.jsx';
 import JoinPage from './portal/JoinPage.jsx';
 import NotFound from './portal/NotFound.jsx';
@@ -118,6 +119,7 @@ export default function App() {
 				{showGame && <GameBar />}
 			</div>
 			{page}
+			<LoadingScreen />
 		</>
 	);
 }

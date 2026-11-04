@@ -350,3 +350,21 @@ body.online-game #setup { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .adv-panel { animation: none; } }
 .result-line { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
 
+/* ---------- loading screen (resuming a saved game) ---------- */
+.loading-screen { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 24px; background: var(--dark-gray); animation: loading-in .15s ease-out; transition: opacity .25s ease; }
+.loading-screen.closing { opacity: 0; pointer-events: none; }
+.loading-card { width: min(420px, 100%); display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
+.loading-card h2 { margin: 0; font-size: 22px; }
+.loading-die { position: relative; width: 56px; height: 56px; border-radius: 14px; background: var(--white); box-shadow: 0 8px 24px #0006; animation: loading-roll 1.6s ease-in-out infinite; }
+.loading-die i { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--dark); }
+.loading-die i:nth-child(1) { left: 10px; top: 10px; }
+.loading-die i:nth-child(2) { left: 23px; top: 23px; }
+.loading-die i:nth-child(3) { right: 10px; bottom: 10px; }
+.loading-track { width: 100%; height: 12px; border-radius: 6px; background: var(--row); border: 1px solid var(--line); overflow: hidden; }
+.loading-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #7fbf00, var(--green)); box-shadow: 0 0 12px #acfa0080; transition: width .12s linear; }
+.loading-meta { width: 100%; display: flex; justify-content: space-between; gap: 12px; font: 600 13px Montserrat, sans-serif; color: var(--white-o); font-variant-numeric: tabular-nums; }
+.loading-pct { color: var(--green); }
+@keyframes loading-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes loading-roll { 0%, 100% { transform: rotate(-8deg) translateY(0); } 50% { transform: rotate(8deg) translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .loading-die, .loading-screen { animation: none; } .loading-fill { transition: none; } }
+
