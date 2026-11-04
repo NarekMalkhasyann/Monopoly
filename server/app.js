@@ -132,6 +132,30 @@ export function createApp(db, { secret, staticDir } = {}) {
 		if (from) { where.push('g.created_at >= ?'); args.push(`${from} 00:00:00`); }
 		if (to) { where.push('g.created_at <= ?'); args.push(`${to} 23:59:59`); }
 
+		// "Advanced" filters of the History page (all optional, all combine with the ones above)
+		const likeOf2 = (t) => `%${t.toLowerCase().replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+		const word = (k) => String(params.get(k) || '').trim().slice(0, 30);
+		const whole = (k, lo, hi) => { const v = params.get(k); if (v === null || v.trim() === '') return null; const n = Math.floor(Number(v)); return Number.isFinite(n) ? Math.min(Math.max(n, lo), hi) : null; };
+		const player = word('player'), winner = word('winner'), roomCode = word('room');
+		if (player) { where.push("g.id IN (SELECT game_id FROM game_players WHERE LOWER(name) LIKE ? ESCAPE '\\')"); args.push(likeOf2(player)); }
+		if (winner) { where.push("LOWER(COALESCE(g.winner_name, '')) LIKE ? ESCAPE '\\'"); args.push(likeOf2(winner)); }
+		if (roomCode) { where.push("LOWER(COALESCE(g.room_code, '')) LIKE ? ESCAPE '\\'"); args.push(likeOf2(roomCode)); }
+		const minTurns = whole('minTurns', 0, 100000), maxTurns = whole('maxTurns', 0, 100000);
+		if (minTurns !== null) { where.push('g.turn_count >= ?'); args.push(minTurns); }
+		if (maxTurns !== null) { where.push('g.turn_count <= ?'); args.push(maxTurns); }
+		const size = whole('size', 1, 8);
+		if (size !== null) { where.push('(SELECT COUNT(*) FROM game_players p WHERE p.game_id = g.id) = ?'); args.push(size); }
+		const ai = params.get('ai');
+		if (ai === 'yes') where.push('EXISTS (SELECT 1 FROM game_players p WHERE p.game_id = g.id AND p.is_ai = 1)');
+		if (ai === 'no') where.push('NOT EXISTS (SELECT 1 FROM game_players p WHERE p.game_id = g.id AND p.is_ai = 1)');
+		// my result in online games (the account sits at a seat); for the admin list it is the user picked in "user"
+		const result = params.get('result');
+		if (only && (result === 'won' || result === 'lost')) {
+			if (result === 'won') where.push('EXISTS (SELECT 1 FROM game_players p WHERE p.game_id = g.id AND p.user_id = ? AND p.final_rank = 1)');
+			else where.push("g.status = 'finished' AND EXISTS (SELECT 1 FROM game_players p WHERE p.game_id = g.id AND p.user_id = ? AND (p.final_rank IS NULL OR p.final_rank > 1))");
+			args.push(only);
+		}
+
 		const rows = await db.all(`SELECT g.* FROM games g WHERE ${where.join(' AND ')} ORDER BY ${sort} ${dir}, g.id ${dir} LIMIT ? OFFSET ?`, [...args, limit, offset]);
 		const total = (await db.get(`SELECT COUNT(*) AS n FROM games g WHERE ${where.join(' AND ')}`, args)).n;
 		const games = await Promise.all(rows.map(gameSummary));
