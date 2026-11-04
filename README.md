@@ -24,6 +24,12 @@ Online Website of my game https://actmonopoly.vercel.app/
   - **New York City Edition** (`newyorkcityedition.js`): Alternate board theme featuring iconic NYC landmarks and locations.
 - **Accounts & History**:
   - Register / sign in, play on this device, resume unfinished games, browse past games with ranking and game log.
+- **Turn timers**:
+  - A player who does nothing for **30 seconds** after *End turn* appears has the turn ended automatically. In an auction each bidder has **15 seconds** before *Pass* is pressed for them. The countdown is a dark green clockwise sweep that fills the button itself; it pauses while a pop-up, the stats window or a trade is open and ignores computer players.
+- **Online play**:
+  - Friends play together on their own devices with a room code; see *Online Play* below. The box that shows whose turn it is has a green circle when that player is connected.
+- **Admin panel**:
+  - Administrators see all users and all games, with statistics (see *Admin panel* below).
 - **Interactive UI**:
   - Interactive board deeds popup with detailed rent tiers and mortgage values.
   - Player statistics, live bank balance, log view, and draggable modal dialogues.
@@ -52,14 +58,14 @@ Online Website of my game https://actmonopoly.vercel.app/
 │   ├── App.jsx             # Pages by URL: sign in, Play, History, game, lobby
 │   ├── router.jsx          # Tiny History-API router
 │   ├── online.js           # WebSocket connection + room state (useOnline)
-│   ├── onlineGame.js       # Runs an online game on the engine: seeded start, shared clicks, replay
+│   ├── onlineGame.js       # Runs an online game on the engine: seeded start, shared clicks, replay, automatic End turn / Pass
 │   ├── api.js              # fetch wrapper with the login token
 │   ├── session.js          # Saves checkpoints and log lines, resumes a game
-│   ├── portal/             # Sign in, Home, Lobby, History, sidebar shell (+ portal.css)
+│   ├── portal/             # Sign in, Home, Lobby, History (+ AdvancedFilters), Admin, sidebar shell (+ portal.css)
 │   ├── hooks/useFitBoard.js # Shrinks the board to fit narrow screens
 │   ├── vendor/dice-box-threejs/ # 3D dice library (MIT), copied as is
 │   ├── styles.css          # Design system (lime on charcoal, Montserrat)
-│   └── components/         # Board, ControlPanel, MoneyBar, Setup, TradePanel, Deed, Popups, Dice3D (.jsx)
+│   └── components/         # Board, ControlPanel, MoneyBar, Setup, TradePanel, Deed, Popups, Dice3D, TurnTimer, TurnPresence (.jsx)
 └── public/
     ├── engine/             # Game engine (plain JS): monopoly.js, ai.js,
     │                       #   classicedition.js, newyorkcityedition.js
@@ -120,9 +126,9 @@ Players sign in (register / login), and every local game is saved to their accou
 
 - **Sign in / Create account** – email + password. Passwords are hashed with scrypt, the session is a signed JWT kept in `localStorage`.
 - **Replay** – *History → Details → Replay* steps through a saved game line by line (play / pause, speed up to 8×, slider, jump to a turn) with a running count of purchases and rent paid. Address: `/history/:id/replay`.
-- **History filters** – search by player, winner or room code, filter by mode, status and date, sort by activity, date or number of turns.
+- **History filters** – buttons for mode (all / this device / online) and status (all / in progress / finished / abandoned). The **Advanced** button opens a panel with detailed filters: player name, winner, room code, number of players, with computer players or humans only, turns from–to, my result (won / lost, online games), dates (from–to) and the sort order (activity, date or number of turns). The button shows how many advanced filters are on; *Clear filters* resets everything.
 - **Play** – start a new game on this device (2–8 players, humans and AI) or resume an unfinished one.
-- **History** – every game with its mode, players, winner, turns and date; filter by mode and status; open *Details* for the final ranking and the full game log; delete a game.
+- **History** – every game with its mode, players, winner, turns and date; filter it (see above); open *Details* for the final ranking and the full game log; delete a game.
 - **Saving** – the engine calls small hooks (`onTurnStart`, `onGameEvent`, `onPlayerEliminated`, `onGameEnd`). At the start of every turn the browser uploads a checkpoint (players, properties, card decks) plus the new log lines (`src/session.js`). Resume copies the checkpoint back into the engine and continues.
 - **Backend** – `server/` is plain Node (`node:http`, `node:crypto`). Without any setting it stores everything in a SQLite file (`node:sqlite`, nothing to install). With `DATABASE_URL` set it uses PostgreSQL (Neon, Supabase, Render...) through the `pg` package. The same SQL runs on both (`server/db.js`); tables: `users`, `games`, `game_players`, `game_actions`.
 
@@ -159,6 +165,10 @@ Each player opens the game on their own device. **Home → Create room** gives a
 
 **Away and abandoned games.** If the player whose turn it is leaves, the others see a countdown and then a *Remove* button: the player is declared bankrupt to the bank (their properties are auctioned) and the game goes on, or ends if one player is left. The host can also *Abandon game* for everybody. A running game that nobody has opened for 30 minutes is marked *abandoned* by the server (`ABANDON_AFTER_MS`; `FORFEIT_AFTER_MS` and `SWEEP_EVERY_MS` can be set too). Abandoned games stay in History with their own badge.
 
+**Timers and who is online.** The turn timer (30 s) and the auction timer (15 s) run in every browser, but only the browser of the player concerned sends the automatic *End turn* / *Pass*, so it happens once for everybody. Ending the turn on an unbought property opens the usual auction. The lengths are `TOTAL_SECONDS` and `AUCTION_SECONDS` in `src/components/TurnTimer.jsx`. The server tells everyone who is connected; the circle is shown in the "whose turn" box (glowing green = online, grey ring = away).
+
+**Out of sync.** If a shared click cannot be pressed on a still screen (for example an impatient second click on *OK*), every browser drops it the same way after 1.5 s. If the browsers still disagree, the bar shows a red *Out of sync – reload* button (hover it for the reason); reloading replays the game from the stored clicks.
+
 **Limits.** The server checks membership but cannot check the rules (the engine lives in the browsers), so online games are meant for friends. A player who goes away in the middle of an auction or trade (and whose turn it is not) can only be removed on their own turn, or the host can abandon the game.
 
 ---
@@ -173,11 +183,11 @@ Each player opens the game on their own device. **Home → Create room** gives a
 | `/play/:id` | A saved game: resumes a local game, or opens the online lobby / game |
 | `/join/:code` | Join an online room by its code, then continues at `/play/:id` |
 | `/history`, `/history/:id` | All games; details of one game |
+| `/history/:id/replay` | Step through a saved game line by line |
+| `/admin`, `/admin/users`, `/admin/users/:id`, `/admin/games` | Admin panel (administrators only) |
 | anything else | Page not found |
 
 The router is a small module (`src/router.jsx`, History API, no library). After `npm run build`, `npm start` serves the site from `dist/` and answers every non-API path with `index.html`, so these addresses also work when typed in or reloaded.
-
----
 
 ---
 
@@ -248,6 +258,6 @@ Open **Admin** in the sidebar (only administrators see it; the server checks the
 
 - **Overview:** totals (users, games, in progress, finished, turns, open connections) and the last 14 days of games and sign-ups.
 - **Users:** every account with search, role filter and sorting; a user page shows their games, lets you make them admin / player or delete the account.
-- **Games:** every game of every player with the same filters as History plus the creator's name or e-mail; open any game (details, replay), end a running online game, or delete a finished one.
+- **Games:** every game of every player with the same filters as History (including *Advanced*) plus a search for the creator's name or e-mail; open any game (details, replay), end a running online game, or delete a finished one.
 
 To become an administrator, set the environment variable `ADMIN_EMAILS` (e.g. `ADMIN_EMAILS=me@example.am`) on the backend, restart it and log in again. Admins can then promote others in the panel. You cannot change or delete your own account there.
