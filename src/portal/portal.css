@@ -348,4 +348,5 @@ body.online-game #setup { display: none !important; }
 .adv-group small { font-weight: 500; font-size: 11px; }
 .adv-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (prefers-reduced-motion: reduce) { .adv-panel { animation: none; } }
+.result-line { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
 
