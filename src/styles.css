@@ -1727,3 +1727,11 @@ td.statscellname[title="Mortgaged"]::after {
 /* Tab links have no href (they are buttons), so give them the pointer cursor and a focus ring */
 .menu-item a { cursor: pointer; }
 .menu-item a:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+
+/* Player pieces: the engine's own are hidden, BoardTokens draws them and moves them square by square */
+#stage-inner { position: relative; }
+#token-layer { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 6; pointer-events: none; }
+.tk { position: absolute; width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--white); box-shadow: 0 2px 4px rgba(0, 0, 0, .5); pointer-events: auto; transition: left .11s linear, top .11s linear; }
+.tk:hover { transform: scale(1.35); }
+.cell-position-holder .cell-position, #jailpositionholder .cell-position { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { .tk { transition: none; } }

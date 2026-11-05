@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Popups from './components/Popups.jsx';
 import Deed from './components/Deed.jsx';
 import Board from './components/Board.jsx';
+import BoardTokens from './components/BoardTokens.jsx';
 import MoneyBar from './components/MoneyBar.jsx';
 import Setup from './components/Setup.jsx';
 import ControlPanel from './components/ControlPanel.jsx';
@@ -108,6 +109,7 @@ export default function App() {
 				<div id="stage">
 					<div id="stage-inner">
 						<Board />
+						<BoardTokens />
 					</div>
 				</div>
 				<ControlPanel />
