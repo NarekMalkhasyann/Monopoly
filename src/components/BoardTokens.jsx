@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 // The engine's own pieces stay in the page (hidden) and remain the source of truth: this only watches
 // player[].position and player[].jail.
 const STEP_MS = 120;
+const SIZE = 24;   // piece diameter in board pixels
+const GAP = 26;    // distance between pieces that share a square
 const reduce = () => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function targets() {
@@ -93,9 +95,9 @@ export default function BoardTokens() {
 				const k = mates.indexOf(d.name);
 				const n = mates.length;
 				const cols = Math.min(n, 3);
-				const dx = (k % 3 - (cols - 1) / 2) * 15;
-				const dy = (Math.floor(k / 3) - (Math.ceil(n / 3) - 1) / 2) * 15 + (d.jail ? 14 : 0);
-				return <div key={d.name} className="tk" title={d.name} style={{ left: s.x + s.w / 2 - 7 + dx, top: s.y + s.h / 2 - 7 + dy, background: d.color }} />;
+				const dx = (k % 3 - (cols - 1) / 2) * GAP;
+				const dy = (Math.floor(k / 3) - (Math.ceil(n / 3) - 1) / 2) * GAP + (d.jail ? 12 : 0);
+				return <div key={d.name} className="tk" title={d.name} aria-label={d.name} style={{ left: s.x + s.w / 2 - SIZE / 2 + dx, top: s.y + s.h / 2 - SIZE / 2 + dy, backgroundColor: d.color }}>{view.tokens.indexOf(d) + 1}</div>;
 			})}
 		</div>
 	);
