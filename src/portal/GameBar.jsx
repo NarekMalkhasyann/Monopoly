@@ -27,7 +27,7 @@ export default function GameBar() {
 	useEffect(() => setSeen(Date.now()), [online.room]);
 	useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 1000); return () => clearInterval(t); }, []);
 	const room = isOnline ? online.room : null;
-	const turnPlayer = room && info.turnName ? room.players.find((p) => p.name === info.turnName) : null;
+	const turnPlayer = room && !info.over && info.turnName ? room.players.find((p) => p.name === info.turnName) : null;
 	const away = turnPlayer && !turnPlayer.online ? turnPlayer.awayMs + (Date.now() - seen) : 0;
 	const canRemove = turnPlayer && away >= room.forfeitAfterMs && turnPlayer.userId !== online.you?.userId;
 	const isHost = room && online.you && room.hostId === online.you.userId;
@@ -55,11 +55,11 @@ export default function GameBar() {
 						<button className="btn-danger" onClick={() => window.location.reload()} title={`${info.desyncWhy || 'The game screens differ'}. Reloading replays the game from the start.`}>Out of sync – reload</button>
 					) : (
 						<span className={`save-state ${info.myTurn ? 'saved' : ''}`}>
-							{info.turnName ? (info.myTurn ? 'Your turn' : `${info.turnName}'s turn`) : ''}
+							{info.over ? 'Game over' : info.turnName ? (info.myTurn ? 'Your turn' : `${info.turnName}'s turn`) : ''}
 						</span>
 					)}
 					{online.conn !== 'open' && <span className="save-state offline">Reconnecting…</span>}
-					{offlineCount > 0 && <span className="save-state offline">{offlineCount} away</span>}
+					{offlineCount > 0 && !info.over && <span className="save-state offline">{offlineCount} away</span>}
 					{info.waitingMe && !info.myTurn && <span className="save-state saved">Your move</span>}
 					{turnPlayer && !turnPlayer.online && !canRemove && (
 						<span className="save-state offline">{turnPlayer.name} is away ({Math.max(0, Math.ceil((room.forfeitAfterMs - away) / 1000))}s)</span>
