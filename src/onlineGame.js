@@ -167,6 +167,9 @@ function share(id, extra) {
 
 function onClickCapture(e) {
 	if (!started || bypass || !(e.target instanceof Element)) return;
+	// The game is over (one player left): the winner's "OK" only closes the pop-up on this screen. There is no
+	// turn any more (after the last opponent was removed it is "the bank's turn"), so nothing is shared.
+	if (win.pcount <= 1) return;
 	const holder = e.target.closest('[id]');
 	let id = holder && holder.id;
 	if (!id) return;
@@ -295,13 +298,14 @@ function restoreFast() {
 
 function refreshInfo() {
 	if (!started || !win.player || !win.player[win.turn]) return;
-	const myTurn = win.turn === myIndex;
-	document.body.classList.toggle('online-wait', !myTurn);
+	const over = win.pcount <= 1;
+	const myTurn = !over && win.turn === myIndex;
+	document.body.classList.toggle('online-wait', !myTurn && !over);
 	// Something is waiting for me: my turn, my bid, or a trade offer made to me.
 	let waitingFor = win.turn;
 	if (document.getElementById('currentbidder') && isVisible(document.getElementById('currentbidder'))) waitingFor = win.game.getCurrentBidder();
 	else if (tradeShared) waitingFor = byName(text('trade-leftp-name'));
-	setInfo({ myTurn, turnName: win.player[win.turn].name, waitingMe: waitingFor === myIndex, waitingName: win.player[waitingFor] ? win.player[waitingFor].name : '',
+	setInfo({ over, myTurn, turnName: over ? '' : win.player[win.turn].name, waitingMe: !over && waitingFor === myIndex, waitingName: win.player[waitingFor] ? win.player[waitingFor].name : '',
 		turnIndex: win.turn, players: win.pcount });
 }
 
