@@ -81,8 +81,11 @@ function Game() {
 		}
 	};
 
-	this.addPropertyToAuctionQueue = function(propertyIndex) {
+	// declined = true when a player landed on the square and did not buy it (not for a bankrupt player's properties).
+	var declinedBy = {};
+	this.addPropertyToAuctionQueue = function(propertyIndex, declined) {
 		auctionQueue.push(propertyIndex);
+		if (declined) declinedBy[propertyIndex] = player[turn].name;
 	};
 
 	this.auction = function() {
@@ -96,6 +99,12 @@ function Game() {
 
 		if (s.price === 0 || s.owner !== 0) {
 			return game.auction();
+		}
+
+		// The player who landed here did not buy it: say so on screen (the saved log keeps its own lines).
+		if (declinedBy[index]) {
+			showAlert(declinedBy[index] + " landed on " + s.name + " and didn't buy it.");
+			delete declinedBy[index];
 		}
 
 		auctionproperty = index;
@@ -1273,16 +1282,22 @@ function addAlert(alertText) {
 	// Hook: the app keeps a readable log of the game (see src/session.js).
 	if (typeof window.onGameEvent === "function") window.onGameEvent(alertText);
 
+	// Hook: the app decides which lines the on-screen log shows (src/gameLog.js); everything was saved above.
+	if (typeof window.showInGameLog !== "function" || window.showInGameLog(alertText)) showAlert(alertText);
+
+	if (!player[turn].human) {
+		player[turn].AI.alertList += "<div>" + alertText + "</div>";
+	}
+}
+
+// Writes one line into the on-screen log (not into the saved history).
+function showAlert(alertText) {
 	$alert = $("#alert");
 
 	$(document.createElement("div")).text(alertText).appendTo($alert);
 
 	// Animate scrolling down alert element.
 	$alert.stop().animate({"scrollTop": $alert.prop("scrollHeight")}, 1000);
-
-	if (!player[turn].human) {
-		player[turn].AI.alertList += "<div>" + alertText + "</div>";
-	}
 }
 
 function popup(HTML, action, option) {
@@ -2360,7 +2375,7 @@ function land(increasedRent) {
 		}
 
 
-		game.addPropertyToAuctionQueue(p.position);
+		game.addPropertyToAuctionQueue(p.position, true);
 	}
 
 	// Collect rent

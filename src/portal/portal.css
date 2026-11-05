@@ -368,3 +368,5 @@ body.online-game #setup { display: none !important; }
 @keyframes loading-roll { 0%, 100% { transform: rotate(-8deg) translateY(0); } 50% { transform: rotate(8deg) translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { .loading-die, .loading-screen { animation: none; } .loading-fill { transition: none; } }
 
+/* the in-game log field only shows deals, jail and GO salary (src/gameLog.js): say so while it is empty */
+#alert:empty::before { content: 'Purchases, jail and GO salary appear here.'; color: var(--gray); font-size: 13px; }

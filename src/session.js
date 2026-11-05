@@ -14,6 +14,7 @@
 
 import { api } from './api.js';
 import { navigate, gameKey } from './router.jsx';
+import './gameLog.js'; // registers window.showInGameLog: which lines the on-screen log shows
 
 const PLAYER_FIELDS = ['name', 'color', 'position', 'money', 'creditor', 'jail', 'jailroll',
 	'communityChestJailCard', 'chanceJailCard', 'bidding', 'human'];
