@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
 import { fmtDate } from './format.js';
 import Replay from './Replay.jsx';
+import { buildFrames } from './replayModel.js';
 
 export function Modal({ onClose, children, wide = false }) {
 	return (
@@ -24,6 +25,16 @@ export function Details({ id, replay, onClose, onReplay, onOpen, admin = false, 
 
 	const load = () => api('GET', `/games/${id}`).then((r) => setGame(r.game)).catch((e) => setError(e.message));
 	useEffect(() => { load(); }, [id]);
+
+	// A game that is not finished has no saved final money: work it out from the log, the same way Replay does.
+	const live = useMemo(() => {
+		if (!game || game.status === 'finished' || !game.events.length) return null;
+		const { frames } = buildFrames(game.events, game.players);
+		const last = frames[frames.length - 1];
+		const byName = new Map(game.players.map((p) => [p.seat, null]));
+		[...game.players].sort((a, b) => a.seat - b.seat).forEach((p, i) => byName.set(p.seat, { money: last.money[i], out: last.out[i] }));
+		return byName;
+	}, [game]);
 
 	const act = async () => {
 		setBusy(true);
@@ -56,13 +67,13 @@ export function Details({ id, replay, onClose, onReplay, onOpen, admin = false, 
 					</p>
 					{admin && game.owner && <p className="muted">Created by <strong>{game.owner.name}</strong> ({game.owner.email}) · {fmtDate(game.created_at)}</p>}
 					<table className="table">
-						<thead><tr><th>#</th><th>Player</th><th>Money</th></tr></thead>
+						<thead><tr><th>#</th><th>Player</th><th>{live ? 'Money now' : 'Money'}</th></tr></thead>
 						<tbody>
-							{[...game.players].sort((a, b) => (a.final_rank || 99) - (b.final_rank || 99) || a.seat - b.seat).map((p) => (
+							{[...game.players].sort((a, b) => (a.final_rank || 99) - (b.final_rank || 99) || (live ? (live.get(b.seat).out - live.get(a.seat).out) * -1 || live.get(b.seat).money - live.get(a.seat).money : 0) || a.seat - b.seat).map((p) => (
 								<tr key={p.seat}>
 									<td>{p.final_rank || '–'}</td>
 									<td><span className="player-chip"><i style={{ background: p.color }} />{p.name}{p.is_ai ? ' (AI)' : ''}</span></td>
-									<td>{p.final_money == null ? '–' : `$${p.final_money}`}</td>
+									<td>{p.final_money != null ? `$${p.final_money}` : live ? (live.get(p.seat).out ? 'Bankrupt' : `$${live.get(p.seat).money}`) : '–'}</td>
 								</tr>
 							))}
 						</tbody>
