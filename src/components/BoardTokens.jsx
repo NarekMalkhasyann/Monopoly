@@ -97,7 +97,7 @@ export default function BoardTokens() {
 				const cols = Math.min(n, 3);
 				const dx = (k % 3 - (cols - 1) / 2) * GAP;
 				const dy = (Math.floor(k / 3) - (Math.ceil(n / 3) - 1) / 2) * GAP + (d.jail ? 12 : 0);
-				return <div key={d.name} className="tk" title={d.name} aria-label={d.name} style={{ left: s.x + s.w / 2 - SIZE / 2 + dx, top: s.y + s.h / 2 - SIZE / 2 + dy, backgroundColor: d.color }}>{view.tokens.indexOf(d) + 1}</div>;
+				return <div key={d.name} className="tk" title={d.name} aria-label={d.name} style={{ left: s.x + s.w / 2 - SIZE / 2 + dx, top: s.y + s.h / 2 - SIZE / 2 + dy, backgroundColor: d.color }} />;
 			})}
 		</div>
 	);
