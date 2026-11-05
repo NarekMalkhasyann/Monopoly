@@ -34,8 +34,8 @@ export default function MoneyBar() {
 						</tr>
 					</tbody>
 				</table>
-				<MyProperties />
 			</div>
+			<MyProperties />
 		</div>
 	);
 }
