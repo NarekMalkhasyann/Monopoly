@@ -3,10 +3,10 @@ import { api } from '../api.js';
 import { fmtDate } from './format.js';
 import Replay from './Replay.jsx';
 
-export function Modal({ onClose, children }) {
+export function Modal({ onClose, children, wide = false }) {
 	return (
 		<div className="overlay" onClick={onClose}>
-			<div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>{children}</div>
+			<div className={wide ? 'modal modal-wide' : 'modal'} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>{children}</div>
 		</div>
 	);
 }
@@ -37,7 +37,7 @@ export function Details({ id, replay, onClose, onReplay, onOpen, admin = false, 
 
 	if (replay && game) {
 		return (
-			<Modal onClose={onClose}>
+			<Modal onClose={onClose} wide>
 				<Replay events={game.events} players={game.players} onClose={() => onReplay(false)} />
 			</Modal>
 		);
