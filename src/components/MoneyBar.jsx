@@ -2,6 +2,8 @@
 // The engine updates the numbers in place (p1money, p1moneyname, ...) and
 // shows / hides rows and the arrow that marks whose turn it is.
 
+import MyProperties from './MyProperties.jsx';
+
 export default function MoneyBar() {
 	return (
 		<div id="moneybarwrap">
@@ -32,6 +34,7 @@ export default function MoneyBar() {
 						</tr>
 					</tbody>
 				</table>
+				<MyProperties />
 			</div>
 		</div>
 	);
