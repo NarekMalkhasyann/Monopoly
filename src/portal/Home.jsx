@@ -39,16 +39,8 @@ export default function Home({ user }) {
 		if (c) navigate(`/join/${encodeURIComponent(c.toUpperCase())}`);
 	};
 
-	const today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
-
 	return (
 		<>
-			<section className="welcome">
-				<p className="muted">{today}</p>
-				<h2>Welcome back, {user.name}!</h2>
-				<p className="muted">Start a new game or pick up where you left off. Every game is saved to your history.</p>
-			</section>
-
 			<section className="stats">
 				<div className="stat-card"><h3>In progress</h3><p className="num">{counts.active}</p></div>
 				<div className="stat-card"><h3>Finished</h3><p className="num">{counts.finished}</p></div>
