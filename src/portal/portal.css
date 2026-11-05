@@ -254,6 +254,7 @@ body.online-game #setup { display: none !important; }
 .replay-status { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; font: 600 13px Montserrat, sans-serif; color: var(--gray); }
 .replay-status label { flex-direction: row; align-items: center; }
 .replay-log { height: 220px; }
+.replay-note { font-size: 12px !important; }
 .replay-now { color: var(--green); font-weight: 600; }
 .replay-tally td, .replay-tally th { text-align: left; }
 @media (max-width: 560px) { .filters label { flex: 1 1 120px; } .filters input, .filters select { width: 100%; box-sizing: border-box; } }
@@ -368,3 +369,42 @@ body.online-game #setup { display: none !important; }
 @keyframes loading-roll { 0%, 100% { transform: rotate(-8deg) translateY(0); } 50% { transform: rotate(8deg) translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { .loading-die, .loading-screen { animation: none; } .loading-fill { transition: none; } }
 
+
+/* ---------- replay board ---------- */
+.modal-wide { max-width: 980px; max-height: 92vh; }
+.replay-main { display: grid; grid-template-columns: minmax(0, 540px) minmax(220px, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 760px) { .replay-main { grid-template-columns: minmax(0, 1fr); } }
+.replay-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.rp-players { display: flex; flex-direction: column; gap: 6px; }
+.rp { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; padding: 8px 10px; border: 1px solid var(--gray); border-radius: 10px; font-size: 13px; }
+.rp-on { border-color: var(--green); box-shadow: 0 0 0 1px var(--green) inset; }
+.rp-out { opacity: .45; }
+.rp-money { font-weight: 700; }
+.rp-sub { grid-column: 1 / -1; font-size: 11px; color: var(--gray); }
+.rb { position: relative; display: grid; grid-template-columns: repeat(11, 1fr); grid-template-rows: repeat(11, 1fr); aspect-ratio: 1; width: 100%; background: #14301f; border: 2px solid #0b1f13; border-radius: 6px; container-type: inline-size; }
+.rb-sq { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #cfe5d3; color: #10251a; border: 1px solid #0b1f13; overflow: hidden; text-align: center; line-height: 1.05; min-width: 0; min-height: 0; }
+.rb-corner { background: #e9f3d5; font-weight: 700; }
+.rb-mort { opacity: .4; }
+.rb-band { position: absolute; display: flex; gap: 1px; align-items: center; justify-content: center; }
+.rb-b .rb-band { top: 0; left: 0; right: 0; height: 22%; }
+.rb-t .rb-band { bottom: 0; left: 0; right: 0; height: 22%; }
+.rb-l .rb-band { right: 0; top: 0; bottom: 0; width: 16%; flex-direction: column; }
+.rb-r .rb-band { left: 0; top: 0; bottom: 0; width: 16%; flex-direction: column; }
+.rb-house { display: block; width: 28%; aspect-ratio: 1; max-width: 6px; background: #1c9c3f; border: 1px solid #0b3a18; }
+.rb-hotel { display: block; width: 55%; height: 60%; max-width: 12px; background: #d62828; border: 1px solid #5a0f0f; }
+.rb-name { font-size: clamp(4px, 1.05cqw, 8px); padding: 0 1px; overflow-wrap: anywhere; hyphens: auto; max-width: 100%; }
+.rb-name em { display: block; font-style: normal; font-size: 1.6em; }
+.rb-price { font-size: clamp(4px, 1cqw, 8px); opacity: .75; }
+.rb-owner { position: absolute; bottom: 2px; right: 2px; width: 22%; aspect-ratio: 1; max-width: 10px; border-radius: 50%; border: 1px solid #fff; }
+.rb-token { position: absolute; width: 5%; aspect-ratio: 1; border-radius: 50%; border: 2px solid #fff; color: #fff; display: grid; place-items: center; font: 700 clamp(6px, 1.8cqw, 13px) Montserrat, sans-serif; text-shadow: 0 1px 2px #000; box-shadow: 0 2px 6px #0008; transition: left .14s ease-out, top .14s ease-out, transform .14s ease-out; }
+.rb-active { outline: 2px solid #ffe14d; outline-offset: 1px; }
+.rb-center { position: absolute; left: 9.1%; top: 9.1%; width: 81.8%; height: 81.8%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4%; color: #e8f5ea; padding: 4%; text-align: center; pointer-events: none; }
+.rb-logo { font: 800 clamp(14px, 5cqw, 34px) Montserrat, sans-serif; letter-spacing: .06em; opacity: .85; }
+.rb-dice { display: flex; gap: 14px; min-height: 12cqw; align-items: center; }
+.rb-caption { font: 600 clamp(11px, 2.2cqw, 16px) Montserrat, sans-serif; max-width: 90%; min-height: 2.6em; }
+.rdie { width: 11cqw; max-width: 64px; min-width: 30px; aspect-ratio: 1; background: #fff; border-radius: 14%; padding: 12%; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); box-shadow: 0 3px 8px #0009; }
+.rpip { border-radius: 50%; }
+.rpip.on { background: #111; }
+.rdie-rolling { animation: die-tumble .22s linear infinite; }
+@keyframes die-tumble { 0% { transform: rotate(0) translateY(0); } 50% { transform: rotate(180deg) translateY(-8px); } 100% { transform: rotate(360deg) translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .rdie-rolling { animation: none; } .rb-token { transition: none; } }
