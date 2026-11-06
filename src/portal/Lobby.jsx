@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { leaveRoom, startRoom, chooseColor, clearError, setVisibility, joinByCode } from '../online.js';
+import { leaveRoom, startRoom, chooseColor, clearError, setVisibility, joinByCode, kickPlayer } from '../online.js';
 import { navigate } from '../router.jsx';
 import RoomsSidebar from './RoomsSidebar.jsx';
 import Lock from './Lock.jsx';
@@ -12,6 +12,7 @@ export default function Lobby({ room, you, error }) {
 	const [copied, setCopied] = useState('');
 	const [pw, setPw] = useState('');
 	const [askPw, setAskPw] = useState(false);
+	const [kickId, setKickId] = useState(null); // the player the host is about to remove
 	const isHost = you.userId === room.hostId;
 	const link = `${window.location.origin}/join/${room.code}`;
 	const me = room.players.find((p) => p.userId === you.userId);
@@ -68,6 +69,9 @@ export default function Lobby({ room, you, error }) {
 						<div className="row-tags">
 							{p.host && <span className="tag">Host</span>}
 							<span className={`badge ${p.online ? 'badge-done' : 'badge-pending'}`}>{p.online ? 'Online' : 'Away'}</span>
+							{isHost && !p.host && (kickId === p.userId
+								? <span className="kick-confirm">Remove {p.name}? <button className="btn-danger btn-sm" onClick={() => { kickPlayer(p.userId); setKickId(null); }}>Remove</button><button className="btn-ghost btn-sm" onClick={() => setKickId(null)}>Cancel</button></span>
+								: <button className="btn-ghost btn-sm kick-btn" onClick={() => setKickId(p.userId)} aria-label={`Remove ${p.name} from the room`}>Kick</button>)}
 						</div>
 					</div>
 				))}
