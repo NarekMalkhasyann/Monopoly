@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { leaveRoom, startRoom, chooseColor, clearError, setVisibility, joinByCode } from '../online.js';
 import { navigate } from '../router.jsx';
 import RoomsSidebar from './RoomsSidebar.jsx';
+import Lock from './Lock.jsx';
 
 const PALETTE = ['yellow', 'blue', 'red', 'lime', 'green', 'aqua', 'orange', 'purple',
 	'fuchsia', 'teal', 'maroon', 'navy', 'olive', 'silver', 'gray', 'black'];
@@ -43,10 +44,10 @@ export default function Lobby({ room, you, error }) {
 
 			<section className="card lobby-vis">
 				<div className="vis-head">
-					<span className={`badge ${room.isPrivate ? 'badge-pending' : 'badge-done'}`}>{room.isPrivate ? '🔒 Private' : 'Public'}</span>
+					<span className={`badge ${room.isPrivate ? 'badge-pending' : 'badge-done'}`}>{room.isPrivate ? 'Private' : 'Public'}</span>
 					<span className="muted">{room.isPrivate ? 'Not in the open-rooms list. Joining needs the password.' : 'Listed in Open rooms. Anyone can join.'}</span>
 				</div>
-				{isHost && !room.isPrivate && !askPw && <button className="btn-ghost" onClick={() => { clearError(); setAskPw(true); }}>Make private…</button>}
+				{isHost && !room.isPrivate && !askPw && <button className="btn-ghost" onClick={() => { clearError(); setAskPw(true); }}><Lock open /> Make private…</button>}
 				{isHost && !room.isPrivate && askPw && (
 					<form className="vis-form" onSubmit={(e) => { e.preventDefault(); if (pw.length >= 4) { setVisibility(true, pw).catch(() => {}); setAskPw(false); setPw(''); } }}>
 						<input className="code-input" type="text" autoFocus autoComplete="off" placeholder="Choose a password (4+ characters)" aria-label="Room password" value={pw} maxLength={40} onChange={(e) => setPw(e.target.value)} />
@@ -54,7 +55,7 @@ export default function Lobby({ room, you, error }) {
 						<button className="btn-ghost btn-sm" type="button" onClick={() => { setAskPw(false); setPw(''); }}>Cancel</button>
 					</form>
 				)}
-				{isHost && room.isPrivate && <button className="btn-ghost" onClick={() => { clearError(); setVisibility(false).catch(() => {}); }}>Make public</button>}
+				{isHost && room.isPrivate && <button className="btn-ghost" onClick={() => { clearError(); setVisibility(false).catch(() => {}); }}><Lock /> Make public</button>}
 			</section>
 
 			<h2 className="h2-sm">Players <span className="muted count">{room.players.length} / 8</span></h2>
