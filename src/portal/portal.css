@@ -437,3 +437,5 @@ body.online-game #setup { display: none !important; }
 .vis-form .code-input { text-transform: none; letter-spacing: 0; flex: 1 1 200px; }
 .join-pass { max-width: 420px; }
 @media (max-width: 1200px) { .lobby-layout { grid-template-columns: minmax(0, 1fr); } .rooms-side { position: static; max-height: none; } }
+
+.lobby-vis .btn-ghost { display: inline-flex; align-items: center; gap: 8px; }
