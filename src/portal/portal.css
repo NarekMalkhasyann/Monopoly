@@ -408,3 +408,25 @@ body.online-game #setup { display: none !important; }
 .rdie-rolling { animation: die-tumble .22s linear infinite; }
 @keyframes die-tumble { 0% { transform: rotate(0) translateY(0); } 50% { transform: rotate(180deg) translateY(-8px); } 100% { transform: rotate(360deg) translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .rdie-rolling { animation: none; } .rb-token { transition: none; } }
+
+/* ---------- open rooms sidebar, public / private ---------- */
+.home-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 24px; align-items: start; }
+.home-main { min-width: 0; }
+.rooms-side { background: var(--dark); border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 8px; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+.rooms-side h3 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.rooms-side ul { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.rooms-hint, .rooms-empty { margin: 0; font-size: 13px; line-height: 150%; }
+.room-item { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 14px; background: var(--gray-dark, #3a3a3a); border: 1px solid transparent; color: var(--white); cursor: pointer; font: inherit; }
+.room-item:hover, .room-item:focus-visible { border-color: var(--green); outline: none; }
+.room-top, .room-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.room-top b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.room-code { font: 700 12px Montserrat, sans-serif; letter-spacing: .12em; color: var(--green); }
+.room-bottom { font-size: 12px; }
+.room-dots { display: flex; gap: 3px; }
+.room-dots i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #fff8; }
+.lobby-vis { margin: 16px 0; }
+.vis-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.vis-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.vis-form .code-input { text-transform: none; letter-spacing: 0; flex: 1 1 200px; }
+.join-pass { max-width: 420px; }
+@media (max-width: 900px) { .home-layout { grid-template-columns: minmax(0, 1fr); } .rooms-side { position: static; max-height: none; } }

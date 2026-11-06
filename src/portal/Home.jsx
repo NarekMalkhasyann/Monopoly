@@ -4,6 +4,7 @@ import { createRoom } from '../online.js';
 import { navigate } from '../router.jsx';
 import { fmtDate } from './format.js';
 import PlayerDots from './PlayerDots.jsx';
+import RoomsSidebar from './RoomsSidebar.jsx';
 
 export default function Home({ user }) {
 	const [active, setActive] = useState(null);
@@ -42,7 +43,9 @@ export default function Home({ user }) {
 	const today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 
 	return (
-		<>
+		<div className="home-layout">
+			<RoomsSidebar />
+			<div className="home-main">
 			<section className="welcome">
 				<p className="muted">{today}</p>
 				<h2>Welcome back, {user.name}!</h2>
@@ -100,6 +103,7 @@ export default function Home({ user }) {
 				))}
 			</div>
 			{counts.active > 3 && <button className="btn-ghost" onClick={() => navigate('/history')}>See all games →</button>}
-		</>
+			</div>
+		</div>
 	);
 }
