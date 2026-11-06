@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { leaveRoom, startRoom, chooseColor, clearError, setVisibility } from '../online.js';
 import { navigate } from '../router.jsx';
+import RoomsSidebar from './RoomsSidebar.jsx';
 
 const PALETTE = ['yellow', 'blue', 'red', 'lime', 'green', 'aqua', 'orange', 'purple',
 	'fuchsia', 'teal', 'maroon', 'navy', 'olive', 'silver', 'gray', 'black'];
@@ -23,7 +24,14 @@ export default function Lobby({ room, you, error }) {
 		navigate('/play');
 	};
 
+	// Switching to another open room: leave this one first (it is removed if nobody else is in it).
+	const switchTo = async (code) => {
+		try { await leaveRoom(); } catch { /* connection already gone */ }
+		navigate(`/join/${code}`);
+	};
+
 	return (
+		<div className="lobby-layout">
 		<div className="lobby">
 			<div className="page-head"><h2>Online room</h2></div>
 
@@ -96,6 +104,8 @@ export default function Lobby({ room, you, error }) {
 				)}
 				<button className="btn-ghost" onClick={leave}>Leave room</button>
 			</div>
+		</div>
+		<RoomsSidebar excludeId={room.id} onJoin={switchTo} />
 		</div>
 	);
 }
