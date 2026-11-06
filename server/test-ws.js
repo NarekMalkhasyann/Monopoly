@@ -1,5 +1,6 @@
 // Run: node server/test-ws.js  (uses Node's built-in WebSocket client)
 import assert from 'node:assert/strict';
+import { randomBytes } from 'node:crypto';
 import { openDb } from './db.js';
 import { createApp } from './app.js';
 
@@ -16,7 +17,8 @@ const call = async (method, path, body, token) => {
 	const r = await fetch(base + path, { method, headers: { 'Content-Type': 'application/json', ...(token && { Authorization: `Bearer ${token}` }) }, body: body && JSON.stringify(body) });
 	return { status: r.status, body: await r.json() };
 };
-const register = async (name) => (await call('POST', '/api/auth/register', { name, email: `${name.toLowerCase()}@x.am`, password: 'password1' })).body.token;
+const PW = randomBytes(9).toString('hex'); // the test accounts' password: random on every run
+const register = async (name) => (await call('POST', '/api/auth/register', { name, email: `${name.toLowerCase()}@x.am`, password: PW })).body.token;
 
 // A socket that records everything it receives
 function open(token) {
@@ -214,6 +216,42 @@ a.send({ t: 'join', code: ja.room.code }); assert.match((await a.next('error', (
 	r1.close(); s1.close();
 	// Sam's seat in someone else's game is cleared (not left pointing at nobody) when an account is deleted
 	assert.equal((await call('DELETE', `/api/admin/users/${ritaId}`, null, tRoot)).status, 200);
+}
+
+// rooms: private rooms with a password, the open-rooms list, one room per account, kicking players
+{
+	const [tH, tG, tK] = [await register('Hostie'), await register('Guesty'), await register('Kicky')];
+	const roomPw = randomBytes(6).toString('hex'), wrongPw = randomBytes(6).toString('hex'), shortPw = randomBytes(1).toString('hex').slice(0, 1) + 'xy'; // a different value on every run
+	const h = await open(tH), g = await open(tG), k = await open(tK);
+	await h.next('hello'); await g.next('hello'); await k.next('hello');
+	h.send({ t: 'create' }); const created = await h.next('joined');
+	const code = created.room.code;
+	assert.equal(created.room.isPrivate, false);                                              // public by default
+	assert.ok((await call('GET', '/api/rooms', null, tG)).body.rooms.some((r) => r.code === code && !r.isPrivate));
+	assert.ok(!(await call('GET', '/api/rooms', null, tH)).body.rooms.some((r) => r.code === code)); // not in the host's own list
+	// only the host sets a password, 4+ characters; the hash never leaves the server
+	g.send({ t: 'join', code }); await g.next('joined');
+	g.send({ t: 'visibility', private: true, password: roomPw }); assert.match((await g.next('error')).message, /Only the host/);
+	h.send({ t: 'visibility', private: true, password: shortPw }); assert.equal((await h.next('error')).code, 'password');
+	h.send({ t: 'visibility', private: true, password: roomPw }); await h.next('room', (m) => m.room.isPrivate);
+	assert.ok(!JSON.stringify(created).includes('pwHash'));
+	// a new player needs the password
+	k.send({ t: 'join', code }); assert.equal((await k.next('error')).code, 'password');
+	k.send({ t: 'join', code, password: wrongPw }); assert.match((await k.next('error')).message, /Wrong password/);
+	// the same account on a second device is refused while the first one is inside
+	const g2 = await open(tG); await g2.next('hello');
+	g2.send({ t: 'create' }); assert.equal((await g2.next('error')).code, 'busy');
+	g2.send({ t: 'join', code }); assert.equal((await g2.next('error')).code, 'busy');
+	g2.close();
+	// kicking: host only, waiting room only, the player is told and cannot come back
+	k.send({ t: 'join', code, password: roomPw }); await k.next('joined');
+	const kickyId = (await call('GET', '/api/me', null, tK)).body.user.id;
+	g.send({ t: 'kick', userId: kickyId }); assert.match((await g.next('error')).message, /Only the host/);
+	h.send({ t: 'kick', userId: kickyId });
+	assert.match((await k.next('kicked')).message, /removed you/);
+	await g.next('room', (m) => m.room.players.length === 2);
+	k.send({ t: 'join', code, password: roomPw }); assert.equal((await k.next('error')).code, 'kicked');
+	h.close(); g.close(); k.close();
 }
 
 // the SPA fallback is only active when a build exists, API 404s stay JSON

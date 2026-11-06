@@ -21,6 +21,9 @@ export default function GamePage({ id, user, live, onLive }) {
 	const room = online.room && String(online.room.id) === String(id) ? online.room : null;
 	const resumed = useRef(false);
 
+	// removed by the host: back to the Play page (it shows why)
+	useEffect(() => { if (online.kicked) navigate('/play', { replace: true }); }, [online.kicked]);
+
 	// 1. find out what kind of game this is
 	useEffect(() => {
 		let stale = false;

@@ -125,6 +125,7 @@ export function createRooms(db) {
 				id: row.id, code: row.room_code, hostId: row.owner_id, status: row.status, seed: row.seed,
 				isPrivate: !!row.is_private, pwHash: row.room_password || null,
 				seq: await q.lastSeq(row.id), turnCount: row.turn_count || 0, writes: Promise.resolve(),
+				banned: new Set(), // users the host removed: they cannot come back to this room
 				members: new Map(), // userId -> { seat, name, color, sessions:Set }
 			};
 			for (const m of await q.members(row.id)) {
@@ -325,6 +326,7 @@ export function createRooms(db) {
 			if (!m) {
 				if (!msg.code) return err(s.conn, 'You are not a player in this game');
 				if (room.status !== 'waiting') return err(s.conn, 'This game has already started');
+				if (room.banned && room.banned.has(s.user.id)) return err(s.conn, 'The host removed you from this room.', 'kicked');
 				const other = await otherWaitingRoom(s, room);
 				if (other) return err(s.conn, busyMessage(other), 'busy');
 				if (room.members.size >= MAX_PLAYERS) return err(s.conn, 'This room is full');
@@ -355,6 +357,22 @@ export function createRooms(db) {
 			if ([...room.members.values()].some((m) => m.userId !== s.user.id && m.color === color)) return err(s.conn, 'That colour is taken');
 			room.members.get(s.user.id).color = color;
 			written(room, () => q.setColor(color, room.id, s.user.id));
+			broadcastRoom(room);
+		},
+
+		// The host removes a player from a waiting room. The player is told, goes back to the Play page and cannot
+		// re-enter this room.
+		kick(s, msg) {
+			const room = s.room;
+			if (!room || room.status !== 'waiting') return;
+			if (room.hostId !== s.user.id) return err(s.conn, 'Only the host can remove players');
+			const id = Number(msg.userId);
+			const m = room.members.get(id);
+			if (!m || id === room.hostId) return err(s.conn, 'That player is not in this room');
+			for (const t of m.sessions) { t.room = null; try { t.conn.send(JSON.stringify({ t: 'kicked', message: 'The host removed you from the room.' })); } catch { /* gone */ } }
+			m.sessions.clear();
+			room.banned.add(id);
+			removeMember(room, id);
 			broadcastRoom(room);
 		},
 
