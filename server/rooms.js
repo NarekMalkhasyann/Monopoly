@@ -56,6 +56,7 @@ export function createRooms(db) {
 		gameById: (id) => db.get("SELECT * FROM games WHERE id = ? AND mode = 'online'", [id]),
 		members: (gameId) => db.all('SELECT seat, name, color, user_id FROM game_players WHERE game_id = ? AND user_id IS NOT NULL ORDER BY seat', [gameId]),
 		insertMember: (gameId, seat, name, color, userId) => db.run('INSERT INTO game_players (game_id, seat, name, color, is_ai, user_id) VALUES (?, ?, ?, ?, 0, ?)', [gameId, seat, name, color, userId]),
+		waitingRoomsOf: (userId) => db.all("SELECT g.id FROM games g JOIN game_players p ON p.game_id = g.id WHERE g.mode = 'online' AND g.status = 'waiting' AND p.user_id = ?", [userId]),
 		deleteMember: (gameId, userId) => db.run('DELETE FROM game_players WHERE game_id = ? AND user_id = ?', [gameId, userId]),
 		setSeat: (seat, gameId, userId) => db.run('UPDATE game_players SET seat = ? WHERE game_id = ? AND user_id = ?', [seat, gameId, userId]),
 		setColor: (color, gameId, userId) => db.run('UPDATE game_players SET color = ? WHERE game_id = ? AND user_id = ?', [color, gameId, userId]),
@@ -171,11 +172,11 @@ export function createRooms(db) {
 		}, 150);
 		changeTimer.unref();
 	}
-	async function listOpen() {
+	async function listOpen(userId) {
 		const out = [];
 		for (const { id } of await q.openRooms()) {
 			const room = await roomById(id);
-			if (!room || room.status !== 'waiting' || room.members.size === 0) continue;
+			if (!room || room.status !== 'waiting' || room.members.size === 0 || room.members.has(userId)) continue; // not the rooms you are already in (on any device)
 			const host = room.members.get(room.hostId);
 			out.push({ id: room.id, code: room.code, isPrivate: !!room.isPrivate, host: host ? host.name : '?', players: room.members.size, max: MAX_PLAYERS,
 				colors: [...room.members.values()].sort((a, b) => a.seat - b.seat).map((m) => m.color) });
@@ -285,8 +286,26 @@ export function createRooms(db) {
 		} finally { s.hold = null; }
 	}
 
+	// One account, one waiting room: the same account on a second device cannot open or enter a different room
+	// while it already has one (the first device's room). Returns that room, or null.
+	async function otherWaitingRoom(s, except) {
+		for (const { id } of await q.waitingRoomsOf(s.user.id)) {
+			if (s.room && s.room.id === id) continue; // this very connection: it leaves that room itself when it switches
+			if (except && except.id === id) continue;
+			const room = await roomById(id);
+			const m = room && room.status === 'waiting' ? room.members.get(s.user.id) : null;
+			if (!m) continue;
+			if ([...m.sessions].some((x) => x !== s)) return room; // another device is in it right now
+			removeMember(room, s.user.id); // nobody is in it any more (the tab was closed): the old seat just goes
+		}
+		return null;
+	}
+	const busyMessage = (room) => `Your account already has an open room (${room.code}), probably on another device. Leave it there first.`;
+
 	const handlers = {
 		async create(s) {
+			const other = await otherWaitingRoom(s);
+			if (other) return err(s.conn, busyMessage(other), 'busy');
 			if (s.room) leaveRoom(s);
 			const code = await newCode();
 			const id = await q.insertGame(s.user.id, code);
@@ -300,9 +319,14 @@ export function createRooms(db) {
 			const room = msg.code ? await roomByCode(msg.code) : await roomById(msg.gameId);
 			if (!room) return err(s.conn, msg.code ? 'No room with this code' : 'This online game is not available');
 			let m = room.members.get(s.user.id);
+			// Entering by code a room this account is already in while another of its devices is inside = a second device. A returning
+			// player uses the game (history / refresh) instead, which stays allowed.
+			if (m && msg.code && room.status === 'waiting' && [...m.sessions].some((x) => x !== s)) return err(s.conn, 'Your account is already in this room, probably on another device.', 'busy');
 			if (!m) {
 				if (!msg.code) return err(s.conn, 'You are not a player in this game');
 				if (room.status !== 'waiting') return err(s.conn, 'This game has already started');
+				const other = await otherWaitingRoom(s, room);
+				if (other) return err(s.conn, busyMessage(other), 'busy');
 				if (room.members.size >= MAX_PLAYERS) return err(s.conn, 'This room is full');
 				if (room.isPrivate) {
 					const wait = lockedFor(s.user.id);

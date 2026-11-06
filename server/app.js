@@ -294,8 +294,8 @@ export function createApp(db, { secret, staticDir } = {}) {
 		}
 		if (path.startsWith('/api/admin/')) return adminRoute(req, method, path, url);
 		if (method === 'GET' && path === '/api/rooms') {
-			await authUser(req);
-			return [200, { rooms: await rooms.listOpen() }];
+			const me = await authUser(req);
+			return [200, { rooms: await rooms.listOpen(me.id) }];
 		}
 		if (method === 'GET' && path === '/api/health') {
 			await db.get('SELECT 1 AS ok'); // also proves the database answers
