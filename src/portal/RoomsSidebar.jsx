@@ -49,7 +49,6 @@ export default function RoomsSidebar({ excludeId, onJoin }) {
 	return (
 		<aside className="rooms-side" aria-label="Open rooms">
 			<h3>Rooms {shown && <span className="muted count">{shown.length}</span>}</h3>
-			<p className="muted rooms-hint"><Lock open /> open: anyone can join. <Lock /> private: needs the password.</p>
 			{error && <p className="auth-error" role="alert">{error}</p>}
 			{shown && shown.length === 0 && <p className="muted rooms-empty">No other rooms waiting right now.</p>}
 			<ul>
