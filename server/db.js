@@ -42,6 +42,8 @@ const tables = (pg) => {
 			snapshot TEXT,                               -- JSON checkpoint taken at the start of a turn (local games)
 			room_code TEXT,                              -- online games: 5-letter join code
 			seed ${big},                                 -- online games: seed of the shared random numbers
+			is_private INTEGER NOT NULL DEFAULT 0,       -- online lobby: 1 = not in the open-rooms list, needs the password
+			room_password TEXT,                          -- scrypt hash of that password (never the password itself)
 			created_at TEXT NOT NULL,
 			updated_at TEXT NOT NULL,
 			finished_at TEXT
@@ -86,6 +88,8 @@ async function openSqlite(file) {
 		const has = (table, col) => raw.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col);
 		if (!has('games', 'room_code')) raw.exec('ALTER TABLE games ADD COLUMN room_code TEXT');
 		if (!has('games', 'seed')) raw.exec('ALTER TABLE games ADD COLUMN seed INTEGER');
+		if (!has('games', 'is_private')) raw.exec('ALTER TABLE games ADD COLUMN is_private INTEGER NOT NULL DEFAULT 0');
+		if (!has('games', 'room_password')) raw.exec('ALTER TABLE games ADD COLUMN room_password TEXT');
 		if (!has('game_players', 'user_id')) raw.exec('ALTER TABLE game_players ADD COLUMN user_id INTEGER');
 		raw.exec(`CREATE UNIQUE INDEX IF NOT EXISTS games_room_code ON games(room_code) WHERE room_code IS NOT NULL;
 			CREATE INDEX IF NOT EXISTS players_user ON game_players(user_id);`);
@@ -144,6 +148,9 @@ async function openPostgres(url) {
 	};
 
 	for (const sql of tables(true)) await pool.query(sql);
+	// databases made before public / private rooms
+	await pool.query('ALTER TABLE games ADD COLUMN IF NOT EXISTS is_private INTEGER NOT NULL DEFAULT 0');
+	await pool.query('ALTER TABLE games ADD COLUMN IF NOT EXISTS room_password TEXT');
 	return api;
 }
 

@@ -138,6 +138,7 @@ Players sign in (register / login), and every local game is saved to their accou
 | GET | `/api/me` | current user |
 | POST | `/api/games` | create a game record |
 | GET | `/api/games?status=&mode=&q=&from=&to=&sort=&dir=&limit=&offset=` | history, paged. `status` active / finished / abandoned; `q` searches player names, winner and room code; `from`/`to` are dates (`YYYY-MM-DD`); `sort` updated / created / turns, `dir` asc / desc |
+| GET | `/api/rooms` | online rooms still waiting for players (`id`, `code`, `isPrivate`, `host`, `players`, `max`, `colors`); started games are not listed |
 | GET | `/api/health` | `{ ok, db }` – the server and its database answer |
 | GET / DELETE | `/api/games/:id` | game with checkpoint and log / delete |
 | PUT | `/api/games/:id/checkpoint` | save checkpoint + log lines |
@@ -147,11 +148,15 @@ Players sign in (register / login), and every local game is saved to their accou
 
 Each player opens the game on their own device. **Home → Create room** gives a 5-letter code (and a link `/join/CODE`); friends enter it under **Join**. In the lobby everyone picks a colour, and the host presses **Start game**.
 
+**Rooms and private rooms.** The online room page has a *Rooms* sidebar with the rooms that are still waiting for players (it updates live; started games disappear). An open lock means anyone can join with the **Join** button; a closed lock is a private room and **Join…** asks for its password. Rooms are public when created. In the lobby the host can press **Make private…** and choose a password (4–40 characters): joining then needs the password (the server keeps only a scrypt hash; 5 wrong passwords lock that account out of password rooms for 30 seconds). **Make public** opens it again. Joining another room from a lobby takes you out of the current one.
+
 **How it stays in sync ("relay" model).** The game engine runs unchanged in every browser. Only the buttons that change the game are shared: *Roll / End turn, Buy, Pay $50, Use card, pop-up OK / Yes / No, Resign, auction Bid / Pass / Exit, Buy / Sell house, Mortgage, trade Propose / Accept / Reject / Cancel*. The player whose turn it is clicks one, the click goes to the server over a WebSocket, the server numbers it and sends it to everybody, and every browser presses the same button in that order. All randomness (dice, card decks, turn order) comes from one seed that the server hands out when the game starts (`window.seededRandom`), so everyone sees the same dice. The ordered click list is stored in `game_actions`: refreshing or rejoining replays the game from the start.
 
 | Message (JSON over `/ws?token=JWT`) | Direction | Purpose |
 |---|---|---|
-| `create`, `join {code \| gameId, after}`, `leave` | client → server | open / enter / leave a room |
+| `create`, `join {code \| gameId, after, password?}`, `leave` | client → server | open / enter / leave a room (a private room needs `password`) |
+| `visibility {private, password}` | client → server | host only, while waiting: make the room private (with a password) or public |
+| `rooms-changed` | server → client | the open-rooms list may have changed: ask `GET /api/rooms` again |
 | `color`, `start` | client → server | lobby: pick colour; host starts (2–8 players) |
 | `act {a:{id, turn, v?, check?}}` | client → server | a shared button click (members only); `v` = bid amount or trade offer, `check` = selected property |
 | `forfeit {seat}` | client → server | remove a player who has been away for `forfeitAfterMs` (default 60 s) |

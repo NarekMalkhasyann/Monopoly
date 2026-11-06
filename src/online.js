@@ -9,6 +9,7 @@ import { getToken, API_BASE } from './api.js';
 let state = { conn: 'closed', room: null, you: null, error: '', left: false };
 const listeners = new Set();
 const actionListeners = new Set();
+const roomsListeners = new Set();
 let ws = null;
 let opening = null;
 let lastSeq = 0;
@@ -45,9 +46,12 @@ function handle(msg) {
 		case 'left':
 			set({ room: null, you: null, left: true });
 			break;
+		case 'rooms-changed':
+			roomsListeners.forEach((fn) => fn());
+			break;
 		case 'error':
 			set({ error: msg.message });
-			if (pending) { pending.reject(new Error(msg.message)); pending = null; }
+			if (pending) { const e = new Error(msg.message); e.code = msg.code || ''; pending.reject(e); pending = null; }
 			break;
 		default:
 	}
@@ -108,7 +112,14 @@ function request(msg) {
 	});
 }
 export const createRoom = () => request({ t: 'create' });
-export const joinByCode = (code) => request({ t: 'join', code });
+export const joinByCode = (code, password) => request({ t: 'join', code, ...(password ? { password } : {}) });
+export const setVisibility = (isPrivate, password) => send({ t: 'visibility', private: !!isPrivate, password: password || '' });
+// The open-rooms list: calls fn when the server says it may have changed (keeps the socket open while watching).
+export function watchRooms(fn) {
+	roomsListeners.add(fn);
+	open().catch(() => {});
+	return () => roomsListeners.delete(fn);
+}
 export const joinById = (gameId) => request({ t: 'join', gameId: Number(gameId), after: lastSeq });
 export const leaveRoom = () => send({ t: 'leave' });
 export const startRoom = () => send({ t: 'start' });

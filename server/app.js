@@ -293,6 +293,10 @@ export function createApp(db, { secret, staticDir } = {}) {
 			return [200, { user: publicUser(await authUser(req)) }];
 		}
 		if (path.startsWith('/api/admin/')) return adminRoute(req, method, path, url);
+		if (method === 'GET' && path === '/api/rooms') {
+			await authUser(req);
+			return [200, { rooms: await rooms.listOpen() }];
+		}
 		if (method === 'GET' && path === '/api/health') {
 			await db.get('SELECT 1 AS ok'); // also proves the database answers
 			return [200, { ok: true, db: db.dialect }];

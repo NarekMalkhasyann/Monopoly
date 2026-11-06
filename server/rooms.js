@@ -7,6 +7,7 @@
 // joins late can replay the game from the start.
 import { randomBytes, randomInt } from 'node:crypto';
 import { now } from './db.js';
+import { hashPassword, verifyPassword } from './auth.js';
 
 export const COLORS = ['yellow', 'blue', 'red', 'lime', 'green', 'aqua', 'orange', 'purple',
 	'fuchsia', 'teal', 'maroon', 'navy', 'olive', 'silver', 'gray', 'black'];
@@ -58,6 +59,8 @@ export function createRooms(db) {
 		deleteMember: (gameId, userId) => db.run('DELETE FROM game_players WHERE game_id = ? AND user_id = ?', [gameId, userId]),
 		setSeat: (seat, gameId, userId) => db.run('UPDATE game_players SET seat = ? WHERE game_id = ? AND user_id = ?', [seat, gameId, userId]),
 		setColor: (color, gameId, userId) => db.run('UPDATE game_players SET color = ? WHERE game_id = ? AND user_id = ?', [color, gameId, userId]),
+		setVisibility: (priv, hash, gameId) => db.run('UPDATE games SET is_private = ?, room_password = ? WHERE id = ?', [priv ? 1 : 0, hash, gameId]),
+		openRooms: () => db.all("SELECT id FROM games WHERE mode = 'online' AND status = 'waiting' ORDER BY id DESC LIMIT 50"),
 		setOwner: (userId, gameId) => db.run('UPDATE games SET owner_id = ? WHERE id = ?', [userId, gameId]),
 		activate: (seed, gameId) => db.run("UPDATE games SET status = 'active', seed = ?, updated_at = ? WHERE id = ?", [seed, now(), gameId]),
 		deleteGame: (gameId) => db.run('DELETE FROM games WHERE id = ?', [gameId]),
@@ -88,7 +91,13 @@ export function createRooms(db) {
 	const sessions = new Set(); // every open socket {conn, user, room}
 
 	const send = (conn, msg) => { try { conn.send(JSON.stringify(msg)); } catch { /* socket gone */ } };
-	const err = (conn, message) => send(conn, { t: 'error', message });
+	const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code ? { code } : {}) });
+
+	// Wrong room passwords: 5 misses lock that account out of password rooms for 30 seconds.
+	const misses = new Map(); // userId -> { n, until }
+	const lockedFor = (id) => { const x = misses.get(id); return x && x.until > Date.now() ? Math.ceil((x.until - Date.now()) / 1000) : 0; };
+	const failedPassword = (id) => { const x = misses.get(id) || { n: 0, until: 0 }; x.n += 1; if (x.n >= 5) { x.n = 0; x.until = Date.now() + 30_000; } misses.set(id, x); };
+	const passwordOk = (id) => misses.delete(id);
 
 	async function newCode() {
 		for (let i = 0; i < 50; i++) {
@@ -113,6 +122,7 @@ export function createRooms(db) {
 		const job = (async () => {
 			const room = {
 				id: row.id, code: row.room_code, hostId: row.owner_id, status: row.status, seed: row.seed,
+				isPrivate: !!row.is_private, pwHash: row.room_password || null,
 				seq: await q.lastSeq(row.id), turnCount: row.turn_count || 0, writes: Promise.resolve(),
 				members: new Map(), // userId -> { seat, name, color, sessions:Set }
 			};
@@ -132,6 +142,7 @@ export function createRooms(db) {
 	function publicRoom(room) {
 		return {
 			id: room.id, code: room.code, status: room.status, hostId: room.hostId, forfeitAfterMs: FORFEIT_AFTER_MS(),
+			isPrivate: !!room.isPrivate,
 			seed: room.status === 'active' ? room.seed : null,
 			players: [...room.members.values()].sort((a, b) => a.seat - b.seat).map((m) => ({
 				seat: m.seat, userId: m.userId, name: m.name, color: m.color,
@@ -146,6 +157,31 @@ export function createRooms(db) {
 		for (const m of room.members.values()) for (const s of m.sessions) { if (s.hold) { s.hold.push(text); continue; } try { s.conn.send(text); } catch { /* gone */ } }
 	}
 	const broadcastRoom = (room) => broadcast(room, { t: 'room', room: publicRoom(room) });
+
+	// ---- the open-rooms list --------------------------------------------------
+	// Rooms that are still waiting for players (private ones are marked with a lock; joining them needs the password). Everybody connected is told when the list may have changed
+	// and asks for it again (the list itself is not pushed, so it is always read fresh).
+	let changeTimer = null;
+	function listChanged() {
+		if (changeTimer) return;
+		changeTimer = setTimeout(() => {
+			changeTimer = null;
+			const text = JSON.stringify({ t: 'rooms-changed' });
+			for (const s of sessions) { try { s.conn.send(text); } catch { /* gone */ } }
+		}, 150);
+		changeTimer.unref();
+	}
+	async function listOpen() {
+		const out = [];
+		for (const { id } of await q.openRooms()) {
+			const room = await roomById(id);
+			if (!room || room.status !== 'waiting' || room.members.size === 0) continue;
+			const host = room.members.get(room.hostId);
+			out.push({ id: room.id, code: room.code, isPrivate: !!room.isPrivate, host: host ? host.name : '?', players: room.members.size, max: MAX_PLAYERS,
+				colors: [...room.members.values()].sort((a, b) => a.seat - b.seat).map((m) => m.color) });
+		}
+		return out;
+	}
 
 	// ---- membership ----------------------------------------------------------
 	function uniqueName(room, wanted) {
@@ -165,6 +201,7 @@ export function createRooms(db) {
 		const m = { userId: user.id, seat: room.members.size + 1, name: uniqueName(room, user.name), color, sessions: new Set(), offlineSince: null };
 		written(room, () => q.insertMember(room.id, m.seat, m.name, m.color, user.id));
 		room.members.set(user.id, m);
+		listChanged();
 		return m;
 	}
 
@@ -201,6 +238,7 @@ export function createRooms(db) {
 		if (!room.members.has(userId)) return;
 		written(room, () => q.deleteMember(room.id, userId));
 		room.members.delete(userId);
+		listChanged();
 		if (room.members.size === 0) {
 			written(room, () => q.deleteGame(room.id));
 			rooms.delete(room.id);
@@ -266,6 +304,17 @@ export function createRooms(db) {
 				if (!msg.code) return err(s.conn, 'You are not a player in this game');
 				if (room.status !== 'waiting') return err(s.conn, 'This game has already started');
 				if (room.members.size >= MAX_PLAYERS) return err(s.conn, 'This room is full');
+				if (room.isPrivate) {
+					const wait = lockedFor(s.user.id);
+					if (wait) return err(s.conn, `Too many wrong passwords. Try again in ${wait} seconds.`, 'locked');
+					if (!msg.password) return err(s.conn, 'This room is private. Enter its password.', 'password');
+					if (!room.pwHash || !verifyPassword(String(msg.password).slice(0, 100), room.pwHash)) {
+						failedPassword(s.user.id);
+						return err(s.conn, 'Wrong password', 'password');
+					}
+					passwordOk(s.user.id);
+				}
+				if (s.room && s.room !== room) leaveRoom(s); // joining another room from a lobby: leave the old one
 				m = addMember(room, s.user);
 			}
 			await attachAndSend(s, room, m, msg.after);
@@ -285,6 +334,26 @@ export function createRooms(db) {
 			broadcastRoom(room);
 		},
 
+		// The host makes a waiting room public (listed, anybody can join) or private (not listed, needs a password).
+		visibility(s, msg) {
+			const room = s.room;
+			if (!room || room.status !== 'waiting') return;
+			if (room.hostId !== s.user.id) return err(s.conn, 'Only the host can change this');
+			if (msg.private) {
+				const pw = String(msg.password || '');
+				if (pw.length < 4 || pw.length > 40) return err(s.conn, 'The password needs 4 to 40 characters', 'password');
+				room.isPrivate = true;
+				room.pwHash = hashPassword(pw);
+			} else {
+				room.isPrivate = false;
+				room.pwHash = null;
+			}
+			const priv = room.isPrivate, hash = room.pwHash;
+			written(room, () => q.setVisibility(priv, hash, room.id));
+			broadcastRoom(room);
+			listChanged();
+		},
+
 		start(s) {
 			const room = s.room;
 			if (!room || room.status !== 'waiting') return;
@@ -295,6 +364,7 @@ export function createRooms(db) {
 			const seed = room.seed;
 			written(room, () => q.activate(seed, room.id));
 			broadcast(room, { t: 'started', room: publicRoom(room) });
+			listChanged();
 		},
 
 		// A shared button click. The sender must be a member of an active game.
@@ -401,6 +471,7 @@ export function createRooms(db) {
 
 	return {
 		publicRoom,
+		listOpen,
 		connect(conn, user) {
 			const session = { conn, user, room: null };
 			sessions.add(session);

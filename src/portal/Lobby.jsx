@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { leaveRoom, startRoom, chooseColor, clearError } from '../online.js';
+import { leaveRoom, startRoom, chooseColor, clearError, setVisibility, joinByCode } from '../online.js';
 import { navigate } from '../router.jsx';
+import RoomsSidebar from './RoomsSidebar.jsx';
 
 const PALETTE = ['yellow', 'blue', 'red', 'lime', 'green', 'aqua', 'orange', 'purple',
 	'fuchsia', 'teal', 'maroon', 'navy', 'olive', 'silver', 'gray', 'black'];
@@ -8,6 +9,8 @@ const PALETTE = ['yellow', 'blue', 'red', 'lime', 'green', 'aqua', 'orange', 'pu
 // Waiting room of an online game: share the code, pick a colour, the host starts.
 export default function Lobby({ room, you, error }) {
 	const [copied, setCopied] = useState('');
+	const [pw, setPw] = useState('');
+	const [askPw, setAskPw] = useState(false);
 	const isHost = you.userId === room.hostId;
 	const link = `${window.location.origin}/join/${room.code}`;
 	const me = room.players.find((p) => p.userId === you.userId);
@@ -21,7 +24,11 @@ export default function Lobby({ room, you, error }) {
 		navigate('/play');
 	};
 
+	// Joining another waiting room from here: the server takes this player out of the current room once the join is accepted.
+	const switchTo = (code, password) => joinByCode(code, password);
+
 	return (
+		<div className="lobby-layout">
 		<div className="lobby">
 			<div className="page-head"><h2>Online room</h2></div>
 
@@ -32,6 +39,22 @@ export default function Lobby({ room, you, error }) {
 					<button className="btn-ghost" onClick={() => copy(room.code, 'code')}>{copied === 'code' ? 'Copied' : 'Copy code'}</button>
 					<button className="btn-ghost" onClick={() => copy(link, 'link')}>{copied === 'link' ? 'Copied' : 'Copy link'}</button>
 				</div>
+			</section>
+
+			<section className="card lobby-vis">
+				<div className="vis-head">
+					<span className={`badge ${room.isPrivate ? 'badge-pending' : 'badge-done'}`}>{room.isPrivate ? '🔒 Private' : 'Public'}</span>
+					<span className="muted">{room.isPrivate ? 'Not in the open-rooms list. Joining needs the password.' : 'Listed in Open rooms. Anyone can join.'}</span>
+				</div>
+				{isHost && !room.isPrivate && !askPw && <button className="btn-ghost" onClick={() => { clearError(); setAskPw(true); }}>Make private…</button>}
+				{isHost && !room.isPrivate && askPw && (
+					<form className="vis-form" onSubmit={(e) => { e.preventDefault(); if (pw.length >= 4) { setVisibility(true, pw).catch(() => {}); setAskPw(false); setPw(''); } }}>
+						<input className="code-input" type="text" autoFocus autoComplete="off" placeholder="Choose a password (4+ characters)" aria-label="Room password" value={pw} maxLength={40} onChange={(e) => setPw(e.target.value)} />
+						<button className="btn-primary btn-sm" type="submit" disabled={pw.length < 4}>Set password</button>
+						<button className="btn-ghost btn-sm" type="button" onClick={() => { setAskPw(false); setPw(''); }}>Cancel</button>
+					</form>
+				)}
+				{isHost && room.isPrivate && <button className="btn-ghost" onClick={() => { clearError(); setVisibility(false).catch(() => {}); }}>Make public</button>}
 			</section>
 
 			<h2 className="h2-sm">Players <span className="muted count">{room.players.length} / 8</span></h2>
@@ -78,6 +101,8 @@ export default function Lobby({ room, you, error }) {
 				)}
 				<button className="btn-ghost" onClick={leave}>Leave room</button>
 			</div>
+		</div>
+		<RoomsSidebar excludeId={room.id} onJoin={switchTo} />
 		</div>
 	);
 }
