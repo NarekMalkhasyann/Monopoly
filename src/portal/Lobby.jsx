@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { leaveRoom, startRoom, chooseColor, clearError, setVisibility } from '../online.js';
+import { leaveRoom, startRoom, chooseColor, clearError, setVisibility, joinByCode } from '../online.js';
 import { navigate } from '../router.jsx';
 import RoomsSidebar from './RoomsSidebar.jsx';
 
@@ -24,11 +24,8 @@ export default function Lobby({ room, you, error }) {
 		navigate('/play');
 	};
 
-	// Switching to another open room: leave this one first (it is removed if nobody else is in it).
-	const switchTo = async (code) => {
-		try { await leaveRoom(); } catch { /* connection already gone */ }
-		navigate(`/join/${code}`);
-	};
+	// Joining another waiting room from here: the server takes this player out of the current room once the join is accepted.
+	const switchTo = (code, password) => joinByCode(code, password);
 
 	return (
 		<div className="lobby-layout">

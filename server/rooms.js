@@ -60,7 +60,7 @@ export function createRooms(db) {
 		setSeat: (seat, gameId, userId) => db.run('UPDATE game_players SET seat = ? WHERE game_id = ? AND user_id = ?', [seat, gameId, userId]),
 		setColor: (color, gameId, userId) => db.run('UPDATE game_players SET color = ? WHERE game_id = ? AND user_id = ?', [color, gameId, userId]),
 		setVisibility: (priv, hash, gameId) => db.run('UPDATE games SET is_private = ?, room_password = ? WHERE id = ?', [priv ? 1 : 0, hash, gameId]),
-		openRooms: () => db.all("SELECT id FROM games WHERE mode = 'online' AND status = 'waiting' AND is_private = 0 ORDER BY id DESC LIMIT 50"),
+		openRooms: () => db.all("SELECT id FROM games WHERE mode = 'online' AND status = 'waiting' ORDER BY id DESC LIMIT 50"),
 		setOwner: (userId, gameId) => db.run('UPDATE games SET owner_id = ? WHERE id = ?', [userId, gameId]),
 		activate: (seed, gameId) => db.run("UPDATE games SET status = 'active', seed = ?, updated_at = ? WHERE id = ?", [seed, now(), gameId]),
 		deleteGame: (gameId) => db.run('DELETE FROM games WHERE id = ?', [gameId]),
@@ -159,7 +159,7 @@ export function createRooms(db) {
 	const broadcastRoom = (room) => broadcast(room, { t: 'room', room: publicRoom(room) });
 
 	// ---- the open-rooms list --------------------------------------------------
-	// Public rooms that are still waiting for players. Everybody connected is told when the list may have changed
+	// Rooms that are still waiting for players (private ones are marked with a lock; joining them needs the password). Everybody connected is told when the list may have changed
 	// and asks for it again (the list itself is not pushed, so it is always read fresh).
 	let changeTimer = null;
 	function listChanged() {
@@ -175,9 +175,9 @@ export function createRooms(db) {
 		const out = [];
 		for (const { id } of await q.openRooms()) {
 			const room = await roomById(id);
-			if (!room || room.status !== 'waiting' || room.isPrivate || room.members.size === 0) continue;
+			if (!room || room.status !== 'waiting' || room.members.size === 0) continue;
 			const host = room.members.get(room.hostId);
-			out.push({ id: room.id, code: room.code, host: host ? host.name : '?', players: room.members.size, max: MAX_PLAYERS,
+			out.push({ id: room.id, code: room.code, isPrivate: !!room.isPrivate, host: host ? host.name : '?', players: room.members.size, max: MAX_PLAYERS,
 				colors: [...room.members.values()].sort((a, b) => a.seat - b.seat).map((m) => m.color) });
 		}
 		return out;
@@ -314,6 +314,7 @@ export function createRooms(db) {
 					}
 					passwordOk(s.user.id);
 				}
+				if (s.room && s.room !== room) leaveRoom(s); // joining another room from a lobby: leave the old one
 				m = addMember(room, s.user);
 			}
 			await attachAndSend(s, room, m, msg.after);

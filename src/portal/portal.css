@@ -415,14 +415,21 @@ body.online-game #setup { display: none !important; }
 .rooms-side h3 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; }
 .rooms-side ul { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .rooms-hint, .rooms-empty { margin: 0; font-size: 13px; line-height: 150%; }
-.room-item { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 14px; background: var(--gray-dark, #3a3a3a); border: 1px solid transparent; color: var(--white); cursor: pointer; font: inherit; }
-.room-item:hover, .room-item:focus-visible { border-color: var(--green); outline: none; }
+.room-item { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 14px; background: var(--gray-dark, #3a3a3a); }
 .room-top, .room-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.room-top b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.room-who { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.room-who b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lock { flex-shrink: 0; vertical-align: -3px; }
+.lock-open { color: var(--green); }
+.lock-shut { color: var(--orange); }
 .room-code { font: 700 12px Montserrat, sans-serif; letter-spacing: .12em; color: var(--green); }
 .room-bottom { font-size: 12px; }
+.room-bottom .btn-sm { margin-left: auto; }
 .room-dots { display: flex; gap: 3px; }
 .room-dots i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #fff8; }
+.room-pass { display: flex; gap: 6px; }
+.room-pass .code-input { min-width: 0; flex: 1; text-transform: none; letter-spacing: 0; }
+.room-err { margin: 0; font-size: 12px; }
 .lobby-vis { margin: 16px 0; }
 .vis-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .lobby-vis .btn-ghost { align-self: flex-start; }
