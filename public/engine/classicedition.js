@@ -69,9 +69,9 @@ var categories = {
 	3: { en: "Mineral Water", hy: "Հանքային ջուր" },
 	4: { en: "Dairy Products", hy: "Կաթնամթերք" },
 	5: { en: "Telecommunications", hy: "Հեռահաղորդակցություն" },
-	6: { en: "Beer", hy: "Գարեջուր" },
-	7: { en: "Sweets & Chocolate", hy: "Քաղցրավենիք" },
-	8: { en: "Brandy", hy: "Կոնյակ" },
+	6: { en: "Sweets & Chocolate", hy: "Քաղցրավենիք" },
+	7: { en: "Brandy", hy: "Կոնյակ" },
+	8: { en: "Colleges & Universities", hy: "Քոլեջներ և համալսարաններ" },
 	9: { en: "Supermarkets", hy: "Սուպերմարկետներ" },
 	10: { en: "Banks", hy: "Բանկեր" },
 };
@@ -94,19 +94,19 @@ square[12] = new Square("Viva", "$140", "#a855f7", 140, 5, 10, 50, 150, 450, 625
 square[13] = new Square("Team Telecom", "$140", "#a855f7", 140, 5, 10, 50, 150, 450, 625, 750);
 square[14] = new Square("Ucom", "$160", "#a855f7", 160, 5, 12, 60, 180, 500, 700, 900);
 square[15] = new Square("Gyumri Station", "$200", "#FFFFFF", 200, 1);
-square[16] = new Square("Gyumri", "$180", "#eab308", 180, 6, 14, 70, 200, 550, 750, 950);
+square[16] = new Square("Grand Candy", "$180", "#ec4899", 180, 6, 14, 70, 200, 550, 750, 950);
 square[17] = new Square("Community Chest", "FOLLOW INSTRUCTIONS ON TOP CARD", "#FFFFFF");
-square[18] = new Square("Kotayq", "$180", "#eab308", 180, 6, 14, 70, 200, 550, 750, 950);
-square[19] = new Square("Kilikia", "$200", "#eab308", 200, 6, 16, 80, 220, 600, 800, 1000);
+square[18] = new Square("Ani", "$180", "#ec4899", 180, 6, 14, 70, 200, 550, 750, 950);
+square[19] = new Square("Pink Berry", "$200", "#ec4899", 200, 6, 16, 80, 220, 600, 800, 1000);
 square[20] = new Square("Free Parking", "", "#FFFFFF");
-square[21] = new Square("Grand Candy", "$220", "#ec4899", 220, 7, 18, 90, 250, 700, 875, 1050);
+square[21] = new Square("ARARAT", "$220", "#795548", 220, 7, 18, 90, 250, 700, 875, 1050);
 square[22] = new Square("Chance", "FOLLOW INSTRUCTIONS ON TOP CARD", "#FFFFFF");
-square[23] = new Square("Ani", "$220", "#ec4899", 220, 7, 18, 90, 250, 700, 875, 1050);
-square[24] = new Square("Pink Berry", "$240", "#ec4899", 240, 7, 20, 100, 300, 750, 925, 1100);
+square[23] = new Square("NOY", "$220", "#795548", 220, 7, 18, 90, 250, 700, 875, 1050);
+square[24] = new Square("Proshyan", "$240", "#795548", 240, 7, 20, 100, 300, 750, 925, 1100);
 square[25] = new Square("Vanadzor Station", "$200", "#FFFFFF", 200, 1);
-square[26] = new Square("ARARAT", "$260", "#795548", 260, 8, 22, 110, 330, 800, 975, 1150);
-square[27] = new Square("NOY", "$260", "#795548", 260, 8, 22, 110, 330, 800, 975, 1150);
-square[28] = new Square("Proshyan", "$280", "#795548", 280, 8, 24, 120, 360, 850, 1025, 1200);
+square[26] = new Square("American University of Armenia", "$260", "#eab308", 260, 8, 22, 110, 330, 800, 975, 1150);
+square[27] = new Square("Polytechnic", "$260", "#eab308", 260, 8, 22, 110, 330, 800, 975, 1150);
+square[28] = new Square("ACT College", "$280", "#eab308", 280, 8, 24, 120, 360, 850, 1025, 1200);
 square[29] = new Square("Yerevan City", "$300", "#10b981", 300, 9, 26, 130, 390, 900, 1100, 1275);
 square[30] = new Square("Go to Jail", "Go directly to Jail. Do not pass GO. Do not collect $200.", "#FFFFFF");
 square[31] = new Square("SAS", "$300", "#10b981", 300, 9, 26, 130, 390, 900, 1100, 1275);
@@ -151,8 +151,8 @@ chanceCards[7] = new Card("ADVANCE TO THE NEAREST STATION. If UNOWNED, you may b
 chanceCards[8] = new Card("Pay poor tax of $15.", function() { subtractamount(15, 'Chance');});
 chanceCards[9] = new Card("Take a trip to Yerevan Station. If you pass \"GO\" collect $200.", function() { advance(5);});
 chanceCards[10] = new Card("ADVANCE to ACBA Bank.", function() { advance(39);});
-chanceCards[11] = new Card("ADVANCE to Gourmet Dourme. If you pass \"GO\" collect $200.", function() { advance(24);});
+chanceCards[11] = new Card("ADVANCE to Proshyan. If you pass \"GO\" collect $200.", function() { advance(24);});
 chanceCards[12] = new Card("Your building loan matures. Collect $150.", function() { addamount(150, 'Chance');});
 chanceCards[13] = new Card("ADVANCE TO THE NEAREST STATION. If UNOWNED, you may buy it from the Bank. If OWNED, pay owner twice the rental to which they are otherwise entitled.", function() { advanceToNearestRailroad();});
-chanceCards[14] = new Card("ADVANCE to Yeremyan. If you pass \"GO\" collect $200.", function() { advance(11);});
+chanceCards[14] = new Card("ADVANCE to Bonilat. If you pass \"GO\" collect $200.", function() { advance(11);});
 chanceCards[15] = new Card("Go to Jail. Go Directly to Jail. Do not pass \"GO\". Do not collect $200.", function() { gotojail();});
