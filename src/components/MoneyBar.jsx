@@ -13,7 +13,7 @@ export default function MoneyBar() {
 						{[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
 							<tr key={n} id={`moneybarrow${n}`} className="money-bar-row">
 								<td className="moneybararrowcell">
-									<img src="images/arrow.png" id={`p${n}arrow`} className="money-bar-arrow" alt=">" />
+									<img src="images/Monopoly-base-images/arrow.png" id={`p${n}arrow`} className="money-bar-arrow" alt=">" />
 								</td>
 								<td id={`p${n}moneybar`} className="moneybarcell">
 									<div><span id={`p${n}moneyname`}>Player {n}</span>:</div>

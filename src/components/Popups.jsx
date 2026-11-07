@@ -19,7 +19,7 @@ export default function Popups() {
 			<div id="statswrap">
 				<div id="stats">
 					<div style={{ position: 'relative' }}>
-						<img id="statsclose" src="images/close.png" title="Close" alt="x" />
+						<img id="statsclose" src="images/Monopoly-base-images/close.png" title="Close" alt="x" />
 						<div id="statstext" />
 						<div id="statsdrag" />
 					</div>
