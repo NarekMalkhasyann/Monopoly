@@ -15,6 +15,7 @@ function Square(name, pricetext, color, price, groupNumber, baserent, rent1, ren
 	this.rent4 = (rent4 || 0);
 	this.rent5 = (rent5 || 0);
 	this.landcount = 0;
+	this.logo = (typeof logoOf !== "undefined" && logoOf[name]) || null;
 	this.category = (typeof categories !== "undefined" && categories[groupNumber]) || null;
 
 	if (groupNumber === 3 || groupNumber === 4) {
@@ -74,6 +75,34 @@ var categories = {
 	8: { en: "Colleges & Universities", hy: "Քոլեջներ և համալսարաններ" },
 	9: { en: "Supermarkets", hy: "Սուպերմարկետներ" },
 	10: { en: "Banks", hy: "Բանկեր" },
+};
+
+// Logo file (public/images/card-logos/<name>.png, and large/<name>.png for the hover cards) of every brand.
+var logoOf = {
+	"Jermuk": "jermuk",
+	"Bjni": "bjni",
+	"Aparan": "aparan",
+	"Ashtarak Kat": "ashtarak-kat",
+	"Marianna": "mariana",
+	"Bonilat": "bonilat",
+	"Viva": "viva",
+	"Team Telecom": "team-telecom",
+	"Ucom": "ucom",
+	"Grand Candy": "grand-candy",
+	"Ani": "ani",
+	"Pink Berry": "pink-berry",
+	"ARARAT": "ararat",
+	"NOY": "noy",
+	"Proshyan": "proshyan",
+	"American University of Armenia": "armenian-university-of-armenia",
+	"Polytechnic": "polytechnic",
+	"ACT College": "act-college",
+	"Yerevan City": "yerevan-city",
+	"SAS": "sas",
+	"Nor Zovq": "zovq",
+	"Ameriabank": "ameriabank",
+	"Ardshinbank": "ardshinbank",
+	"ACBA Bank": "acba-bank",
 };
 
 var square = [];

@@ -1761,3 +1761,25 @@ td.statscellname[title="Mortgaged"]::after {
 .tk:hover { transform: scale(1.25); z-index: 2; }
 .cell-position-holder .cell-position, #jailpositionholder .cell-position { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .tk { transition: none; } }
+
+/* Brand logos: on the board squares (above the name), in the hover card and in the title deed */
+.cell-logo {
+	position: absolute;
+	z-index: 3;
+	object-fit: contain;
+	pointer-events: none;
+	border-radius: 3px;
+}
+
+.board-top .cell-logo { top: 27px; left: 6px; width: calc(100% - 12px); height: 32px; }
+.board-top .cell-name.has-logo { bottom: 3px; }
+.board-bottom .cell-logo { top: 5px; left: 6px; width: calc(100% - 12px); height: 32px; }
+.board-bottom .cell-name.has-logo { top: 40px; }
+.board-left .cell-logo { top: 5px; left: 8px; width: calc(100% - 41px); height: 26px; }
+.board-right .cell-logo { top: 5px; left: 31px; width: calc(100% - 41px); height: 26px; }
+.board-left .cell-name.has-logo, .board-right .cell-name.has-logo { top: 33px; transform: none; line-height: 1.15; }
+
+.enlarge.has-logo { width: 240px; }
+.enlarge-logo { display: block; width: calc(100% - 28px); height: 120px; margin: 12px auto 0; object-fit: contain; }
+
+#deed-logo { display: block; width: calc(100% - 16px); height: 84px; margin: 0 auto 4px; object-fit: contain; }

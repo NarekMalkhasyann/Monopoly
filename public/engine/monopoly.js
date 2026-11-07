@@ -2238,6 +2238,8 @@ function showdeed(property) {
 			$("#deed-normal").show();
 			document.getElementById("deed-header").style.backgroundColor = sq.color;
 			document.getElementById("deed-name").textContent = sq.name;
+			var deedLogo = document.getElementById("deed-logo");
+			if (sq.logo) { deedLogo.src = "images/card-logos/large/" + sq.logo + ".png"; deedLogo.alt = sq.name; deedLogo.style.display = "block"; } else { deedLogo.style.display = "none"; }
 			document.getElementById("deed-category").textContent = sq.category ? sq.category.en + "\n" + sq.category.hy : "";
 			document.getElementById("deed-baserent").textContent = sq.baserent;
 			document.getElementById("deed-rent1").textContent = sq.rent1;
@@ -2892,9 +2894,17 @@ window.onload = function() {
 		currentCellPositionHolder.className = "cell-position-holder";
 		currentCellPositionHolder.enlargeId = "enlarge" + i;
 
+		if (s.logo) {
+			var currentCellLogo = currentCellAnchor.appendChild(document.createElement("img"));
+			currentCellLogo.className = "cell-logo";
+			currentCellLogo.src = "images/card-logos/" + s.logo + ".png";
+			currentCellLogo.alt = "";
+			currentCellLogo.draggable = false;
+		}
+
 		currentCellName = currentCellAnchor.appendChild(document.createElement("div"));
 		currentCellName.id = "cell" + i + "name";
-		currentCellName.className = "cell-name";
+		currentCellName.className = "cell-name" + (s.logo ? " has-logo" : "");
 		currentCellName.textContent = s.name;
 
 		if (square[i].groupNumber && square[i].groupNumber >= 3) {
@@ -2912,6 +2922,16 @@ window.onload = function() {
 
 		document.getElementById("enlarge" + i + "color").style.backgroundColor = s.color;
 		document.getElementById("enlarge" + i + "name").textContent = s.name;
+		if (s.logo) {
+			var enlargeBox = document.getElementById("enlarge" + i);
+			enlargeBox.classList.add("has-logo");
+			var enlargeLogo = document.createElement("img");
+			enlargeLogo.className = "enlarge-logo";
+			enlargeLogo.alt = s.name;
+			enlargeLogo.loading = "lazy";
+			enlargeLogo.src = "images/card-logos/large/" + s.logo + ".png";
+			enlargeBox.insertBefore(enlargeLogo, document.getElementById("enlarge" + i + "name").previousSibling);
+		}
 		document.getElementById("enlarge" + i + "price").textContent = s.pricetext;
 	}
 
@@ -2946,8 +2966,9 @@ window.onload = function() {
 	}).on("mousemove", function(e) {
 		var element = document.getElementById(this.enlargeId);
 
-		if (e.clientY + 20 > window.innerHeight - 204) {
-			element.style.top = (window.innerHeight - 204) + "px";
+		var enlargeHeight = element.offsetHeight || 204;
+		if (e.clientY + 20 > window.innerHeight - enlargeHeight) {
+			element.style.top = (window.innerHeight - enlargeHeight) + "px";
 		} else {
 			element.style.top = (e.clientY + 20) + "px";
 		}
@@ -2967,8 +2988,9 @@ window.onload = function() {
 
 
 		if (object.classList.contains("propertycellcolor") || object.classList.contains("statscellcolor")) {
-			if (e.clientY + 20 > window.innerHeight - 279) {
-				document.getElementById("deed").style.top = (window.innerHeight - 279) + "px";
+			var deedHeight = document.getElementById("deed").offsetHeight || 279;
+			if (e.clientY + 20 > window.innerHeight - deedHeight) {
+				document.getElementById("deed").style.top = (window.innerHeight - deedHeight) + "px";
 			} else {
 				document.getElementById("deed").style.top = (e.clientY + 20) + "px";
 			}
