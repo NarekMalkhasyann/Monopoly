@@ -555,6 +555,16 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 		},
 		sweep,
 		connections: () => [...sessions].map((s) => s.conn),
+		// A player of an abandoned online game (nobody was there for a while, or it was ended) brings it back: it is "active" again,
+		// with all clicks kept, so everybody can rejoin and play on. Returns false if the game is not an abandoned one of theirs.
+		async resume(id, userId) {
+			if (pending.has(id)) await pending.get(id);
+			const g = await q.gameById(id);
+			if (!g || g.status !== 'abandoned') return false;
+			if (!(await q.members(id)).some((m) => m.user_id === userId)) return false;
+			await db.run("UPDATE games SET status = 'active', updated_at = ? WHERE id = ? AND status = 'abandoned'", [now(), id]);
+			return true;
+		},
 		// An admin ends a running online game for everybody (same result as the host abandoning it). Returns false if there was nothing to end.
 		async adminAbandon(id) {
 			const room = rooms.get(id);

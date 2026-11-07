@@ -36,6 +36,11 @@ export default function History({ detailId, replay }) {
 		return api('GET', `/games?${qs}`);
 	}, [status, mode, from, to, sort, advQ]);
 
+	// An abandoned online game comes back as a running one, and its player opens it again.
+	const resume = async (id) => {
+		try { await api('POST', `/games/${id}/resume`); navigate(`/play/${id}`); } catch (e) { setError(e.message); }
+	};
+
 	const advCount = countAdvanced(adv) + (from ? 1 : 0) + (to ? 1 : 0); // what the badge on "Advanced" counts
 	const filtered = !!(status || mode || advCount || sort !== 'updated:desc');
 	const clear = () => { setStatus(''); setMode(''); setFrom(''); setTo(''); setSort('updated:desc'); setAdv(NO_ADVANCED); };
@@ -109,6 +114,7 @@ export default function History({ detailId, replay }) {
 						</div>
 						<div className="row-actions">
 							{g.status === 'active' && <button className="btn-primary btn-sm" onClick={() => navigate(`/play/${g.id}`)}>{g.mode === 'online' ? 'Rejoin' : 'Resume'}</button>}
+							{g.status === 'abandoned' && g.mode === 'online' && <button className="btn-primary btn-sm" onClick={() => resume(g.id)}>Resume</button>}
 							<button className="btn-ghost" onClick={() => navigate(`/history/${g.id}`)}>Details</button>
 							<button className="btn-ghost danger" onClick={() => setToDelete(g.id)} aria-label={`Delete game ${g.id}`}>Delete</button>
 						</div>

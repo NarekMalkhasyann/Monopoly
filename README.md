@@ -143,6 +143,7 @@ Players sign in (register / login), and every local game is saved to their accou
 | GET / DELETE | `/api/games/:id` | game with checkpoint and log / delete |
 | PUT | `/api/games/:id/checkpoint` | save checkpoint + log lines |
 | POST | `/api/games/:id/finish` | save result and final ranking |
+| POST | `/api/games/:id/resume` | a player brings an abandoned online game back to "active" |
 
 ## 🌐 Online Play (Milestones 2 and 3)
 
