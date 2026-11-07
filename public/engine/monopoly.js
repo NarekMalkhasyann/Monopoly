@@ -2238,8 +2238,6 @@ function showdeed(property) {
 			$("#deed-normal").show();
 			document.getElementById("deed-header").style.backgroundColor = sq.color;
 			document.getElementById("deed-name").textContent = sq.name;
-			var deedLogo = document.getElementById("deed-logo");
-			if (sq.logo) { deedLogo.src = "images/card-logos/large/" + sq.logo + ".png"; deedLogo.alt = sq.name; deedLogo.style.display = "block"; } else { deedLogo.style.display = "none"; }
 			document.getElementById("deed-category").textContent = sq.category ? sq.category.en + "\n" + sq.category.hy : "";
 			document.getElementById("deed-baserent").textContent = sq.baserent;
 			document.getElementById("deed-rent1").textContent = sq.rent1;

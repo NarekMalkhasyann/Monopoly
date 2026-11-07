@@ -1780,5 +1780,3 @@ td.statscellname[title="Mortgaged"]::after {
 
 .enlarge.has-logo { width: 240px; }
 .enlarge-logo { display: block; width: calc(100% - 28px); height: 120px; margin: 12px auto 0; object-fit: contain; }
-
-#deed-logo { display: block; width: calc(100% - 16px); height: 84px; margin: 0 auto 4px; object-fit: contain; }

@@ -11,7 +11,6 @@ export default function Deed() {
 					<div id="deed-name" />
 					<div id="deed-category" />
 				</div>
-				<img id="deed-logo" alt="" style={{ display: 'none' }} />
 				<table id="deed-table">
 					<tbody>
 						<tr>
