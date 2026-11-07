@@ -6,7 +6,7 @@
 import { useSyncExternalStore } from 'react';
 import { getToken, API_BASE } from './api.js';
 
-let state = { conn: 'closed', room: null, you: null, error: '', left: false };
+let state = { conn: 'closed', room: null, you: null, error: '', left: false, kicked: '' };
 const listeners = new Set();
 const actionListeners = new Set();
 const roomsListeners = new Set();
@@ -42,6 +42,9 @@ function handle(msg) {
 			break;
 		case 'act':
 			deliver(msg);
+			break;
+		case 'kicked':
+			set({ room: null, you: null, left: true, kicked: msg.message || 'You were removed from the room.' });
 			break;
 		case 'left':
 			set({ room: null, you: null, left: true });
@@ -113,6 +116,8 @@ function request(msg) {
 }
 export const createRoom = () => request({ t: 'create' });
 export const joinByCode = (code, password) => request({ t: 'join', code, ...(password ? { password } : {}) });
+export const kickPlayer = (userId) => send({ t: 'kick', userId });
+export const clearKicked = () => set({ kicked: '' });
 export const setVisibility = (isPrivate, password) => send({ t: 'visibility', private: !!isPrivate, password: password || '' });
 // The open-rooms list: calls fn when the server says it may have changed (keeps the socket open while watching).
 export function watchRooms(fn) {

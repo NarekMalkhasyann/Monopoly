@@ -56,6 +56,7 @@ export function createRooms(db) {
 		gameById: (id) => db.get("SELECT * FROM games WHERE id = ? AND mode = 'online'", [id]),
 		members: (gameId) => db.all('SELECT seat, name, color, user_id FROM game_players WHERE game_id = ? AND user_id IS NOT NULL ORDER BY seat', [gameId]),
 		insertMember: (gameId, seat, name, color, userId) => db.run('INSERT INTO game_players (game_id, seat, name, color, is_ai, user_id) VALUES (?, ?, ?, ?, 0, ?)', [gameId, seat, name, color, userId]),
+		waitingRoomsOf: (userId) => db.all("SELECT g.id FROM games g JOIN game_players p ON p.game_id = g.id WHERE g.mode = 'online' AND g.status = 'waiting' AND p.user_id = ?", [userId]),
 		deleteMember: (gameId, userId) => db.run('DELETE FROM game_players WHERE game_id = ? AND user_id = ?', [gameId, userId]),
 		setSeat: (seat, gameId, userId) => db.run('UPDATE game_players SET seat = ? WHERE game_id = ? AND user_id = ?', [seat, gameId, userId]),
 		setColor: (color, gameId, userId) => db.run('UPDATE game_players SET color = ? WHERE game_id = ? AND user_id = ?', [color, gameId, userId]),
@@ -91,13 +92,36 @@ export function createRooms(db) {
 	const sessions = new Set(); // every open socket {conn, user, room}
 
 	const send = (conn, msg) => { try { conn.send(JSON.stringify(msg)); } catch { /* socket gone */ } };
-	const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code ? { code } : {}) });
+	// A forced "Pass" (auction clock 15 s) needs 14 s without any click, a forced "End turn" (turn clock 30 s) needs 29 s.
+const FORCE_AFTER_MS = (id) => Number(process.env.FORCE_PASS_AFTER_MS) || (id === 'autoend' ? 29_000 : 14_000);
+const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code ? { code } : {}) });
 
 	// Wrong room passwords: 5 misses lock that account out of password rooms for 30 seconds.
 	const misses = new Map(); // userId -> { n, until }
 	const lockedFor = (id) => { const x = misses.get(id); return x && x.until > Date.now() ? Math.ceil((x.until - Date.now()) / 1000) : 0; };
 	const failedPassword = (id) => { const x = misses.get(id) || { n: 0, until: 0 }; x.n += 1; if (x.n >= 5) { x.n = 0; x.until = Date.now() + 30_000; } misses.set(id, x); };
 	const passwordOk = (id) => misses.delete(id);
+
+	// Shared by "autopass" and "autoend": a present player acts for one who is away.
+	function relayFor(s, msg, id) {
+		const room = s.room;
+		if (!room || room.status !== 'active') return;
+		const target = [...room.members.values()].find((m) => m.seat === Number(msg.seat));
+		if (!target || target.userId === s.user.id) return;
+		// A player whose browser is connected acts for themselves. If they are connected but not acting (they went
+		// to the menu, the tab sleeps...), another player may force it, but only when nothing at all has been
+		// pressed in this game for a while, so nobody can act for a player who is still thinking.
+		if (target.sessions.size > 0 && !(msg.force && Date.now() - (room.lastClickAt || 0) >= FORCE_AFTER_MS(id))) return;
+		const key = `${id}|${target.seat}|${Number(msg.turn) || 0}`;
+		if (room.lastRelay && room.lastRelay.key === key && Date.now() - room.lastRelay.at < 4000) return;
+		room.lastRelay = { key, at: Date.now() };
+		const member = room.members.get(s.user.id);
+		const action = { seat: member.seat, a: { id, turn: Number(msg.turn) || 0, v: target.seat } };
+		room.lastClickAt = Date.now();
+		const seq = ++room.seq;
+		written(room, async () => { await q.insertAction(room.id, seq, action.a.turn, 'click', JSON.stringify(action)); await q.bump(room.id); });
+		broadcast(room, { t: 'act', seq, ...action });
+	}
 
 	async function newCode() {
 		for (let i = 0; i < 50; i++) {
@@ -124,6 +148,7 @@ export function createRooms(db) {
 				id: row.id, code: row.room_code, hostId: row.owner_id, status: row.status, seed: row.seed,
 				isPrivate: !!row.is_private, pwHash: row.room_password || null,
 				seq: await q.lastSeq(row.id), turnCount: row.turn_count || 0, writes: Promise.resolve(),
+				banned: new Set(), // users the host removed: they cannot come back to this room
 				members: new Map(), // userId -> { seat, name, color, sessions:Set }
 			};
 			for (const m of await q.members(row.id)) {
@@ -171,11 +196,11 @@ export function createRooms(db) {
 		}, 150);
 		changeTimer.unref();
 	}
-	async function listOpen() {
+	async function listOpen(userId) {
 		const out = [];
 		for (const { id } of await q.openRooms()) {
 			const room = await roomById(id);
-			if (!room || room.status !== 'waiting' || room.members.size === 0) continue;
+			if (!room || room.status !== 'waiting' || room.members.size === 0 || room.members.has(userId)) continue; // not the rooms you are already in (on any device)
 			const host = room.members.get(room.hostId);
 			out.push({ id: room.id, code: room.code, isPrivate: !!room.isPrivate, host: host ? host.name : '?', players: room.members.size, max: MAX_PLAYERS,
 				colors: [...room.members.values()].sort((a, b) => a.seat - b.seat).map((m) => m.color) });
@@ -285,8 +310,26 @@ export function createRooms(db) {
 		} finally { s.hold = null; }
 	}
 
+	// One account, one waiting room: the same account on a second device cannot open or enter a different room
+	// while it already has one (the first device's room). Returns that room, or null.
+	async function otherWaitingRoom(s, except) {
+		for (const { id } of await q.waitingRoomsOf(s.user.id)) {
+			if (s.room && s.room.id === id) continue; // this very connection: it leaves that room itself when it switches
+			if (except && except.id === id) continue;
+			const room = await roomById(id);
+			const m = room && room.status === 'waiting' ? room.members.get(s.user.id) : null;
+			if (!m) continue;
+			if ([...m.sessions].some((x) => x !== s)) return room; // another device is in it right now
+			removeMember(room, s.user.id); // nobody is in it any more (the tab was closed): the old seat just goes
+		}
+		return null;
+	}
+	const busyMessage = (room) => `Your account already has an open room (${room.code}), probably on another device. Leave it there first.`;
+
 	const handlers = {
 		async create(s) {
+			const other = await otherWaitingRoom(s);
+			if (other) return err(s.conn, busyMessage(other), 'busy');
 			if (s.room) leaveRoom(s);
 			const code = await newCode();
 			const id = await q.insertGame(s.user.id, code);
@@ -300,9 +343,15 @@ export function createRooms(db) {
 			const room = msg.code ? await roomByCode(msg.code) : await roomById(msg.gameId);
 			if (!room) return err(s.conn, msg.code ? 'No room with this code' : 'This online game is not available');
 			let m = room.members.get(s.user.id);
+			// Entering by code a room this account is already in while another of its devices is inside = a second device. A returning
+			// player uses the game (history / refresh) instead, which stays allowed.
+			if (m && msg.code && room.status === 'waiting' && [...m.sessions].some((x) => x !== s)) return err(s.conn, 'Your account is already in this room, probably on another device.', 'busy');
 			if (!m) {
 				if (!msg.code) return err(s.conn, 'You are not a player in this game');
 				if (room.status !== 'waiting') return err(s.conn, 'This game has already started');
+				if (room.banned && room.banned.has(s.user.id)) return err(s.conn, 'The host removed you from this room.', 'kicked');
+				const other = await otherWaitingRoom(s, room);
+				if (other) return err(s.conn, busyMessage(other), 'busy');
 				if (room.members.size >= MAX_PLAYERS) return err(s.conn, 'This room is full');
 				if (room.isPrivate) {
 					const wait = lockedFor(s.user.id);
@@ -331,6 +380,22 @@ export function createRooms(db) {
 			if ([...room.members.values()].some((m) => m.userId !== s.user.id && m.color === color)) return err(s.conn, 'That colour is taken');
 			room.members.get(s.user.id).color = color;
 			written(room, () => q.setColor(color, room.id, s.user.id));
+			broadcastRoom(room);
+		},
+
+		// The host removes a player from a waiting room. The player is told, goes back to the Play page and cannot
+		// re-enter this room.
+		kick(s, msg) {
+			const room = s.room;
+			if (!room || room.status !== 'waiting') return;
+			if (room.hostId !== s.user.id) return err(s.conn, 'Only the host can remove players');
+			const id = Number(msg.userId);
+			const m = room.members.get(id);
+			if (!m || id === room.hostId) return err(s.conn, 'That player is not in this room');
+			for (const t of m.sessions) { t.room = null; try { t.conn.send(JSON.stringify({ t: 'kicked', message: 'The host removed you from the room.' })); } catch { /* gone */ } }
+			m.sessions.clear();
+			room.banned.add(id);
+			removeMember(room, id);
 			broadcastRoom(room);
 		},
 
@@ -377,6 +442,7 @@ export function createRooms(db) {
 			if (!RELAYED.has(a.id)) return err(s.conn, 'Unknown action');
 			const member = room.members.get(s.user.id);
 			const action = { seat: member.seat, a: cleanPayload(a) };
+			room.lastClickAt = Date.now();
 			const seq = ++room.seq;
 			written(room, async () => { await q.insertAction(room.id, seq, action.a.turn, 'click', JSON.stringify(action)); await q.bump(room.id); });
 			broadcast(room, { t: 'act', seq, ...action });
@@ -397,6 +463,11 @@ export function createRooms(db) {
 			written(room, async () => { await q.insertAction(room.id, seq, action.a.turn, 'click', JSON.stringify(action)); await q.bump(room.id); });
 			broadcast(room, { t: 'act', seq, ...action });
 		},
+
+		// The auction timer (autopass) or the turn timer (autoend) of a player who is not there ran out: another player
+		// presses "Pass" / "End turn" for them (their own browser cannot). Every connected browser may send this, so repeats are dropped.
+		autopass(s, msg) { return relayFor(s, msg, 'autopass'); },
+		autoend(s, msg) { return relayFor(s, msg, 'autoend'); },
 
 		// The host ends a running game without a winner.
 		abandon(s) {
@@ -489,6 +560,16 @@ export function createRooms(db) {
 		},
 		sweep,
 		connections: () => [...sessions].map((s) => s.conn),
+		// A player of an abandoned online game (nobody was there for a while, or it was ended) brings it back: it is "active" again,
+		// with all clicks kept, so everybody can rejoin and play on. Returns false if the game is not an abandoned one of theirs.
+		async resume(id, userId) {
+			if (pending.has(id)) await pending.get(id);
+			const g = await q.gameById(id);
+			if (!g || g.status !== 'abandoned') return false;
+			if (!(await q.members(id)).some((m) => m.user_id === userId)) return false;
+			await db.run("UPDATE games SET status = 'active', updated_at = ? WHERE id = ? AND status = 'abandoned'", [now(), id]);
+			return true;
+		},
 		// An admin ends a running online game for everybody (same result as the host abandoning it). Returns false if there was nothing to end.
 		async adminAbandon(id) {
 			const room = rooms.get(id);

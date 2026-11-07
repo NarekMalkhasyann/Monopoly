@@ -1,7 +1,10 @@
 // Run: node server/test.js
 import assert from 'node:assert/strict';
+import { randomBytes } from 'node:crypto';
 import { openDb } from './db.js';
 import { createApp } from './app.js';
+
+const PW = randomBytes(9).toString('hex'); // test accounts' password: random on every run, nothing hard-coded
 
 process.env.ALLOWED_ORIGIN = 'https://game.example.am/';
 process.env.ADMIN_EMAILS = ' Boss@x.am , nobody@x.am ';
@@ -16,12 +19,12 @@ const call = async (method, path, body, token) => {
 
 let r = await call('POST', '/api/auth/register', { name: 'Anna', email: 'a@x.am', password: 'short' });
 assert.equal(r.status, 400);
-r = await call('POST', '/api/auth/register', { name: 'Anna', email: 'a@x.am', password: 'password1' });
+r = await call('POST', '/api/auth/register', { name: 'Anna', email: 'a@x.am', password: PW });
 assert.equal(r.status, 201);
 const tokenA = r.body.token;
-assert.equal((await call('POST', '/api/auth/register', { name: 'Anna', email: 'A@x.am', password: 'password1' })).status, 409);
+assert.equal((await call('POST', '/api/auth/register', { name: 'Anna', email: 'A@x.am', password: PW })).status, 409);
 assert.equal((await call('POST', '/api/auth/login', { email: 'a@x.am', password: 'wrongwrong' })).status, 401);
-r = await call('POST', '/api/auth/login', { email: 'a@x.am', password: 'password1' });
+r = await call('POST', '/api/auth/login', { email: 'a@x.am', password: PW });
 assert.equal(r.status, 200);
 assert.equal((await call('GET', '/api/me', null, r.body.token)).body.user.email, 'a@x.am');
 assert.equal((await call('GET', '/api/me')).status, 401);

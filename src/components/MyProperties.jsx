@@ -26,7 +26,7 @@ const signature = (list) => JSON.stringify(list);
 function moveDeed(e) { // the engine only follows the mouse over its own lists; this panel is at the right edge, so the card goes to the left
 	const d = document.getElementById('deed');
 	if (!d) return;
-	d.style.top = `${Math.min(e.clientY + 20, window.innerHeight - 279)}px`;
+	d.style.top = `${Math.min(e.clientY + 20, window.innerHeight - (d.offsetHeight || 279))}px`;
 	d.style.left = `${Math.max(8, e.clientX - 250)}px`;
 }
 

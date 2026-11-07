@@ -167,6 +167,9 @@ function share(id, extra) {
 
 function onClickCapture(e) {
 	if (!started || bypass || !(e.target instanceof Element)) return;
+	// The game is over (one player left): the winner's "OK" only closes the pop-up on this screen. There is no
+	// turn any more (after the last opponent was removed it is "the bank's turn"), so nothing is shared.
+	if (win.pcount <= 1) return;
 	const holder = e.target.closest('[id]');
 	let id = holder && holder.id;
 	if (!id) return;
@@ -218,7 +221,7 @@ function tick() {
 	}
 
 	const id = m.a.id;
-	const direct = id === 'proposetradebutton' || id === 'forfeit' || id === 'bankunmortgage';
+	const direct = id === 'proposetradebutton' || id === 'forfeit' || id === 'autopass' || id === 'autoend' || id === 'bankunmortgage';
 	const manage = MANAGE.has(id);
 
 	// Before pressing a house / mortgage button, tick the same property as the sender did.
@@ -277,6 +280,24 @@ function tick() {
 			const idx = who ? byName(who.name) : 0;
 			if (idx && idx === win.turn) { win.game.forfeit(); tradeShared = false; }
 		}
+		else if (id === 'autopass') {
+			// "Pass" pressed for a bidder who is not connected. Only if that player is still the bidder (several browsers
+			// send this at the same moment; the first one counts, the others find the auction moved on).
+			const room = getOnline().room;
+			const who = room && room.players.find((x) => x.seat === m.a.v);
+			const idx = who ? byName(who.name) : 0;
+			const btn = document.getElementById('auctionpass');
+			if (idx && btn && !btn.disabled && win.game.getCurrentBidder() === idx) btn.click(); // (the board may be hidden behind the menu: no visibility check)
+		}
+		else if (id === 'autoend') {
+			// "End turn" pressed for a player who is away. Only if it is still that player's turn and the button is there
+			// (several browsers send this at the same moment; the first one counts).
+			const room = getOnline().room;
+			const who = room && room.players.find((x) => x.seat === m.a.v);
+			const idx = who ? byName(who.name) : 0;
+			const btn = document.getElementById('nextbutton');
+			if (idx && idx === win.turn && btn && !btn.disabled && /end turn/i.test(btn.value)) btn.click();
+		}
 		else if (id === 'bankunmortgage') win.game.bankruptcyUnmortgageSquare(m.a.v);
 		else {
 			if (id === 'auctionbid') el.parentElement.parentElement.querySelector('#bid').value = String(m.a.v);
@@ -295,13 +316,14 @@ function restoreFast() {
 
 function refreshInfo() {
 	if (!started || !win.player || !win.player[win.turn]) return;
-	const myTurn = win.turn === myIndex;
-	document.body.classList.toggle('online-wait', !myTurn);
+	const over = win.pcount <= 1;
+	const myTurn = !over && win.turn === myIndex;
+	document.body.classList.toggle('online-wait', !myTurn && !over);
 	// Something is waiting for me: my turn, my bid, or a trade offer made to me.
 	let waitingFor = win.turn;
 	if (document.getElementById('currentbidder') && isVisible(document.getElementById('currentbidder'))) waitingFor = win.game.getCurrentBidder();
 	else if (tradeShared) waitingFor = byName(text('trade-leftp-name'));
-	setInfo({ myTurn, turnName: win.player[win.turn].name, waitingMe: waitingFor === myIndex, waitingName: win.player[waitingFor] ? win.player[waitingFor].name : '',
+	setInfo({ over, myTurn, turnName: over ? '' : win.player[win.turn].name, waitingMe: !over && waitingFor === myIndex, waitingName: win.player[waitingFor] ? win.player[waitingFor].name : '',
 		turnIndex: win.turn, players: win.pcount });
 }
 
@@ -411,19 +433,44 @@ export const isReplaying = () => queue.length > 0;
 
 // The turn timer ran out: end the turn for the player, exactly as if they had pressed "End turn".
 // Online, only the player whose turn it is sends it (it goes through the server like any click).
+let autoEndTry = { key: '', at: 0 };
 export function autoEndTurn() {
 	if (started) {
-		if (win.turn === myIndex && queue.length === 0) share('nextbutton', {});
+		if (queue.length > 0) return;
+		if (win.turn === myIndex) { share('nextbutton', {}); return; }
+		// The player whose turn it is closed the game / lost the connection: their browser cannot press "End turn", so a
+		// present player does. If they are connected but do nothing (menu, sleeping tab), the second try, three seconds
+		// later, forces it (the server only allows that after a long quiet time).
+		const room = getOnline().room;
+		const p = room && win.player[win.turn] && room.players.find((x) => x.name === win.player[win.turn].name);
+		if (!p) return;
+		const tryKey = `${win.turn}`;
+		const again = autoEndTry.key === tryKey && Date.now() - autoEndTry.at < 20000;
+		autoEndTry = { key: tryKey, at: Date.now() };
+		if (!p.online || again) send({ t: 'autoend', seat: p.seat, turn: win.turn, force: p.online }).catch(() => {});
 		return;
 	}
 	const el = document.getElementById('nextbutton');
 	if (el && !el.disabled) el.click();
 }
+let autoPassTry = { key: '', at: 0 };
 // The auction timer ran out: press "Pass" for the bidder, exactly as if they had pressed it.
-// Online, only the bidder's own browser sends it.
+// Online, the bidder's own browser sends it; if the bidder is not connected, any other connected player does it for them.
 export function autoPass() {
 	if (started) {
-		if (win.game.getCurrentBidder() === myIndex && queue.length === 0) share('auctionpass', {});
+		const bidder = win.game.getCurrentBidder();
+		if (queue.length > 0) return;
+		if (bidder === myIndex) { share('auctionpass', {}); return; }
+		// The bidder closed the game / lost the connection: their browser cannot press "Pass", so a present player does.
+		const room = getOnline().room;
+		const p = room && win.player[bidder] && room.players.find((x) => x.name === win.player[bidder].name);
+		if (!p) return;
+		// A bidder who is still connected but does not act (they went to the menu, the tab sleeps...) gets the same
+		// treatment on the second try, three seconds later: by then their own browser had its chance.
+		const tryKey = `${bidder}|${win.turn}|${text('highestbid')}`;
+		const again = autoPassTry.key === tryKey && Date.now() - autoPassTry.at < 20000;
+		autoPassTry = { key: tryKey, at: Date.now() };
+		if (!p.online || again) send({ t: 'autopass', seat: p.seat, turn: win.turn, force: p.online }).catch(() => {});
 		return;
 	}
 	const el = document.getElementById('auctionpass');

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
-import { createRoom } from '../online.js';
+import { createRoom, useOnline, clearKicked } from '../online.js';
 import { navigate } from '../router.jsx';
 import { fmtDate } from './format.js';
 import PlayerDots from './PlayerDots.jsx';
@@ -11,6 +11,7 @@ export default function Home({ user }) {
 	const [error, setError] = useState('');
 	const [code, setCode] = useState('');
 	const [busy, setBusy] = useState(false);
+	const { kicked } = useOnline();
 
 	useEffect(() => {
 		Promise.all([
@@ -39,16 +40,8 @@ export default function Home({ user }) {
 		if (c) navigate(`/join/${encodeURIComponent(c.toUpperCase())}`);
 	};
 
-	const today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
-
 	return (
 		<>
-			<section className="welcome">
-				<p className="muted">{today}</p>
-				<h2>Welcome back, {user.name}!</h2>
-				<p className="muted">Start a new game or pick up where you left off. Every game is saved to your history.</p>
-			</section>
-
 			<section className="stats">
 				<div className="stat-card"><h3>In progress</h3><p className="num">{counts.active}</p></div>
 				<div className="stat-card"><h3>Finished</h3><p className="num">{counts.finished}</p></div>
@@ -56,6 +49,7 @@ export default function Home({ user }) {
 			</section>
 
 			<h2 className="h2-sm">Start a game</h2>
+			{kicked && <p className="notice-kicked" role="alert">{kicked} <button className="link-btn" onClick={clearKicked}>Dismiss</button></p>}
 			{error && <p className="auth-error" role="alert">{error}</p>}
 			<section className="mode-grid">
 				<div className="card">

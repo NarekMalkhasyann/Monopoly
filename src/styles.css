@@ -1050,6 +1050,17 @@ a.statscellcolor {
 	font-weight: 700;
 }
 
+#deed-category {
+	margin-top: 4px;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.5px;
+	text-transform: none;
+	white-space: pre-line;
+	line-height: 1.35;
+	opacity: 0.85;
+}
+
 #deed-table {
 	margin: 8px auto;
 	width: calc(100% - 16px);
@@ -1742,3 +1753,30 @@ td.statscellname[title="Mortgaged"]::after {
 .mp-mort { opacity: .5; text-decoration: line-through; }
 .mp-empty { color: var(--gray); font-size: 11px; padding: 2px 4px; }
 @media (max-width: 900px) { #myprops { max-height: none; z-index: 1; margin-top: 12px; } }
+
+/* Player pieces: the engine's own are hidden, BoardTokens draws them and moves them square by square */
+#stage-inner { position: relative; }
+#token-layer { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 6; pointer-events: none; }
+.tk { position: absolute; width: 24px; height: 24px; border-radius: 50%; box-sizing: border-box; border: 1.5px solid var(--white); box-shadow: 0 2px 4px rgba(0, 0, 0, .5); pointer-events: auto; transition: left .11s linear, top .11s linear, transform .15s ease; }
+.tk:hover { transform: scale(1.25); z-index: 2; }
+.cell-position-holder .cell-position, #jailpositionholder .cell-position { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { .tk { transition: none; } }
+
+/* Brand logos: on the board squares (above the name), in the hover card and in the title deed */
+.cell-logo {
+	position: absolute;
+	z-index: 3;
+	object-fit: contain;
+	pointer-events: none;
+	border-radius: 3px;
+}
+
+/* The logo replaces the name: it is centred in the part of the square next to the colour bar (22 px) */
+.board-top .cell-logo { top: 22px; left: 6px; width: calc(100% - 12px); height: calc(100% - 22px); padding: 8px 0; box-sizing: border-box; }
+.board-bottom .cell-logo { top: 0; left: 6px; width: calc(100% - 12px); height: calc(100% - 22px); padding: 8px 0; box-sizing: border-box; }
+.board-left .cell-logo { top: 0; left: 0; width: calc(100% - 22px); height: 100%; padding: 8px 7px; box-sizing: border-box; }
+.board-right .cell-logo { top: 0; left: 22px; width: calc(100% - 22px); height: 100%; padding: 8px 7px; box-sizing: border-box; }
+.cell-name.has-logo { display: none; }
+
+.enlarge.has-logo { width: 240px; }
+.enlarge-logo { display: block; width: calc(100% - 28px); height: 120px; margin: 12px auto 0; object-fit: contain; }

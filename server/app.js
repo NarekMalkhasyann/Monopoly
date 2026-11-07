@@ -294,8 +294,8 @@ export function createApp(db, { secret, staticDir } = {}) {
 		}
 		if (path.startsWith('/api/admin/')) return adminRoute(req, method, path, url);
 		if (method === 'GET' && path === '/api/rooms') {
-			await authUser(req);
-			return [200, { rooms: await rooms.listOpen() }];
+			const me = await authUser(req);
+			return [200, { rooms: await rooms.listOpen(me.id) }];
 		}
 		if (method === 'GET' && path === '/api/health') {
 			await db.get('SELECT 1 AS ok'); // also proves the database answers
@@ -341,6 +341,11 @@ export function createApp(db, { secret, staticDir } = {}) {
 				await db.run('DELETE FROM games WHERE id = ? AND owner_id = ?', [g.id, user.id]);
 				return [200, { ok: true }];
 			}
+		}
+		if (method === 'POST' && (m = /^\/api\/games\/(\d+)\/resume$/.exec(path))) {
+			const user = await authUser(req);
+			if (!(await rooms.resume(Number(m[1]), user.id))) throw new HttpError(409, 'Only a player of an abandoned online game can bring it back');
+			return [200, { ok: true }];
 		}
 		if (method === 'PUT' && (m = /^\/api\/games\/(\d+)\/checkpoint$/.exec(path))) {
 			const user = await authUser(req);

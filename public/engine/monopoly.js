@@ -1469,7 +1469,7 @@ function updateDice() {
 			element0 = element0.appendChild(document.createElement("img"));
 		}
 
-		element0.src = "images/Die_" + die0 + ".png";
+		element0.src = "images/Monopoly-base-images/Die_" + die0 + ".png";
 		element0.alt = die0;
 
 		if (element1.firstChild) {
@@ -1478,7 +1478,7 @@ function updateDice() {
 			element1 = element1.appendChild(document.createElement("img"));
 		}
 
-		element1.src = "images/Die_" + die1 + ".png";
+		element1.src = "images/Monopoly-base-images/Die_" + die1 + ".png";
 		element1.alt = die0;
 	} else {
 		document.getElementById("die0").textContent = die0;
@@ -1527,10 +1527,10 @@ function updateOwned() {
 			housetext = "";
 			if (sq.house >= 1 && sq.house <= 4) {
 				for (var x = 1; x <= sq.house; x++) {
-					housetext += "<img src='images/house.png' alt='' title='House' class='house' />";
+					housetext += "<img src='images/Monopoly-base-images/house.png' alt='' title='House' class='house' />";
 				}
 			} else if (sq.hotel) {
-				housetext += "<img src='images/hotel.png' alt='' title='Hotel' class='hotel' />";
+				housetext += "<img src='images/Monopoly-base-images/hotel.png' alt='' title='Hotel' class='hotel' />";
 			}
 
 			if (HTML === "") {
@@ -1624,7 +1624,7 @@ function updateOption() {
 		}
 
 		$("#buildings").show();
-		document.getElementById("buildings").innerHTML = "<img src='images/house.png' alt='' title='House' class='house' />:&nbsp;" + housesum + "&nbsp;&nbsp;<img src='images/hotel.png' alt='' title='Hotel' class='hotel' />:&nbsp;" + hotelsum;
+		document.getElementById("buildings").innerHTML = "<img src='images/Monopoly-base-images/house.png' alt='' title='House' class='house' />:&nbsp;" + housesum + "&nbsp;&nbsp;<img src='images/Monopoly-base-images/hotel.png' alt='' title='Hotel' class='hotel' />:&nbsp;" + hotelsum;
 
 		return;
 	}
@@ -1769,7 +1769,7 @@ function chanceCommunityChest() {
 			communityChestCards.deck.splice(communityChestCards.index, 1);
 		}
 
-		popup("<img src='images/community_chest_icon.png' style='height: 50px; width: 53px; float: left; margin: 8px 8px 8px 0px;' /><div style='font-weight: bold; font-size: 16px; '>Community Chest:</div><div style='text-align: justify;'>" + communityChestCards[communityChestIndex].text + "</div>", function() {
+		popup("<img src='images/Monopoly-base-images/community_chest_icon.png' style='height: 50px; width: 53px; float: left; margin: 8px 8px 8px 0px;' /><div style='font-weight: bold; font-size: 16px; '>Community Chest:</div><div style='text-align: justify;'>" + communityChestCards[communityChestIndex].text + "</div>", function() {
 			communityChestAction(communityChestIndex);
 		});
 
@@ -1788,7 +1788,7 @@ function chanceCommunityChest() {
 			chanceCards.deck.splice(chanceCards.index, 1);
 		}
 
-		popup("<img src='images/chance_icon.png' style='height: 50px; width: 26px; float: left; margin: 8px 8px 8px 0px;' /><div style='font-weight: bold; font-size: 16px; '>Chance:</div><div style='text-align: justify;'>" + chanceCards[chanceIndex].text + "</div>", function() {
+		popup("<img src='images/Monopoly-base-images/chance_icon.png' style='height: 50px; width: 26px; float: left; margin: 8px 8px 8px 0px;' /><div style='font-weight: bold; font-size: 16px; '>Chance:</div><div style='text-align: justify;'>" + chanceCards[chanceIndex].text + "</div>", function() {
 			chanceAction(chanceIndex);
 		});
 
@@ -2170,9 +2170,9 @@ function showStats() {
 				}
 
 				if (sq.house == 5) {
-					housetext += "<span style='float: right; font-weight: bold;'>1&nbsp;x&nbsp;<img src='images/hotel.png' alt='' title='Hotel' class='hotel' style='float: none;' /></span>";
+					housetext += "<span style='float: right; font-weight: bold;'>1&nbsp;x&nbsp;<img src='images/Monopoly-base-images/hotel.png' alt='' title='Hotel' class='hotel' style='float: none;' /></span>";
 				} else if (sq.house > 0 && sq.house < 5) {
-					housetext += "<span style='float: right; font-weight: bold;'>" + sq.house + "&nbsp;x&nbsp;<img src='images/house.png' alt='' title='House' class='house' style='float: none;' /></span>";
+					housetext += "<span style='float: right; font-weight: bold;'>" + sq.house + "&nbsp;x&nbsp;<img src='images/Monopoly-base-images/house.png' alt='' title='House' class='house' style='float: none;' /></span>";
 				}
 
 				HTML += "<tr><td class='statscellcolor' style='background: " + sq.color + ";";
@@ -2238,6 +2238,7 @@ function showdeed(property) {
 			$("#deed-normal").show();
 			document.getElementById("deed-header").style.backgroundColor = sq.color;
 			document.getElementById("deed-name").textContent = sq.name;
+			document.getElementById("deed-category").textContent = sq.category ? sq.category.en + "\n" + sq.category.hy : "";
 			document.getElementById("deed-baserent").textContent = sq.baserent;
 			document.getElementById("deed-rent1").textContent = sq.rent1;
 			document.getElementById("deed-rent2").textContent = sq.rent2;
@@ -2389,14 +2390,14 @@ function land(increasedRent) {
 				rent *= 2;
 			}
 
-		} else if (p.position === 12) {
+		} else if (s.groupNumber === 2 && p.position === 12) {
 			if (increasedRent || square[28].owner == s.owner) {
 				rent = (die1 + die2) * 10;
 			} else {
 				rent = (die1 + die2) * 4;
 			}
 
-		} else if (p.position === 28) {
+		} else if (s.groupNumber === 2 && p.position === 28) {
 			if (increasedRent || square[12].owner == s.owner) {
 				rent = (die1 + die2) * 10;
 			} else {
@@ -2891,9 +2892,18 @@ window.onload = function() {
 		currentCellPositionHolder.className = "cell-position-holder";
 		currentCellPositionHolder.enlargeId = "enlarge" + i;
 
+		if (s.logo) {
+			var currentCellLogo = currentCellAnchor.appendChild(document.createElement("img"));
+			currentCellLogo.className = "cell-logo";
+			currentCellLogo.src = "images/card-logos/" + s.logo + ".png";
+			currentCellLogo.alt = s.name;
+			currentCellLogo.title = s.name;
+			currentCellLogo.draggable = false;
+		}
+
 		currentCellName = currentCellAnchor.appendChild(document.createElement("div"));
 		currentCellName.id = "cell" + i + "name";
-		currentCellName.className = "cell-name";
+		currentCellName.className = "cell-name" + (s.logo ? " has-logo" : "");
 		currentCellName.textContent = s.name;
 
 		if (square[i].groupNumber && square[i].groupNumber >= 3) {
@@ -2911,14 +2921,24 @@ window.onload = function() {
 
 		document.getElementById("enlarge" + i + "color").style.backgroundColor = s.color;
 		document.getElementById("enlarge" + i + "name").textContent = s.name;
+		if (s.logo) {
+			var enlargeBox = document.getElementById("enlarge" + i);
+			enlargeBox.classList.add("has-logo");
+			var enlargeLogo = document.createElement("img");
+			enlargeLogo.className = "enlarge-logo";
+			enlargeLogo.alt = s.name;
+			enlargeLogo.loading = "lazy";
+			enlargeLogo.src = "images/card-logos/large/" + s.logo + ".png";
+			enlargeBox.insertBefore(enlargeLogo, document.getElementById("enlarge" + i + "name").previousSibling);
+		}
 		document.getElementById("enlarge" + i + "price").textContent = s.pricetext;
 	}
 
 
 	// Add images to enlarges.
-	document.getElementById("enlarge0token").innerHTML += '<img src="images/arrow_icon.png" height="40" width="136" alt="" />';
-	document.getElementById("enlarge20price").innerHTML += "<img src='images/free_parking_icon.png' height='80' width='72' alt='' style='position: relative; top: -20px;' />";
-	document.getElementById("enlarge38token").innerHTML += '<img src="images/tax_icon.png" height="60" width="70" alt="" style="position: relative; top: -20px;" />';
+	document.getElementById("enlarge0token").innerHTML += '<img src="images/Monopoly-base-images/arrow_icon.png" height="40" width="136" alt="" />';
+	document.getElementById("enlarge20price").innerHTML += "<img src='images/Monopoly-base-images/free_parking_icon.png' height='80' width='72' alt='' style='position: relative; top: -20px;' />";
+	document.getElementById("enlarge38token").innerHTML += '<img src="images/Monopoly-base-images/tax_icon.png" height="60" width="70" alt="" style="position: relative; top: -20px;" />';
 
 	corrections();
 
@@ -2928,7 +2948,7 @@ window.onload = function() {
 
 	document.getElementById("jail").enlargeId = "enlarge40";
 
-	document.getElementById("enlarge-wrap").innerHTML += "<div id='enlarge40' class='enlarge'><div id='enlarge40color' class='enlarge-color'></div><br /><div id='enlarge40name' class='enlarge-name'>Jail</div><br /><div id='enlarge40price' class='enlarge-price'><img src='images/jake_icon.png' height='80' width='80' alt='' style='position: relative; top: -20px;' /></div><br /><div id='enlarge40token' class='enlarge-token'></div></div>";
+	document.getElementById("enlarge-wrap").innerHTML += "<div id='enlarge40' class='enlarge'><div id='enlarge40color' class='enlarge-color'></div><br /><div id='enlarge40name' class='enlarge-name'>Jail</div><br /><div id='enlarge40price' class='enlarge-price'><img src='images/Monopoly-base-images/jake_icon.png' height='80' width='80' alt='' style='position: relative; top: -20px;' /></div><br /><div id='enlarge40token' class='enlarge-token'></div></div>";
 
 	document.getElementById("enlarge40name").innerHTML = "Jail";
 
@@ -2945,8 +2965,9 @@ window.onload = function() {
 	}).on("mousemove", function(e) {
 		var element = document.getElementById(this.enlargeId);
 
-		if (e.clientY + 20 > window.innerHeight - 204) {
-			element.style.top = (window.innerHeight - 204) + "px";
+		var enlargeHeight = element.offsetHeight || 204;
+		if (e.clientY + 20 > window.innerHeight - enlargeHeight) {
+			element.style.top = (window.innerHeight - enlargeHeight) + "px";
 		} else {
 			element.style.top = (e.clientY + 20) + "px";
 		}
@@ -2966,8 +2987,9 @@ window.onload = function() {
 
 
 		if (object.classList.contains("propertycellcolor") || object.classList.contains("statscellcolor")) {
-			if (e.clientY + 20 > window.innerHeight - 279) {
-				document.getElementById("deed").style.top = (window.innerHeight - 279) + "px";
+			var deedHeight = document.getElementById("deed").offsetHeight || 279;
+			if (e.clientY + 20 > window.innerHeight - deedHeight) {
+				document.getElementById("deed").style.top = (window.innerHeight - deedHeight) + "px";
 			} else {
 				document.getElementById("deed").style.top = (e.clientY + 20) + "px";
 			}
