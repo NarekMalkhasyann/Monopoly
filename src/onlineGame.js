@@ -221,7 +221,7 @@ function tick() {
 	}
 
 	const id = m.a.id;
-	const direct = id === 'proposetradebutton' || id === 'forfeit' || id === 'autopass' || id === 'bankunmortgage';
+	const direct = id === 'proposetradebutton' || id === 'forfeit' || id === 'autopass' || id === 'autoend' || id === 'bankunmortgage';
 	const manage = MANAGE.has(id);
 
 	// Before pressing a house / mortgage button, tick the same property as the sender did.
@@ -288,6 +288,15 @@ function tick() {
 			const idx = who ? byName(who.name) : 0;
 			const btn = document.getElementById('auctionpass');
 			if (idx && btn && !btn.disabled && win.game.getCurrentBidder() === idx) btn.click(); // (the board may be hidden behind the menu: no visibility check)
+		}
+		else if (id === 'autoend') {
+			// "End turn" pressed for a player who is away. Only if it is still that player's turn and the button is there
+			// (several browsers send this at the same moment; the first one counts).
+			const room = getOnline().room;
+			const who = room && room.players.find((x) => x.seat === m.a.v);
+			const idx = who ? byName(who.name) : 0;
+			const btn = document.getElementById('nextbutton');
+			if (idx && idx === win.turn && btn && !btn.disabled && /end turn/i.test(btn.value)) btn.click();
 		}
 		else if (id === 'bankunmortgage') win.game.bankruptcyUnmortgageSquare(m.a.v);
 		else {
@@ -424,9 +433,21 @@ export const isReplaying = () => queue.length > 0;
 
 // The turn timer ran out: end the turn for the player, exactly as if they had pressed "End turn".
 // Online, only the player whose turn it is sends it (it goes through the server like any click).
+let autoEndTry = { key: '', at: 0 };
 export function autoEndTurn() {
 	if (started) {
-		if (win.turn === myIndex && queue.length === 0) share('nextbutton', {});
+		if (queue.length > 0) return;
+		if (win.turn === myIndex) { share('nextbutton', {}); return; }
+		// The player whose turn it is closed the game / lost the connection: their browser cannot press "End turn", so a
+		// present player does. If they are connected but do nothing (menu, sleeping tab), the second try, three seconds
+		// later, forces it (the server only allows that after a long quiet time).
+		const room = getOnline().room;
+		const p = room && win.player[win.turn] && room.players.find((x) => x.name === win.player[win.turn].name);
+		if (!p) return;
+		const tryKey = `${win.turn}`;
+		const again = autoEndTry.key === tryKey && Date.now() - autoEndTry.at < 20000;
+		autoEndTry = { key: tryKey, at: Date.now() };
+		if (!p.online || again) send({ t: 'autoend', seat: p.seat, turn: win.turn, force: p.online }).catch(() => {});
 		return;
 	}
 	const el = document.getElementById('nextbutton');
