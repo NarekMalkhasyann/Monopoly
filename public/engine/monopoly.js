@@ -2238,6 +2238,7 @@ function showdeed(property) {
 			$("#deed-normal").show();
 			document.getElementById("deed-header").style.backgroundColor = sq.color;
 			document.getElementById("deed-name").textContent = sq.name;
+			document.getElementById("deed-category").textContent = sq.category ? sq.category.en + "\n" + sq.category.hy : "";
 			document.getElementById("deed-baserent").textContent = sq.baserent;
 			document.getElementById("deed-rent1").textContent = sq.rent1;
 			document.getElementById("deed-rent2").textContent = sq.rent2;
@@ -2389,14 +2390,14 @@ function land(increasedRent) {
 				rent *= 2;
 			}
 
-		} else if (p.position === 12) {
+		} else if (s.groupNumber === 2 && p.position === 12) {
 			if (increasedRent || square[28].owner == s.owner) {
 				rent = (die1 + die2) * 10;
 			} else {
 				rent = (die1 + die2) * 4;
 			}
 
-		} else if (p.position === 28) {
+		} else if (s.groupNumber === 2 && p.position === 28) {
 			if (increasedRent || square[12].owner == s.owner) {
 				rent = (die1 + die2) * 10;
 			} else {

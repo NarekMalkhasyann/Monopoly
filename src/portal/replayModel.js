@@ -6,13 +6,14 @@
 //   * the log has the SUM of the two dice, not each die: the faces are chosen from the sum (doubles are kept),
 //   * Chance / Community Chest squares have the same name three times: the one the player can have reached is used.
 // Everything else (money, positions, owners, houses, mortgages, jail) follows the lines exactly like the engine did.
-import { SQUARES } from './boardData.js';
+import { SQUARES, OLD_NAMES } from './boardData.js';
 
 export const START_MONEY = 1500;
 const JAIL = 10;
 
 const byName = new Map();
 SQUARES.forEach((s, i) => { const a = byName.get(s.n) || []; a.push(i); byName.set(s.n, a); });
+OLD_NAMES.forEach((n, i) => { const a = byName.get(n) || []; if (!a.includes(i)) a.push(i); byName.set(n, a); }); // games saved before the Armenian board
 
 const dist = (a, b) => { const d = Math.abs(a - b) % 40; return Math.min(d, 40 - d); };
 
@@ -101,6 +102,8 @@ export function buildFrames(events, players) {
 					const to = idxOf(m[2]);
 					s.money[p] -= Number(m[1]);
 					if (to >= 0) { s.money[to] += Number(m[1]); lastRentTo[p] = to; }
+				} else if ((m = /^paid \$(\d+) for landing on (.+)\.$/.exec(rest))) {
+					s.money[p] -= Number(m[1]); // City Tax / Luxury Tax go to the bank
 				} else if (/^collected a \$200 salary for passing GO\.$/.test(rest)) {
 					s.money[p] += 200;
 				} else if ((m = /^lost \$(\d+) (?:from|to) (.+)\.$/.exec(rest))) {

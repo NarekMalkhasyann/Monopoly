@@ -139,7 +139,9 @@ function AITest(p) {
 			}
 		}
 
-		if (square[12].owner === p.index && square[28].owner !== p.index) {
+		if (square[12].groupNumber !== 2 || square[28].groupNumber !== 2) {
+			// no utilities on this board
+		} else if (square[12].owner === p.index && square[28].owner !== p.index) {
 			offeredUtility = 12;
 		} else if (square[28].owner === p.index && square[12].owner !== p.index) {
 			offeredUtility = 28;
