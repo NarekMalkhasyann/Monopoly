@@ -92,7 +92,8 @@ export function createRooms(db) {
 	const sessions = new Set(); // every open socket {conn, user, room}
 
 	const send = (conn, msg) => { try { conn.send(JSON.stringify(msg)); } catch { /* socket gone */ } };
-	const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code ? { code } : {}) });
+	const FORCE_AFTER_MS = () => Number(process.env.FORCE_PASS_AFTER_MS) || 14_000; // the auction clock is 15 s; a forced "Pass" needs this long without any click
+const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code ? { code } : {}) });
 
 	// Wrong room passwords: 5 misses lock that account out of password rooms for 30 seconds.
 	const misses = new Map(); // userId -> { n, until }
@@ -419,6 +420,7 @@ export function createRooms(db) {
 			if (!RELAYED.has(a.id)) return err(s.conn, 'Unknown action');
 			const member = room.members.get(s.user.id);
 			const action = { seat: member.seat, a: cleanPayload(a) };
+			room.lastClickAt = Date.now();
 			const seq = ++room.seq;
 			written(room, async () => { await q.insertAction(room.id, seq, action.a.turn, 'click', JSON.stringify(action)); await q.bump(room.id); });
 			broadcast(room, { t: 'act', seq, ...action });
@@ -435,6 +437,28 @@ export function createRooms(db) {
 			}
 			const member = room.members.get(s.user.id);
 			const action = { seat: member.seat, a: { id: 'forfeit', turn: Number(msg.turn) || 0, v: target.seat } };
+			const seq = ++room.seq;
+			written(room, async () => { await q.insertAction(room.id, seq, action.a.turn, 'click', JSON.stringify(action)); await q.bump(room.id); });
+			broadcast(room, { t: 'act', seq, ...action });
+		},
+
+		// The auction timer of a player who is not connected ran out: another player presses "Pass" for them (the
+		// player's own browser is not there to do it). Every connected browser may send this, so repeats are dropped.
+		autopass(s, msg) {
+			const room = s.room;
+			if (!room || room.status !== 'active') return;
+			const target = [...room.members.values()].find((m) => m.seat === Number(msg.seat));
+			if (!target || target.userId === s.user.id) return;
+			// A player whose browser is connected passes for themselves. If they are connected but not acting (they went
+			// to the menu, the tab sleeps...), another player may force it, but only when nothing at all has been
+			// pressed in this game for a while, so nobody can pass for a bidder who is still thinking.
+			if (target.sessions.size > 0 && !(msg.force && Date.now() - (room.lastClickAt || 0) >= FORCE_AFTER_MS())) return;
+			const key = `${target.seat}|${Number(msg.turn) || 0}`;
+			if (room.lastAutoPass && room.lastAutoPass.key === key && Date.now() - room.lastAutoPass.at < 4000) return;
+			room.lastAutoPass = { key, at: Date.now() };
+			const member = room.members.get(s.user.id);
+			const action = { seat: member.seat, a: { id: 'autopass', turn: Number(msg.turn) || 0, v: target.seat } };
+			room.lastClickAt = Date.now();
 			const seq = ++room.seq;
 			written(room, async () => { await q.insertAction(room.id, seq, action.a.turn, 'click', JSON.stringify(action)); await q.bump(room.id); });
 			broadcast(room, { t: 'act', seq, ...action });
