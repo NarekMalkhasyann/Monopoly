@@ -188,6 +188,15 @@ a.send({ t: 'join', code: ja.room.code }); assert.match((await a.next('error', (
 	p.close(); qq.close();
 	await new Promise((r) => setTimeout(r, 1500));
 	assert.equal((await call('GET', `/api/games/${jp.room.id}`, null, tP)).body.game.status, 'abandoned');
+
+	// a player can bring it back; somebody else cannot
+	const tZ = await register('Zed');
+	assert.equal((await call('POST', `/api/games/${jp.room.id}/resume`, null, tZ)).status, 409);
+	assert.equal((await call('POST', `/api/games/${jp.room.id}/resume`, null, tP)).status, 200);
+	assert.equal((await call('GET', `/api/games/${jp.room.id}`, null, tP)).body.game.status, 'active');
+	assert.equal((await call('POST', `/api/games/${jp.room.id}/resume`, null, tP)).status, 409); // not abandoned any more
+	const rejoin = await open(tQ); await rejoin.next('hello'); rejoin.send({ t: 'join', gameId: jp.room.id }); assert.equal((await rejoin.next('joined')).room.status, 'active');
+	rejoin.close();
 }
 
 // ---- admin: end a running online game for everybody ----

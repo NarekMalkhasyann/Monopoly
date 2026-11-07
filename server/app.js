@@ -342,6 +342,11 @@ export function createApp(db, { secret, staticDir } = {}) {
 				return [200, { ok: true }];
 			}
 		}
+		if (method === 'POST' && (m = /^\/api\/games\/(\d+)\/resume$/.exec(path))) {
+			const user = await authUser(req);
+			if (!(await rooms.resume(Number(m[1]), user.id))) throw new HttpError(409, 'Only a player of an abandoned online game can bring it back');
+			return [200, { ok: true }];
+		}
 		if (method === 'PUT' && (m = /^\/api\/games\/(\d+)\/checkpoint$/.exec(path))) {
 			const user = await authUser(req);
 			const g = await ownedGame(user, m[1]);
