@@ -1,5 +1,5 @@
 // Title-deed card shown when hovering a property. Three faces: a normal deed
-// (rent table), a mortgaged deed and a special card (railroads / utilities).
+// (rent table), a mortgaged deed and a special card (stations).
 // The engine shows one face and writes the numbers into the spans.
 
 export default function Deed() {
@@ -9,6 +9,7 @@ export default function Deed() {
 				<div id="deed-header">
 					<div style={{ margin: 5, fontSize: 11 }}>T I T L E{'  '}D E E D</div>
 					<div id="deed-name" />
+					<div id="deed-category" />
 				</div>
 				<table id="deed-table">
 					<tbody>
@@ -38,7 +39,7 @@ export default function Deed() {
 								<div>Houses cost $<span id="deed-houseprice">100</span>. each</div>
 								<div>Hotels, $<span id="deed-hotelprice">100</span>. plus 4 houses</div>
 								<div style={{ fontSize: 9, fontStyle: 'italic', marginTop: 5 }}>
-									If a player owns ALL the Lots of any Color-Group, the rent is Doubled on Unimproved Lots in that group.
+									If a player owns ALL the brands of a category, the rent is doubled on unimproved brands in that category.
 								</div>
 							</td>
 						</tr>

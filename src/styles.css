@@ -1050,6 +1050,17 @@ a.statscellcolor {
 	font-weight: 700;
 }
 
+#deed-category {
+	margin-top: 4px;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.5px;
+	text-transform: none;
+	white-space: pre-line;
+	line-height: 1.35;
+	opacity: 0.85;
+}
+
 #deed-table {
 	margin: 8px auto;
 	width: calc(100% - 16px);
