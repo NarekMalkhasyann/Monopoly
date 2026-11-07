@@ -2898,7 +2898,8 @@ window.onload = function() {
 			var currentCellLogo = currentCellAnchor.appendChild(document.createElement("img"));
 			currentCellLogo.className = "cell-logo";
 			currentCellLogo.src = "images/card-logos/" + s.logo + ".png";
-			currentCellLogo.alt = "";
+			currentCellLogo.alt = s.name;
+			currentCellLogo.title = s.name;
 			currentCellLogo.draggable = false;
 		}
 

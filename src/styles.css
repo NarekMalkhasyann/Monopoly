@@ -1771,13 +1771,12 @@ td.statscellname[title="Mortgaged"]::after {
 	border-radius: 3px;
 }
 
-.board-top .cell-logo { top: 27px; left: 6px; width: calc(100% - 12px); height: 32px; }
-.board-top .cell-name.has-logo { bottom: 3px; }
-.board-bottom .cell-logo { top: 5px; left: 6px; width: calc(100% - 12px); height: 32px; }
-.board-bottom .cell-name.has-logo { top: 40px; }
-.board-left .cell-logo { top: 5px; left: 8px; width: calc(100% - 41px); height: 26px; }
-.board-right .cell-logo { top: 5px; left: 31px; width: calc(100% - 41px); height: 26px; }
-.board-left .cell-name.has-logo, .board-right .cell-name.has-logo { top: 33px; transform: none; line-height: 1.15; }
+/* The logo replaces the name: it is centred in the part of the square next to the colour bar (22 px) */
+.board-top .cell-logo { top: 22px; left: 6px; width: calc(100% - 12px); height: calc(100% - 22px); padding: 8px 0; box-sizing: border-box; }
+.board-bottom .cell-logo { top: 0; left: 6px; width: calc(100% - 12px); height: calc(100% - 22px); padding: 8px 0; box-sizing: border-box; }
+.board-left .cell-logo { top: 0; left: 0; width: calc(100% - 22px); height: 100%; padding: 8px 7px; box-sizing: border-box; }
+.board-right .cell-logo { top: 0; left: 22px; width: calc(100% - 22px); height: 100%; padding: 8px 7px; box-sizing: border-box; }
+.cell-name.has-logo { display: none; }
 
 .enlarge.has-logo { width: 240px; }
 .enlarge-logo { display: block; width: calc(100% - 28px); height: 120px; margin: 12px auto 0; object-fit: contain; }
