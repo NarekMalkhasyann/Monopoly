@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { subscribeStatus } from '../session.js';
 import { subscribeGameInfo, forfeitPlayer } from '../onlineGame.js';
 import { send } from '../online.js';
 import { navigate } from '../router.jsx';
 import { useOnline } from '../online.js';
+import { Modal } from './GameDetails.jsx';
 
 const LABEL = { idle: '', saving: 'Saving…', saved: 'Saved', offline: 'Offline – will retry' };
 
@@ -13,6 +15,7 @@ const LABEL = { idle: '', saving: 'Saving…', saved: 'Saved', offline: 'Offline
 export default function GameBar() {
 	const [status, setStatus] = useState('idle');
 	const [info, setInfo] = useState({});
+	const [ask, setAsk] = useState(null); // { kind: 'abandon' } or { kind: 'remove', seat, name }: waiting for "are you sure?"
 	const online = useOnline();
 	const isOnline = !!online.room && online.room.status !== 'waiting';
 	useEffect(() => subscribeStatus(setStatus), []);
@@ -65,12 +68,27 @@ export default function GameBar() {
 						<span className="save-state offline">{turnPlayer.name} is away ({Math.max(0, Math.ceil((room.forfeitAfterMs - away) / 1000))}s)</span>
 					)}
 					{canRemove && (
-						<button className="btn-danger" onClick={() => forfeitPlayer(turnPlayer.seat)} title="Removes them from the game; their properties return to the bank">
+						<button className="btn-danger" onClick={() => setAsk({ kind: 'remove', seat: turnPlayer.seat, name: turnPlayer.name })} title="Removes them from the game; their properties return to the bank">
 							Remove {turnPlayer.name}
 						</button>
 					)}
 					{isHost && room.status === 'active' && (
-						<button className="btn-ghost" onClick={() => window.confirm('End this game for everybody without a winner?') && send({ t: 'abandon' })}>Abandon game</button>
+						<button className="btn-ghost" onClick={() => setAsk({ kind: 'abandon' })}>Abandon game</button>
+					)}
+					{ask && createPortal( // (outside the bar: the bar has its own positioning, the dialog must cover the whole page)
+						<Modal onClose={() => setAsk(null)}>
+							<h3 className="modal-title">{ask.kind === 'abandon' ? 'Abandon the game?' : `Remove ${ask.name}?`}</h3>
+							<p className="muted">
+								{ask.kind === 'abandon'
+									? 'Are you sure you want to abandon the game? It ends for everybody without a winner (you can bring it back later from History).'
+									: `Are you sure you want to remove ${ask.name} from the game? Their properties return to the bank. This cannot be undone.`}
+							</p>
+							<div className="modal-actions">
+								<button className="btn-ghost" onClick={() => setAsk(null)}>Cancel</button>
+								<button className="btn-danger" onClick={() => { if (ask.kind === 'abandon') send({ t: 'abandon' }); else forfeitPlayer(ask.seat); setAsk(null); }}>{ask.kind === 'abandon' ? 'Abandon game' : 'Remove player'}</button>
+							</div>
+						</Modal>,
+						document.body,
 					)}
 				</>
 			) : (
