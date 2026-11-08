@@ -62,6 +62,8 @@ export default function History({ detailId, replay }) {
 		} catch (e) { setError(e.message); }
 	};
 
+	const guest = !!toDelete && (games.find((x) => x.id === toDelete) || {}).is_host === false; // a player of somebody else's online game
+
 	const remove = async () => {
 		try {
 			await api('DELETE', `/games/${toDelete}`);
@@ -126,11 +128,15 @@ export default function History({ detailId, replay }) {
 			{detailId && <Details id={detailId} replay={replay} onClose={() => navigate('/history')} onReplay={(on) => navigate(on ? `/history/${detailId}/replay` : `/history/${detailId}`)} onOpen={() => navigate(`/play/${detailId}`)} />}
 			{toDelete && (
 				<Modal onClose={() => setToDelete(null)}>
-					<h3 className="modal-title">Delete this game?</h3>
-					<p className="muted">The game and its log will be removed from your history. This cannot be undone.</p>
+					<h3 className="modal-title">{guest ? 'Hide this game?' : 'Delete this game?'}</h3>
+					<p className="muted">
+						{guest
+							? 'You are not the host of this game. Do you want to hide it from your history only? The host and the other players keep it.'
+							: 'The game and its log will be removed from your history. This cannot be undone.'}
+					</p>
 					<div className="modal-actions">
 						<button className="btn-ghost" onClick={() => setToDelete(null)}>Cancel</button>
-						<button className="btn-danger" onClick={remove}>Delete</button>
+						<button className="btn-danger" onClick={remove}>{guest ? 'Hide from my history' : 'Delete'}</button>
 					</div>
 				</Modal>
 			)}

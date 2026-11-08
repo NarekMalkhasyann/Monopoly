@@ -55,6 +55,7 @@ const tables = (pg) => {
 			color TEXT NOT NULL,
 			is_ai INTEGER NOT NULL DEFAULT 0,
 			user_id INTEGER,                             -- online games: the account that sits here
+			hidden INTEGER NOT NULL DEFAULT 0,           -- 1 = this player removed the game from their own history
 			final_money INTEGER,
 			final_rank INTEGER,
 			PRIMARY KEY (game_id, seat)
@@ -91,6 +92,7 @@ async function openSqlite(file) {
 		if (!has('games', 'is_private')) raw.exec('ALTER TABLE games ADD COLUMN is_private INTEGER NOT NULL DEFAULT 0');
 		if (!has('games', 'room_password')) raw.exec('ALTER TABLE games ADD COLUMN room_password TEXT');
 		if (!has('game_players', 'user_id')) raw.exec('ALTER TABLE game_players ADD COLUMN user_id INTEGER');
+		if (!has('game_players', 'hidden')) raw.exec('ALTER TABLE game_players ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0');
 		raw.exec(`CREATE UNIQUE INDEX IF NOT EXISTS games_room_code ON games(room_code) WHERE room_code IS NOT NULL;
 			CREATE INDEX IF NOT EXISTS players_user ON game_players(user_id);`);
 	}
@@ -151,6 +153,7 @@ async function openPostgres(url) {
 	// databases made before public / private rooms
 	await pool.query('ALTER TABLE games ADD COLUMN IF NOT EXISTS is_private INTEGER NOT NULL DEFAULT 0');
 	await pool.query('ALTER TABLE games ADD COLUMN IF NOT EXISTS room_password TEXT');
+	await pool.query('ALTER TABLE game_players ADD COLUMN IF NOT EXISTS hidden INTEGER NOT NULL DEFAULT 0');
 	return api;
 }
 

@@ -189,14 +189,25 @@ a.send({ t: 'join', code: ja.room.code }); assert.match((await a.next('error', (
 	await new Promise((r) => setTimeout(r, 1500));
 	assert.equal((await call('GET', `/api/games/${jp.room.id}`, null, tP)).body.game.status, 'abandoned');
 
-	// a player can bring it back; somebody else cannot
+	// a guest only hides the game from their own history; a stranger cannot; the host deletes it for everybody
 	const tZ = await register('Zed');
+	assert.equal((await call('GET', '/api/games?status=abandoned', null, tQ)).body.total, 1);
+	assert.equal((await call('DELETE', `/api/games/${jp.room.id}`, null, tZ)).status, 404);
+	const hid = await call('DELETE', `/api/games/${jp.room.id}`, null, tQ);
+	assert.equal(hid.status, 200); assert.equal(hid.body.hidden, true);
+	assert.equal((await call('GET', '/api/games?status=abandoned', null, tQ)).body.total, 0);
+	assert.equal((await call('GET', '/api/games?status=abandoned', null, tP)).body.total, 1);       // the host still has it
+
+	// a player can bring it back; somebody else cannot
 	assert.equal((await call('POST', `/api/games/${jp.room.id}/resume`, null, tZ)).status, 409);
 	assert.equal((await call('POST', `/api/games/${jp.room.id}/resume`, null, tP)).status, 200);
 	assert.equal((await call('GET', `/api/games/${jp.room.id}`, null, tP)).body.game.status, 'active');
 	assert.equal((await call('POST', `/api/games/${jp.room.id}/resume`, null, tP)).status, 409); // not abandoned any more
 	const rejoin = await open(tQ); await rejoin.next('hello'); rejoin.send({ t: 'join', gameId: jp.room.id }); assert.equal((await rejoin.next('joined')).room.status, 'active');
 	rejoin.close();
+	await new Promise((r) => setTimeout(r, 1500));                                                  // abandoned again (nobody is in it)
+	assert.equal((await call('DELETE', `/api/games/${jp.room.id}`, null, tP)).status, 200);        // the host deletes it for everybody
+	assert.equal((await call('GET', `/api/games/${jp.room.id}`, null, tQ)).status, 404);
 }
 
 // ---- admin: end a running online game for everybody ----

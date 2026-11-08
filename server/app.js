@@ -118,7 +118,8 @@ export function createApp(db, { secret, staticDir } = {}) {
 		const args = [];
 		// everybody sees their own games; an admin (all = true) sees every game, optionally those of one user
 		const only = all ? Number(params.get('user')) || 0 : user.id;
-		if (only) { where.push('(g.owner_id = ? OR g.id IN (SELECT game_id FROM game_players WHERE user_id = ?))'); args.push(only, only); }
+		// (a player who is not the host can hide a game from their own history; the admin still sees it)
+		if (only) { where.push(`(g.owner_id = ? OR g.id IN (SELECT game_id FROM game_players WHERE user_id = ?${all ? '' : ' AND hidden = 0'}))`); args.push(only, only); }
 		if (['active', 'finished', 'abandoned'].includes(status)) { where.push('g.status = ?'); args.push(status); }
 		if (mode === 'local' || mode === 'online') { where.push('g.mode = ?'); args.push(mode); }
 		if (text) {
@@ -160,6 +161,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 		const total = (await db.get(`SELECT COUNT(*) AS n FROM games g WHERE ${where.join(' AND ')}`, args)).n;
 		const games = await Promise.all(rows.map(gameSummary));
 		if (all) await addOwners(games);
+		else for (const g of games) g.is_host = g.owner_id === user.id; // the host deletes for everybody, the others only hide
 		return { total, games };
 	}
 
@@ -334,6 +336,18 @@ export function createApp(db, { secret, staticDir } = {}) {
 				const seat = await q.mySeat(g.id, user.id);
 				const owner = user.role === 'admin' ? (await addOwners([{ owner_id: g.owner_id }]))[0].owner : undefined;
 				return [200, { game: { ...await gameSummary(g), owner, you: seat ? seat.seat : null, snapshot: g.snapshot ? JSON.parse(g.snapshot) : null, events: await q.actions(g.id) } }];
+			}
+			if (method === 'DELETE') {
+				// The host deletes the game for everybody. Any other player of an online game only hides it from their own history.
+				const mine = await q.game(Number(m[1]), user.id);
+				if (!mine) {
+					const seat = await q.mySeat(Number(m[1]), user.id);
+					const theirs = seat && (await q.visibleGame(Number(m[1]), user.id));
+					if (!theirs) throw new HttpError(404, 'Game not found');
+					if (theirs.status === 'active') throw new HttpError(409, 'Finish the online game first');
+					await db.run('UPDATE game_players SET hidden = 1 WHERE game_id = ? AND user_id = ?', [theirs.id, user.id]);
+					return [200, { ok: true, hidden: true }];
+				}
 			}
 			const g = await ownedGame(user, m[1]);
 			if (method === 'DELETE') {
