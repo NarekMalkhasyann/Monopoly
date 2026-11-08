@@ -1470,9 +1470,16 @@ a.statscellcolor {
 
 @media (max-width: 560px) {
 	#setup {
-		margin: 12px auto;
+		margin: 12px auto 90px; /* room below for the floating Menu bar */
 		padding: 20px 14px;
 	}
+
+	/* a player: the name takes the rest of the first line, colour and Human / AI share the second line */
+	.player-input { flex-wrap: wrap; }
+	.player-input input[type="text"] { flex: 1 1 120px; }
+	.player-input select { flex: 1 1 calc(50% - 4px); min-width: 0; }
+	#setup input[type="button"] { width: 100%; }
+	#setup .setup-header + div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 	.game-title {
 		font-size: 26px;
