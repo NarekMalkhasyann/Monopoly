@@ -85,7 +85,8 @@
 @media (max-width: 400px) { .auth-form-side h3 { font-size: 35px; } }
 
 /* ---------- app shell: top bar + page ---------- */
-.layout { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; background: var(--dark-gray); color: var(--white); }
+.layout { display: flex; flex-direction: column; height: 100dvh; margin: -20px; overflow: hidden; background: var(--page-bg); color: var(--white); } /* full bleed: cancels the body padding */
+@media (max-width: 1129px) { .layout { margin: -12px; } }
 .top-nav {
 	position: relative; z-index: 30; flex-shrink: 0; display: flex; align-items: center; gap: 28px; height: 64px; padding: 0 32px;
 	background: var(--dark); border-bottom: 1px solid var(--divider);
@@ -113,7 +114,7 @@
 .top-user-sub { font-size: 11px; color: var(--white-o); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
 .top-logout { margin-left: 8px; }
 .top-burger, .top-drawer { display: none; }
-.page { flex: 1; min-width: 0; padding: 40px; overflow-y: scroll; background: var(--dark-gray); }
+.page { flex: 1; min-width: 0; padding: 40px; overflow-y: scroll; background: var(--page-bg); }
 .page h2 { font-size: 32px; font-weight: 700; margin: 0; }
 .page .h2-sm { font-size: 28px; margin: 30px 0 16px; }
 .muted { color: var(--white-o); }
@@ -364,7 +365,7 @@ body.online-game #setup { display: none !important; }
 .result-line { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
 
 /* ---------- loading screen (resuming a saved game) ---------- */
-.loading-screen { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 24px; background: var(--dark-gray); animation: loading-in .15s ease-out; transition: opacity .25s ease; }
+.loading-screen { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 24px; background: var(--page-bg); animation: loading-in .15s ease-out; transition: opacity .25s ease; }
 .loading-screen.closing { opacity: 0; pointer-events: none; }
 .loading-card { width: min(420px, 100%); display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
 .loading-card h2 { margin: 0; font-size: 22px; }

@@ -14,6 +14,7 @@
 	--dark-green: #72a800;
 	--green-o: #abfa004d;
 	--dark-gray: #373737;
+	--page-bg: #1d1d1d; /* page background behind the cards: darker than the cards (--dark) */
 	--gray: #d9d9d9;
 	--red: #f90124;
 	--orange: #fecb00;
@@ -74,7 +75,7 @@
 }
 
 body {
-	background: var(--dark-gray);
+	background: var(--page-bg);
 	color: var(--white);
 	font-family: 'Montserrat', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 	font-size: 14px;
