@@ -198,6 +198,13 @@
 .save-state.saved { color: var(--green); }
 .save-state.offline { color: var(--orange); }
 
+/* narrow screens: the bar grows to the left edge and wraps, so "← Menu" is never pushed off screen */
+@media (max-width: 700px) {
+	.game-bar { left: 8px; right: 8px; bottom: 8px; flex-wrap: wrap; justify-content: flex-end; gap: 6px 10px; }
+	.game-bar .btn-ghost:first-child { margin-right: auto; }
+	.game-bar .save-state { padding-right: 0; }
+}
+
 /* ---------- online: home card, lobby, in-game hints ---------- */
 .join-form { display: flex; gap: 8px; margin-top: 12px; }
 .code-input {
