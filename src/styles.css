@@ -86,6 +86,8 @@ body {
 	-webkit-font-smoothing: antialiased;
 }
 
+body.in-game { background: var(--dark-gray); }
+
 /* ==========================================================================
    Typography & Universal Elements
    ========================================================================== */

@@ -77,6 +77,7 @@ export default function App() {
 	// The game already running on this page (e.g. a new local game just got its number: /play/local -> /play/12)
 	const running = getRunningKey();
 	const showGame = !!user && (route.name === 'local' || (route.name === 'game' && (gameLive || running === route.params.id)));
+	useEffect(() => { document.body.classList.toggle('in-game', showGame); }, [showGame]); // the board keeps its lighter grey; the portal pages are darker
 
 	let page = null;
 	if (user === undefined) {
