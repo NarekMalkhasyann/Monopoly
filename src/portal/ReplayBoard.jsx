@@ -63,7 +63,7 @@ export default function ReplayBoard({ state, players, hop, rolling, shownDice, c
 				);
 			})}
 			<div className="rb-center">
-				<div className="rb-logo">YerevanPoly</div>
+				<div className="rb-logo">ACT Monopoly</div>
 				<div className="rb-dice">
 					{shownDice ? <><Die value={shownDice[0]} rolling={rolling} /><Die value={shownDice[1]} rolling={rolling} /></> : <span className="muted">Press Play</span>}
 				</div>

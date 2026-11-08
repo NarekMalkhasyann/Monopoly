@@ -71,7 +71,7 @@ export default function App() {
 	}, [location]);
 
 	useEffect(() => {
-		document.title = `${TITLES[route.name] || (route.name === 'login' ? 'Sign in' : route.name === 'register' ? 'Create account' : 'Game')} · YerevanPoly`;
+		document.title = `${TITLES[route.name] || (route.name === 'login' ? 'Sign in' : route.name === 'register' ? 'Create account' : 'Game')} · ACT Monopoly`;
 	}, [route.name]);
 
 	// The game already running on this page (e.g. a new local game just got its number: /play/local -> /play/12)
