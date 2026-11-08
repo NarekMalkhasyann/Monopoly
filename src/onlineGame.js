@@ -370,6 +370,7 @@ export function startOnlineGame(room, you) {
 		seats: players.map((p) => ({ seat: p.seat, name: p.name })),
 		roomId: room.id,
 		send: (msg) => send(msg).catch(() => {}),
+		logged: getOnline().logged || 0, // lines the server has already: replaying the game must not upload them again
 	});
 
 	win.setup();

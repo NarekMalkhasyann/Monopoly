@@ -5,6 +5,7 @@
 // members send actions, (3) gives every action a number (seq) and broadcasts it
 // to everyone, in that order, and (4) stores it so a player who refreshes or
 // joins late can replay the game from the start.
+import { cleanLog } from './log.js';
 import { randomBytes, randomInt } from 'node:crypto';
 import { now } from './db.js';
 import { hashPassword, verifyPassword } from './auth.js';
@@ -67,6 +68,7 @@ export function createRooms(db) {
 		deleteGame: (gameId) => db.run('DELETE FROM games WHERE id = ?', [gameId]),
 		lastSeq: async (gameId) => (await db.get('SELECT COALESCE(MAX(seq), 0) AS n FROM game_actions WHERE game_id = ?', [gameId])).n,
 		insertAction: (gameId, seq, turn, type, text) => db.run('INSERT INTO game_actions (game_id, seq, turn, type, text, created_at) VALUES (?, ?, ?, ?, ?, ?)', [gameId, seq, turn, type, text, now()]),
+		logLines: (gameId) => db.all("SELECT turn, text FROM game_actions WHERE game_id = ? AND type = 'alert' ORDER BY seq", [gameId]),
 		clicksAfter: (gameId, after) => db.all("SELECT seq, text FROM game_actions WHERE game_id = ? AND type = 'click' AND seq > ? ORDER BY seq", [gameId, after]),
 		touch: (turns, gameId) => db.run('UPDATE games SET updated_at = ?, turn_count = ? WHERE id = ?', [now(), turns, gameId]),
 		finish: (winner, turns, gameId) => db.run("UPDATE games SET status = 'finished', winner_name = ?, turn_count = ?, finished_at = ?, updated_at = ? WHERE id = ?", [winner, turns, now(), now(), gameId]),
@@ -287,6 +289,8 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 		if (room.status === 'active') {
 			await room.writes; // everything already relayed must be readable before we answer
 			msg.actions = (await q.clicksAfter(room.id, Number(after) || 0)).map((r) => ({ seq: r.seq, ...JSON.parse(r.text) }));
+			// how many log lines the server already has: the host's browser, replaying the game, must not send those again
+			msg.logged = cleanLog(await q.logLines(room.id)).length;
 		}
 		return msg;
 	}

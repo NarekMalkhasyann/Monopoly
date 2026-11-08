@@ -185,6 +185,7 @@ win.onTurnStart = () => {
 	checkpoint(takeSnapshot());
 };
 win.onGameEvent = (text) => {
+	if (online && online.logged > 0) { online.logged -= 1; return; } // replaying a game the server already has the log of
 	events.push({ type: 'alert', turn: turnNo, text: String(text).slice(0, 500) });
 };
 win.onPlayerEliminated = (name) => { eliminated.push(name); };
