@@ -1,4 +1,5 @@
 // Run: node server/test.js
+import { cleanLog } from './log.js';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { openDb } from './db.js';
@@ -195,6 +196,15 @@ assert.equal((await call('GET', '/api/health')).body.ok, true);
 	assert.equal(no.headers.get('access-control-allow-origin'), null);
 	const pre = await fetch(base + '/api/games', { method: 'OPTIONS', headers: { Origin: 'https://game.example.am', 'Access-Control-Request-Method': 'GET' } });
 	assert.equal(pre.status, 204);
+}
+// the log of a game whose host came back (the game was replayed and its lines uploaded again)
+{
+	const L = (turn, text) => ({ turn, text });
+	const first = [L(1, 'a'), L(1, 'b'), L(2, 'c')];
+	assert.deepEqual(cleanLog(first), first);                                                   // nothing repeated
+	assert.deepEqual(cleanLog([...first, L(1, 'a'), L(1, 'b'), L(2, 'c'), L(3, 'd')]).map((r) => r.text), ['a', 'b', 'c', 'd']); // replay + new lines
+	assert.deepEqual(cleanLog([...first, L(1, 'a'), L(1, 'b')]).map((r) => r.text), ['a', 'b', 'c']);                          // only a part replayed
+	assert.deepEqual(cleanLog([...first, L(1, 'a'), L(1, 'b'), L(2, 'c'), L(3, 'd'), L(1, 'a'), L(1, 'b'), L(2, 'c'), L(3, 'd'), L(4, 'e')]).map((r) => r.text), ['a', 'b', 'c', 'd', 'e']); // twice
 }
 console.log('all server tests passed');
 server.close();

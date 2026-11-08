@@ -1,4 +1,5 @@
 // HTTP API. Plain node:http, no framework.
+import { cleanLog } from './log.js';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -335,7 +336,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 				if (!g) throw new HttpError(404, 'Game not found');
 				const seat = await q.mySeat(g.id, user.id);
 				const owner = user.role === 'admin' ? (await addOwners([{ owner_id: g.owner_id }]))[0].owner : undefined;
-				return [200, { game: { ...await gameSummary(g), owner, you: seat ? seat.seat : null, snapshot: g.snapshot ? JSON.parse(g.snapshot) : null, events: await q.actions(g.id) } }];
+				return [200, { game: { ...await gameSummary(g), owner, you: seat ? seat.seat : null, snapshot: g.snapshot ? JSON.parse(g.snapshot) : null, events: cleanLog(await q.actions(g.id)) } }];
 			}
 			if (method === 'DELETE') {
 				// The host deletes the game for everybody. Any other player of an online game only hides it from their own history.

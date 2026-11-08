@@ -6,7 +6,7 @@
 import { useSyncExternalStore } from 'react';
 import { getToken, API_BASE } from './api.js';
 
-let state = { conn: 'closed', room: null, you: null, error: '', left: false, kicked: '' };
+let state = { conn: 'closed', room: null, you: null, error: '', left: false, kicked: '', logged: 0 };
 const listeners = new Set();
 const actionListeners = new Set();
 const roomsListeners = new Set();
@@ -31,7 +31,7 @@ function handle(msg) {
 	switch (msg.t) {
 		case 'joined':
 			if (!state.room || state.room.id !== msg.room.id) lastSeq = 0;
-			set({ room: msg.room, you: msg.you, error: '', left: false });
+			set({ room: msg.room, you: msg.you, error: '', left: false, logged: msg.logged || 0 });
 			if (pending) { pending.resolve(msg.room); pending = null; }
 			for (const a of msg.actions || []) deliver(a);
 			break;
