@@ -1451,15 +1451,15 @@ a.statscellcolor {
 	/* Property card (title deed) and the small hover preview.
 	   The engine places them next to the finger / mouse with inline left and top,
 	   which pushes them off the edge of a narrow screen and over the buttons.
-	   Here they are pinned to the top centre instead (above the floating game bar,
-	   so the bottom of the card is never covered), and let taps through,
+	   Here they are pinned to the middle of the screen instead (above the floating
+	   game bar, so no part of the card is covered), and let taps through,
 	   so tapping anywhere else still closes them. */
 	#deed, .enlarge {
 		left: 50% !important;
-		top: 12px !important;
+		top: 50% !important;
 		bottom: auto;
 		z-index: 70;
-		transform: translateX(-50%);
+		transform: translate(-50%, -50%);
 		max-height: calc(100vh - 24px);
 		max-height: calc(100dvh - 24px);
 		overflow-y: auto;
@@ -1469,6 +1469,14 @@ a.statscellcolor {
 	#deed {
 		width: min(280px, calc(100vw - 24px));
 	}
+
+	/* short screens (phone held sideways): shrink the cards so they still fit whole */
+	@media (max-height: 520px) { #deed, .enlarge { max-height: none; overflow: visible; transform: translate(-50%, -50%) scale(.82); } }
+	@media (max-height: 430px) { #deed, .enlarge { transform: translate(-50%, -50%) scale(.68); } }
+	@media (max-height: 350px) { #deed, .enlarge { transform: translate(-50%, -50%) scale(.54); } }
+
+	/* the floating game bar (see GameBar.jsx sets --game-bar-h) must not cover the end of the page */
+	body { padding-bottom: calc(24px + var(--game-bar-h, 0px)); }
 }
 
 @media (max-width: 560px) {

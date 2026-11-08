@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { subscribeStatus } from '../session.js';
 import { subscribeGameInfo, forfeitPlayer } from '../onlineGame.js';
@@ -18,7 +18,18 @@ export default function GameBar() {
 	const [ask, setAsk] = useState(null); // { kind: 'abandon' } or { kind: 'remove', seat, name }: waiting for "are you sure?"
 	const online = useOnline();
 	const isOnline = !!online.room && online.room.status !== 'waiting';
+	const barRef = useRef(null);
 	useEffect(() => subscribeStatus(setStatus), []);
+	// tell the page how tall the bar is, so the bottom of the page can scroll clear of it (styles.css: body padding)
+	useEffect(() => {
+		const el = barRef.current;
+		if (!el || typeof ResizeObserver === 'undefined') return undefined;
+		const set = () => document.documentElement.style.setProperty('--game-bar-h', `${el.offsetHeight + 8}px`);
+		set();
+		const ro = new ResizeObserver(set);
+		ro.observe(el);
+		return () => { ro.disconnect(); document.documentElement.style.removeProperty('--game-bar-h'); };
+	});
 	useEffect(() => subscribeGameInfo(setInfo), []);
 
 	const leave = () => window.location.assign('/play');
@@ -50,7 +61,7 @@ export default function GameBar() {
 		);
 	}
 	return (
-		<div className="game-bar">
+		<div className="game-bar" ref={barRef}>
 			<button className="btn-ghost" onClick={leave}>← Menu</button>
 			{isOnline ? (
 				<>
