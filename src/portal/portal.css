@@ -101,12 +101,15 @@
 }
 .brand { display: inline-flex; align-items: center; gap: 10px; background: transparent; border: none; color: var(--white); font: 700 18px Montserrat, sans-serif; padding: 0; cursor: pointer; white-space: nowrap; }
 .brand-mark { width: 30px; height: 30px; border-radius: var(--radius); background: var(--green); color: var(--dark); display: grid; place-items: center; font-size: 16px; }
-.top-links { display: flex; align-items: stretch; gap: 4px; height: 100%; flex: 1; min-width: 0; }
-.top-nav .nav-link { display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; font: 500 14px Montserrat, sans-serif; color: var(--gray); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.top-links { position: relative; display: flex; align-items: stretch; gap: 4px; height: 100%; flex: 1; min-width: 0; }
+.top-nav .nav-link { display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; font: 500 14px Montserrat, sans-serif; color: var(--gray); transition: color .25s; }
 .top-nav .nav-link span, .top-nav .nav-link svg { opacity: 1; }
 .top-nav .nav-link svg { width: 18px; height: 18px; }
 .top-nav .nav-link:hover { color: var(--white); }
-.top-nav .nav-link.active { color: var(--green); font-weight: 700; border-bottom-color: var(--green); }
+.top-nav .nav-link.active { color: var(--green); font-weight: 700; }
+.nav-underline { position: absolute; left: 0; bottom: -1px; height: 2px; background: var(--green); border-radius: 2px; transition: transform .3s cubic-bezier(.4, 0, .2, 1), width .3s cubic-bezier(.4, 0, .2, 1); }
+.page { animation: page-in .28s ease-out; }
+@keyframes page-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .top-user { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .avatar.sm-avatar { width: 34px; height: 34px; border: none; background: var(--green); font-size: 14px; flex-shrink: 0; }
 .top-user-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
@@ -139,7 +142,7 @@
 	.page h2 { font-size: 26px; }
 	.page .h2-sm { font-size: 22px; }
 }
-@media (prefers-reduced-motion: reduce) { .spinner { transition: none; animation: none; } }
+@media (prefers-reduced-motion: reduce) { .spinner, .page, .nav-underline, .top-nav .nav-link { transition: none; animation: none; } }
 
 /* ---------- home ---------- */
 .welcome { background: var(--dark); padding: 30px; border-radius: 0; }

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { navigate } from '../router.jsx';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { navigate, useLocation } from '../router.jsx';
 import { setToken } from '../api.js';
 
 // Signing out reloads the page on /login, which also gives the next player a clean engine.
@@ -23,6 +23,19 @@ export const APP_NAME = 'ACT Monopoly';
 // above the scrolling page. Below 800px the links fold into a menu opened from the bar.
 export default function Shell({ user, screen, onLogout = signOut, children }) {
 	const [open, setOpen] = useState(false);
+	const path = useLocation().split('?')[0];
+	// the underline under the current tab slides to the new tab instead of jumping
+	const navRef = useRef(null);
+	const [bar, setBar] = useState(null);
+	useLayoutEffect(() => {
+		const place = () => {
+			const el = navRef.current && navRef.current.querySelector('.nav-link.active');
+			setBar(el ? { left: el.offsetLeft, width: el.offsetWidth } : null);
+		};
+		place();
+		window.addEventListener('resize', place);
+		return () => window.removeEventListener('resize', place);
+	}, [screen, user.role]);
 	const PATHS = { home: '/play', history: '/history', admin: '/admin' };
 	const go = (s) => { setOpen(false); navigate(PATHS[s]); };
 	const item = (id, label, icon) => (
@@ -45,7 +58,10 @@ export default function Shell({ user, screen, onLogout = signOut, children }) {
 					<span className="brand-mark" aria-hidden="true">A</span>
 					<span className="brand-name">{APP_NAME}</span>
 				</button>
-				<nav className="top-links" aria-label="Main">{links}</nav>
+				<nav className="top-links" aria-label="Main" ref={navRef}>
+					{links}
+					{bar && <span className="nav-underline" style={{ transform: `translateX(${bar.left}px)`, width: bar.width }} aria-hidden="true" />}
+				</nav>
 				<div className="top-user">
 					<span className="avatar sm-avatar" aria-hidden="true">{user.name.trim().charAt(0).toUpperCase()}</span>
 					<div className="top-user-text">
@@ -66,7 +82,7 @@ export default function Shell({ user, screen, onLogout = signOut, children }) {
 					</div>
 				)}
 			</header>
-			<main className="page">{children}</main>
+			<main className="page" key={path}>{children}</main>
 		</div>
 	);
 }
