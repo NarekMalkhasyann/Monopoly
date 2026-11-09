@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ReplayBoard from './ReplayBoard.jsx';
+import { SQUARES } from './boardData.js';
 import { buildFrames } from './replayModel.js';
 
 // Replays a saved game on the board: dice roll, tokens hop square by square, money / houses / owners follow the log.
@@ -102,6 +103,28 @@ export default function Replay({ events, players, onClose }) {
 					<div className="log replay-log" ref={listRef} aria-live="off">
 						{shown.length === 0 && <p className="muted">Press Play to start.</p>}
 						{shown.map((e, i) => <div key={e.seq} className={i === shown.length - 1 ? 'replay-now' : ''}><span className="log-turn">T{e.turn}</span>{e.text}</div>)}
+					</div>
+					<div className="rp-props">
+						{list.map((p, i) => {
+							const mine = SQUARES.map((sq, k) => k).filter((k) => state.owner[k] === i);
+							return (
+								<div key={p.seat} className={`rp-props-row${state.out[i] ? ' rp-out' : ''}`}>
+									<span className="player-chip"><i style={{ background: p.color }} />{p.name}</span>
+									<span className="rp-props-list">
+										{mine.length === 0 && <span className="muted">no properties</span>}
+										{mine.map((k) => {
+											const h = state.houses[k];
+											return (
+												<span key={k} className={`rp-prop${state.mort[k] ? ' rp-prop-mort' : ''}`} title={`${SQUARES[k].n}${state.mort[k] ? ' (mortgaged)' : ''}`}>
+													<i style={{ background: SQUARES[k].c || '#9ca3af' }} />{SQUARES[k].n}
+													{h > 0 && <b>{h === 5 ? ' 🏨' : ` ${'🏠'.repeat(h)}`}</b>}
+												</span>
+											);
+										})}
+									</span>
+								</div>
+							);
+						})}
 					</div>
 				</div>
 			</div>
