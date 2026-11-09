@@ -19,7 +19,12 @@ export function Die({ value, rolling }) {
 	);
 }
 
-const ICON = { go: '→', card: '?', tax: '$', jail: '⛓', park: 'P', gojail: '👮', rail: '🚂', util: '💡' };
+// The real board is 852 units wide: two 102-unit corners and nine 72-unit squares between them. The replay board
+// uses the same proportions, so squares are tall on the top / bottom rows and wide on the sides, like the original.
+const UNITS = 852;
+const edge = (c) => (c === 0 ? 0 : c === 10 ? UNITS - 102 : 102 + 72 * (c - 1)); // left edge of column / row c
+const mid = (c) => (c === 0 || c === 10 ? edge(c) + 51 : edge(c) + 36);
+const LOGOS = 'images/card-logos/'; // resolves from the site root (index.html has <base href="/">)
 
 export default function ReplayBoard({ state, players, hop, rolling, shownDice, caption }) {
 	const where = (p) => (hop && hop.player === p ? hop.square : state.pos[p]);
@@ -39,8 +44,7 @@ export default function ReplayBoard({ state, players, hop, rolling, shownDice, c
 						{s.c && <span className="rb-band" style={{ background: s.c }}>
 							{h > 0 && (h === 5 ? <b className="rb-hotel" /> : Array.from({ length: h }, (_, k) => <b key={k} className="rb-house" />))}
 						</span>}
-						<span className="rb-name">{ICON[s.k] && !s.c ? <em>{ICON[s.k]}</em> : null}{s.n}</span>
-						{s.p > 0 && <span className="rb-price">${s.p}</span>}
+						{s.l ? <img className="rb-logo-img" src={`${LOGOS}${s.l}.png`} alt="" draggable="false" /> : <span className="rb-name">{s.n}</span>}
 						{o >= 0 && <span className="rb-owner" style={{ background: colorOf(o) }} />}
 					</div>
 				);
@@ -51,12 +55,12 @@ export default function ReplayBoard({ state, players, hop, rolling, shownDice, c
 				const { row, col } = cell(sq);
 				const mates = atSquare(sq);
 				const k = mates.indexOf(p);
-				const dx = (k % 2 ? 1 : -1) * (mates.length > 1 ? 18 : 0);
-				const dy = (k > 1 ? 1 : -1) * (mates.length > 2 ? 18 : 0);
+				const dx = (k % 2 ? 1 : -1) * (mates.length > 1 ? 40 : 0);
+				const dy = (k > 1 ? 1 : -1) * (mates.length > 2 ? 40 : 0);
 				const inJail = state.jail[p] && sq === 10;
 				return (
 					<div key={p} className={`rb-token${state.turn === p ? ' rb-active' : ''}`}
-						style={{ left: `${((col + 0.5) / 11) * 100}%`, top: `${((row + 0.5) / 11) * 100}%`, background: colorOf(p), transform: `translate(calc(-50% + ${dx}%), calc(-50% + ${dy}% + ${inJail ? 6 : 0}px))`, zIndex: 5 + (state.turn === p ? 1 : 0) }}
+						style={{ left: `${(mid(col) / UNITS) * 100}%`, top: `${(mid(row) / UNITS) * 100}%`, background: colorOf(p), transform: `translate(calc(-50% + ${dx}%), calc(-50% + ${dy}% + ${inJail ? 6 : 0}px))`, zIndex: 5 + (state.turn === p ? 1 : 0) }}
 						title={pl.name}>
 						{p + 1}
 					</div>

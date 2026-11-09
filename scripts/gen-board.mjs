@@ -10,12 +10,13 @@ const kindAt = { 0: 'go', 10: 'jail', 20: 'park', 30: 'gojail', 4: 'tax', 38: 't
 const rows = sq.map((s, i) => ({
 	n: s.name, c: s.groupNumber >= 3 ? s.color : null, p: s.price, g: s.groupNumber, h: s.houseprice,
 	k: kindAt[i] || (s.groupNumber === 1 ? 'rail' : s.groupNumber === 2 ? 'util' : 'prop'),
+	...(s.logo ? { l: s.logo } : {}),
 	...(s.category ? { cat: s.category.en, hy: s.category.hy } : {}),
 }));
 // names the squares had before the Armenian board, so replays of old games still find their squares
 const old = ['GO', 'Mediterranean Avenue', 'Community Chest', 'Baltic Avenue', 'City Tax', 'Reading Railroad', 'Oriental Avenue', 'Chance', 'Vermont Avenue', 'Connecticut Avenue', 'Just Visiting', 'St. Charles Place', 'Electric Company', 'States Avenue', 'Virginia Avenue', 'Pennsylvania Railroad', 'St. James Place', 'Community Chest', 'Tennessee Avenue', 'New York Avenue', 'Free Parking', 'Kentucky Avenue', 'Chance', 'Indiana Avenue', 'Illinois Avenue', 'B&O Railroad', 'Atlantic Avenue', 'Ventnor Avenue', 'Water Works', 'Marvin Gardens', 'Go to Jail', 'Pacific Avenue', 'North Carolina Avenue', 'Community Chest', 'Pennsylvania Avenue', 'Short Line', 'Chance', 'Park Place', 'LUXURY TAX', 'Boardwalk'];
 const out = `// The board, in the order of the squares (0 = GO ... 39 = last bank). Generated from public/engine/classicedition.js by scripts/gen-board.mjs.
-// n name, c colour band (null = none), p price, g group number in the engine, h house price, k kind, cat/hy category (English/Armenian).
+// n name, c colour band (null = none), p price, g group number in the engine, h house price, k kind, cat/hy category (English/Armenian), l logo file name (images/card-logos/<l>.png).
 export const SQUARES = ${JSON.stringify(rows)};
 
 /** The names of the same squares in games played before the Armenian board (same positions). */
