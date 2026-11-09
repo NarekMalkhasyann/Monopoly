@@ -31,7 +31,7 @@ export default function JoinPage({ code, user }) {
 				<form className="card join-pass" onSubmit={(e) => { e.preventDefault(); if (password) attempt(password); }}>
 					<h3>Room {code.toUpperCase()} is private</h3>
 					<p className="muted">Enter the password the host gave you.</p>
-					<input className="code-input" type="password" autoFocus autoComplete="off" placeholder="Room password" aria-label="Room password" value={password} maxLength={40} onChange={(e) => setPassword(e.target.value)} />
+					<input className="code-input secret-input" type="text" autoFocus autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false} data-lpignore="true" data-1p-ignore="true" data-form-type="other" placeholder="Room password" aria-label="Room password" value={password} maxLength={40} onChange={(e) => setPassword(e.target.value)} />
 					{error && <p className="auth-error" role="alert">{error}</p>}
 					<div className="row-actions">
 						<button className="btn-primary" type="submit" disabled={busy || !password}>{busy ? 'Joining…' : 'Join'}</button>

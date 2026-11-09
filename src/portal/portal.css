@@ -222,6 +222,7 @@
 	border: 1px solid rgba(255, 255, 255, .72); border-radius: var(--radius); padding: 8px 12px;
 	font: 700 14px Montserrat, sans-serif; letter-spacing: .12em; text-transform: uppercase;
 }
+.secret-input { -webkit-text-security: disc; text-security: disc; }
 .code-input::placeholder { color: var(--gray); font-weight: 400; letter-spacing: 0; text-transform: none; }
 .code-input:focus-visible { outline: none; border-color: var(--green); }
 

@@ -63,7 +63,7 @@ export default function RoomsSidebar({ excludeId, onJoin }) {
 						</div>
 						{r.isPrivate && asking === r.id && (
 							<form className="room-pass" onSubmit={(e) => { e.preventDefault(); if (pw) join(r, pw); }}>
-								<input className="code-input" type="password" autoFocus autoComplete="off" placeholder="Room password" aria-label={`Password of ${r.host}'s room`} value={pw} maxLength={40} onChange={(e) => setPw(e.target.value)} />
+								<input className="code-input secret-input" type="text" autoFocus autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false} data-lpignore="true" data-1p-ignore="true" data-form-type="other" placeholder="Room password" aria-label={`Password of ${r.host}'s room`} value={pw} maxLength={40} onChange={(e) => setPw(e.target.value)} />
 								<button className="btn-primary btn-sm" type="submit" disabled={!pw || busy === r.id}>Enter</button>
 							</form>
 						)}
