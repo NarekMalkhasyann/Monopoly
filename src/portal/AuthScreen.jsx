@@ -50,7 +50,7 @@ export default function AuthScreen({ mode, onLogin }) {
 				</form>
 			</div>
 			<div className="auth-art">
-				<h2>Yerevan<span>Poly</span></h2>
+				<h2>ACT <span>Monopoly</span></h2>
 				<p>Buy, trade and bankrupt your friends. Play on one screen or across devices.</p>
 			</div>
 		</div>
