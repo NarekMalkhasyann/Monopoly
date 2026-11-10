@@ -823,6 +823,13 @@ input[type="checkbox"] {
 	width: 100%;
 }
 
+.moneybarcell[data-presence] { position: relative; padding-right: 30px; }
+.moneybarcell[data-presence]::after {
+	content: ""; position: absolute; top: 10px; right: 10px; width: 12px; height: 12px; border-radius: 50%;
+	background: #6b6b6b; border: 2px solid #3f3f3f;
+}
+.moneybarcell[data-presence="online"]::after { background: #34d058; border-color: #1f7a35; box-shadow: 0 0 8px #34d058; }
+
 .moneybarcell {
 	width: 130px;
 	min-width: 130px;

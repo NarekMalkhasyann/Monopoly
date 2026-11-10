@@ -32,6 +32,18 @@ export default function GameBar() {
 	});
 	useEffect(() => subscribeGameInfo(setInfo), []);
 
+	// Online games: mark each player's card in the money bar as connected / away (CSS draws the dot from data-presence).
+	useEffect(() => {
+		for (let n = 1; n <= 8; n++) {
+			const card = document.getElementById(`p${n}moneybar`);
+			const nameEl = document.getElementById(`p${n}moneyname`);
+			if (!card || !nameEl) continue;
+			const who = isOnline ? online.room.players.find((p) => p.name === nameEl.textContent) : null;
+			if (who) card.dataset.presence = who.online ? 'online' : 'away';
+			else delete card.dataset.presence;
+		}
+	}, [isOnline, online.room, info]);
+
 	const leave = () => window.location.assign('/play');
 	const offlineCount = isOnline ? online.room.players.filter((p) => !p.online).length : 0;
 
