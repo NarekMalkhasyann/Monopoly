@@ -286,6 +286,10 @@ body.online-game #setup { display: none !important; }
 }
 .turn-timer.warn { --sweep: #06401cd9; }
 .turn-timer.danger { --sweep: #06401cd9; } /* stays green; the pulsing red border is the warning */
+.turn-timer.tt-turn { --sweep: #ff6b5e66; } /* End turn is coral: the countdown fills it in coral */
+.turn-timer.tt-turn.warn, .turn-timer.tt-turn.danger { --sweep: #ff6b5e8c; }
+.turn-timer.tt-turn::after { box-shadow: inset 0 0 0 1px #ff6b5e73; }
+.turn-timer.tt-turn.danger:not(.paused)::after { box-shadow: inset 0 0 0 2px #ff6b5e; }
 .turn-timer.paused { opacity: .5; }
 .turn-timer::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 2px #ffffff40; }
 .turn-timer.danger:not(.paused)::after { animation: tt-pulse 1s ease-in-out infinite; box-shadow: inset 0 0 0 2px var(--red); }
@@ -483,3 +487,23 @@ body.online-game #setup { display: none !important; }
 .kick-btn { margin-left: 8px; }
 .kick-confirm { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; font-size: 13px; }
 .notice-kicked { margin: 0 0 16px; padding: 12px 16px; border-radius: 14px; background: #3d2a1d; border: 1px solid var(--orange); color: var(--white); display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+
+/* ---------- redesign, part 6: on wide screens the game bar is a top header ---------- */
+.gb-brand, .gb-conn { display: none; }
+@media (min-width: 1130px) {
+	.game-bar {
+		top: 0; left: 0; right: 0; bottom: auto; height: 60px; box-sizing: border-box;
+		padding: 0 28px; gap: 16px; border-radius: 0; background: #161616f2;
+		border-bottom: 1px solid #ffffff12; backdrop-filter: blur(8px);
+	}
+	.gb-brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+	.gb-mark { width: 28px; height: 28px; border-radius: 8px; background: var(--green); color: #1d1d1d; display: grid; place-items: center; font-weight: 800; font-size: 15px; }
+	.gb-brand b { font-size: 16px; font-weight: 700; }
+	.gb-sub { font-size: 12px; color: #ffffff99; padding-left: 10px; border-left: 1px solid #ffffff26; }
+	.gb-conn { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #ffffffb3; }
+	.gb-conn i { width: 8px; height: 8px; border-radius: 50%; background: #34d058; box-shadow: 0 0 8px #34d058; }
+	body.in-game { padding-top: 64px; }
+	/* things positioned from the top of the page move down by the header's height */
+	body.in-game #control { top: 214px; }
+	body.in-game #moneybarwrap { top: 79px; }
+}

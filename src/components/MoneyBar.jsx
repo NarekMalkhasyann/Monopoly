@@ -16,7 +16,7 @@ export default function MoneyBar() {
 									<img src="images/Monopoly-base-images/arrow.png" id={`p${n}arrow`} className="money-bar-arrow" alt=">" />
 								</td>
 								<td id={`p${n}moneybar`} className="moneybarcell">
-									<div><span id={`p${n}moneyname`}>Player {n}</span>:</div>
+									<div><span id={`p${n}moneyname`}>Player {n}</span></div>
 									<div>$<span id={`p${n}money`}>1500</span></div>
 								</td>
 							</tr>
