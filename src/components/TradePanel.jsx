@@ -19,7 +19,7 @@ function decorate() {
 		if (select) {
 			const label = document.createElement('span');
 			label.className = 'trade-with';
-			label.textContent = 'WITH';
+			label.textContent = 'TRADE WITH';
 			chips.appendChild(label);
 			Array.from(select.options).forEach((o) => {
 				const b = document.createElement('button');
@@ -44,6 +44,19 @@ function decorate() {
 		if (m > 0) out.push('$' + m);
 		return out.length ? out.join(' + ') : 'nothing';
 	};
+	[['left', 'trade-leftp-name'], ['right', null]].forEach(([k]) => {
+		const nameEl = document.getElementById('trade-' + k + 'p-name');
+		let nm = '';
+		if (nameEl) {
+			const sel = nameEl.querySelector('select');
+			nm = sel ? sel.options[sel.selectedIndex]?.textContent : nameEl.textContent;
+		}
+		const pl = (win.player || []).find((x) => x && x.name === nm);
+		const av = document.getElementById('trade-' + k + 'p-avatar');
+		if (av) { av.textContent = (nm || '?').trim().charAt(0).toUpperCase(); av.style.background = pl ? pl.color : '#888'; }
+		const of = document.getElementById('trade-' + k + 'p-of');
+		if (of) of.textContent = pl ? 'of $' + pl.money : '';
+	});
 	const sum = document.getElementById('trade-summary');
 	if (sum) {
 		const n1 = (document.getElementById('trade-leftp-name') || {}).textContent || '';
@@ -80,41 +93,42 @@ export default function TradePanel() {
 		<div id="trade">
 			<div className="trade-modal" role="dialog" aria-modal="true" aria-label="Trade">
 			<div className="trade-head">
-				<h3>Trade</h3>
+				<div className="trade-titles"><h3>Trade</h3><span>Swap properties, cash and Get Out of Jail Free cards. Nothing changes until the other player accepts.</span></div>
 				<button type="button" className="trade-close" aria-label="Close trade" title="Cancel the trade." onClick={() => window.game.cancelTrade()}>✕</button>
 			</div>
 			<div id="trade-chips" />
-			<table style={{ borderSpacing: 3 }}>
+			<table className="trade-grid">
 				<tbody>
 					<tr>
-						<td className="trade-cell"><div className="trade-title">Gives</div><div id="trade-leftp-name" /></td>
-						<td className="trade-cell"><div className="trade-title">Gets</div><div id="trade-rightp-name" /></td>
+						<td className="trade-cell"><span className="trade-avatar" id="trade-leftp-avatar" /><div className="trade-who"><div className="trade-title">Gives</div><div id="trade-leftp-name" /></div></td>
+						<td className="trade-cell"><span className="trade-avatar" id="trade-rightp-avatar" /><div className="trade-who"><div className="trade-title">Gets</div><div id="trade-rightp-name" /></div></td>
 					</tr>
 					<tr>
-						<td className="trade-cell">
-							${' '}<input id="trade-leftp-money" defaultValue="0" title="Enter amount to exchange with the other player." />
+						<td className="trade-cell trade-cash">
+							<span className="trade-cashlabel">Cash</span><span className="trade-money"><b>$</b><input id="trade-leftp-money" defaultValue="0" title="Enter amount to exchange with the other player." /></span><span className="trade-of" id="trade-leftp-of" />
 						</td>
-						<td className="trade-cell">
-							${' '}<input id="trade-rightp-money" defaultValue="0" title="Enter amount to exchange with the other player." />
+						<td className="trade-cell trade-cash">
+							<span className="trade-cashlabel">Cash</span><span className="trade-money"><b>$</b><input id="trade-rightp-money" defaultValue="0" title="Enter amount to exchange with the other player." /></span><span className="trade-of" id="trade-rightp-of" />
 						</td>
 					</tr>
 					<tr>
 						<td id="trade-leftp-property" className="trade-cell" />
 						<td id="trade-rightp-property" className="trade-cell" />
 					</tr>
-					<tr>
-						<td colSpan={2} className="trade-cell"><div id="trade-summary" /></td>
-					</tr>
-					<tr>
-						<td colSpan={2} className="trade-cell trade-actions">
-							<input type="button" id="proposetradebutton" value="Propose Trade" onClick={() => window.game.proposeTrade()} title="Exchange the money and properties that are checked above." />
-							<input type="button" id="canceltradebutton" value="Cancel Trade" onClick={() => window.game.cancelTrade()} title="Cancel the trade." />
-							<input type="button" id="accepttradebutton" value="Accept Trade" onClick={() => window.game.acceptTrade()} title="Accept the proposed trade." />
-							<input type="button" id="rejecttradebutton" value="Reject Trade" onClick={() => window.game.cancelTrade()} title="Reject the proposed trade." />
-						</td>
-					</tr>
 				</tbody>
 			</table>
+			<div className="trade-foot">
+				<div className="trade-footinfo">
+					<div id="trade-summary" />
+					<span className="trade-rules">Mortgaged properties: the new owner pays 10% at once, or can pay off the mortgage later. Sets with houses cannot be traded until the houses are sold.</span>
+				</div>
+				<div className="trade-actions">
+					<input type="button" id="proposetradebutton" value="Propose trade" onClick={() => window.game.proposeTrade()} title="Exchange the money and properties that are checked above." />
+					<input type="button" id="canceltradebutton" value="Cancel" onClick={() => window.game.cancelTrade()} title="Cancel the trade." />
+					<input type="button" id="accepttradebutton" value="Accept trade" onClick={() => window.game.acceptTrade()} title="Accept the proposed trade." />
+					<input type="button" id="rejecttradebutton" value="Reject" onClick={() => window.game.cancelTrade()} title="Reject the proposed trade." />
+				</div>
+			</div>
 			</div>
 		</div>
 	);
