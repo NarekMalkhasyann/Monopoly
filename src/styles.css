@@ -2106,3 +2106,40 @@ td.statscellname[title="Mortgaged"]::after {
 #deed-foot { margin: 6px 16px 0; padding: 10px 0 14px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; font-size: 12px; color: rgba(255, 255, 255, 0.7); }
 #deed-banner { display: none; margin: 0 16px 16px; padding: 8px 12px; border-radius: 9px; background: rgba(250, 204, 21, 0.12); box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.4); color: #facc15; font-size: 12px; font-weight: 700; text-align: center; }
 #deed.deed-mortgaged #deed-rows { opacity: 0.45; }
+
+/* ===== Manage list as in the preview ===== */
+#option { display: none !important; }
+#owned { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+#owned .mg-empty { padding: 14px; color: #ffffff99; font-size: 13px; }
+.mg-card { border-radius: 14px; background: #262626; box-shadow: inset 0 0 0 1px #ffffff0d; overflow: hidden; }
+.mg-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #2b2b2b; }
+.mg-swatch { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+.mg-title { font-weight: 700; font-size: 13px; }
+.mg-badge { font-size: 9.5px; font-weight: 800; letter-spacing: .06em; padding: 3px 7px; border-radius: 999px; background: #3a3a3a; color: #ffffffb3; }
+.mg-badge.mg-set { background: #acfa00; color: #1d1d1d; }
+.mg-note { margin-left: auto; font-size: 11px; color: #ffffff99; }
+#owned .mg-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid #ffffff0d; border-radius: 0; cursor: pointer; }
+#owned .mg-row:hover, #owned .mg-row.mg-sel { background: #ffffff0a; }
+#owned .mg-row input[type=checkbox] { display: none; }
+.mg-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.mg-name { font-weight: 600; font-size: 13.5px; }
+.mg-mort .mg-name { color: #ffffff80; }
+.mg-sub { display: flex; gap: 3px; align-items: center; height: 8px; }
+.mg-pip { width: 8px; height: 8px; border-radius: 2px; background: #3a3a3a; display: inline-block; }
+.mg-pip.on { background: #22c55e; }
+.mg-pip.mg-hotel { width: 14px; }
+.mg-pip.mg-hotel.on { background: #ef4444; }
+.mg-rent { font-size: 11px; color: #ffffffa6; margin-left: 6px; line-height: 8px; }
+.mg-btn { width: 34px; height: 34px; border-radius: 9px; font: 800 17px Montserrat, sans-serif; flex-shrink: 0; cursor: pointer; padding: 0; }
+.mg-buy { border: none; background: #acfa00; color: #1d1d1d; }
+.mg-sell { border: 1px solid #ffffff40; background: transparent; color: #fff; }
+.mg-mort-btn { height: 34px; padding: 0 10px; border-radius: 9px; font: 700 11.5px Montserrat, sans-serif; flex-shrink: 0; border: 1px solid #ffffff40; background: transparent; color: #fff; cursor: pointer; min-width: 52px; }
+.mg-mort-btn.mg-back { border-color: #facc15; background: #facc151f; color: #facc15; }
+.mg-btn:disabled, .mg-mort-btn:disabled { border: 1px solid #ffffff1f; background: transparent; color: #ffffff40; cursor: not-allowed; }
+.mg-foot { margin: 2px 2px 0; font-size: 11px; line-height: 1.5; color: #ffffff80; }
+#owned { max-height: 440px; text-align: left; }
+.mg-card { flex-shrink: 0; }
+.mg-sub { height: auto; min-height: 12px; }
+.mg-rent { line-height: 12px; }
+.mg-sub .mg-rent:first-child { margin-left: 0; }
+#owned { max-height: 300px; }
