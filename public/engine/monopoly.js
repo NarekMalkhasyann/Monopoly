@@ -1479,7 +1479,7 @@ function updateDice() {
 		}
 
 		element1.src = "images/Monopoly-base-images/Die_" + die1 + ".png";
-		element1.alt = die0;
+		element1.alt = die1;
 	} else {
 		document.getElementById("die0").textContent = die0;
 		document.getElementById("die1").textContent = die1;

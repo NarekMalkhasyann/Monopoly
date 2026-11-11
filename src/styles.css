@@ -1986,24 +1986,8 @@ td.statscellname[title="Mortgaged"]::after {
 	#control #quickstats .qs-name > span:last-child { display: none; }
 	#control #quickstats #pmoney { font-size: 15px; font-weight: 700; color: var(--green); margin-top: 0; }
 
-	/* The two dice as big white tiles */
-	#control #quickstats + div { display: flex; justify-content: center; gap: 14px; }
-	#control .die, #control .die-no-img {
-		float: none;
-		margin: 0;
-		display: grid;
-		place-items: center;
-		width: 62px;
-		height: 62px;
-		padding: 0;
-		border: none;
-		border-radius: 16px;
-		background: #f4f4f4;
-		color: #1d1d1d;
-		font-size: 28px;
-		font-weight: 800;
-		box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
-	}
+	/* the dice tiles themselves are styled below (CSS pips) */
+	#control #quickstats + div { display: flex; justify-content: center; gap: 8px; }
 
 	/* Roll Dice / End turn: wide, under everything */
 	#control > table > tbody > tr:last-child > td > div { display: flex; gap: 10px; padding-top: 14px !important; }
@@ -2028,4 +2012,89 @@ td.statscellname[title="Mortgaged"]::after {
 }
 @media (max-width: 1128px) {
 	.moneybarcell div:first-child[data-initial]::before { left: 10px; width: 20px; font-size: 11px; }
+}
+
+/* ==========================================================================
+   Redesign: the two dice in the centre panel are drawn in CSS (white tile, round pips) instead of the old
+   2D pictures. The engine puts an <img alt="N"> inside each die; we hide the picture and draw N pips.
+   ========================================================================== */
+#control .die, #control .die-no-img {
+	position: relative;
+	display: block;
+	width: 58px;
+	height: 58px;
+	padding: 0;
+	margin: 0 6px;
+	border: none;
+	border-radius: 15px;
+	background-color: #f4f4f4;
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 -3px 0 rgba(0, 0, 0, 0.08);
+	font-size: 0;
+}
+#control .die img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+#die0:has(img[alt="1"]) {
+	background-image: radial-gradient(circle 6px at 50% 50%, #1d1d1d 96%, transparent 100%);
+}
+#die1:has(img[alt="1"]) {
+	background-image: radial-gradient(circle 6px at 50% 50%, #1d1d1d 96%, transparent 100%);
+}
+#die0:has(img[alt="2"]) {
+	background-image: radial-gradient(circle 6px at 28% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 72%, #1d1d1d 96%, transparent 100%);
+}
+#die1:has(img[alt="2"]) {
+	background-image: radial-gradient(circle 6px at 28% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 72%, #1d1d1d 96%, transparent 100%);
+}
+#die0:has(img[alt="3"]) {
+	background-image: radial-gradient(circle 6px at 28% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 50% 50%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 72%, #1d1d1d 96%, transparent 100%);
+}
+#die1:has(img[alt="3"]) {
+	background-image: radial-gradient(circle 6px at 28% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 50% 50%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 72%, #1d1d1d 96%, transparent 100%);
+}
+#die0:has(img[alt="4"]) {
+	background-image: radial-gradient(circle 6px at 28% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 28% 72%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 72%, #1d1d1d 96%, transparent 100%);
+}
+#die1:has(img[alt="4"]) {
+	background-image: radial-gradient(circle 6px at 28% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 28% 72%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 72%, #1d1d1d 96%, transparent 100%);
+}
+#die0:has(img[alt="5"]) {
+	background-image: radial-gradient(circle 6px at 28% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 50% 50%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 28% 72%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 72%, #1d1d1d 96%, transparent 100%);
+}
+#die1:has(img[alt="5"]) {
+	background-image: radial-gradient(circle 6px at 28% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 50% 50%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 28% 72%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 72%, #1d1d1d 96%, transparent 100%);
+}
+#die0:has(img[alt="6"]) {
+	background-image: radial-gradient(circle 6px at 28% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 28% 50%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 50%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 28% 72%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 72%, #1d1d1d 96%, transparent 100%);
+}
+#die1:has(img[alt="6"]) {
+	background-image: radial-gradient(circle 6px at 28% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 28%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 28% 50%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 50%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 28% 72%, #1d1d1d 96%, transparent 100%),
+		radial-gradient(circle 6px at 72% 72%, #1d1d1d 96%, transparent 100%);
 }
