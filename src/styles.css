@@ -1933,3 +1933,80 @@ td.statscellname[title="Mortgaged"]::after {
 #board tbody tr:nth-last-child(2) .board-center { border-radius: 0 0 18px 18px; box-shadow: none; }
 /* the colour bar had a black hairline against the old black cell borders */
 #board .cell-color-bar { border-width: 0 !important; box-shadow: none; }
+
+/* ==========================================================================
+   Redesign, part 5: the panel in the middle of the board (desktop)
+   Same markup and ids as before (the engine and the phone layout use them); on wide screens it is
+   laid out as: YOUR TURN + name, big dice, tabs and log, then the Roll / End turn button.
+   ========================================================================== */
+@media (min-width: 1130px) {
+	#control {
+		top: 150px;
+		width: 480px;
+		box-sizing: border-box;
+		padding: 26px 28px 24px;
+		border: none;
+		border-radius: 22px;
+		background: linear-gradient(160deg, #2c2c2c, #232323);
+		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 24px 60px rgba(0, 0, 0, 0.55);
+	}
+	#control > table, #control > table > tbody, #control > table > tbody > tr, #control > table > tbody > tr > td { display: block; width: 100%; }
+	#control > table > tbody > tr:first-child { display: flex; flex-direction: column; }
+	#control > table > tbody > tr:first-child > td:last-child {
+		order: -1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 14px;
+		margin-bottom: 16px;
+	}
+	#control #menu, #control #alert, #control #landed, #control #manage { width: 100%; box-sizing: border-box; }
+	#control #alert { height: 100px; }
+
+	/* YOUR TURN + big name */
+	#control #quickstats {
+		margin: 0;
+		width: auto;
+		padding: 0;
+		border: none !important;
+		background: none;
+		box-shadow: none;
+		border-radius: 0;
+	}
+	#control #quickstats::before {
+		content: "YOUR TURN";
+		display: block;
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.24em;
+		color: rgba(255, 255, 255, 0.5);
+		margin-bottom: 2px;
+	}
+	#control #quickstats #pname { font-size: 28px; font-weight: 800; letter-spacing: 0; }
+	#control #quickstats .qs-name > span:last-child { display: none; }
+	#control #quickstats #pmoney { font-size: 15px; font-weight: 700; color: var(--green); margin-top: 0; }
+
+	/* The two dice as big white tiles */
+	#control #quickstats + div { display: flex; justify-content: center; gap: 14px; }
+	#control .die, #control .die-no-img {
+		float: none;
+		margin: 0;
+		display: grid;
+		place-items: center;
+		width: 62px;
+		height: 62px;
+		padding: 0;
+		border: none;
+		border-radius: 16px;
+		background: #f4f4f4;
+		color: #1d1d1d;
+		font-size: 28px;
+		font-weight: 800;
+		box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+	}
+
+	/* Roll Dice / End turn: wide, under everything */
+	#control > table > tbody > tr:last-child > td > div { display: flex; gap: 10px; padding-top: 14px !important; }
+	#control #nextbutton { flex: 1; height: 50px; margin: 0; font-size: 16px; border-radius: 14px; }
+	#control #resignbutton { margin: 0; height: 50px; padding: 0 18px; border-radius: 14px; }
+}
