@@ -1903,3 +1903,33 @@ td.statscellname[title="Mortgaged"]::after {
 .board-bottom:has(.cell-owner[style*="display: block"]) .cell-name { top: 22px; }
 .board-left:has(.cell-owner[style*="display: block"]) .cell-name { box-sizing: border-box; padding-left: 16px; }
 .board-right:has(.cell-owner[style*="display: block"]) .cell-name { box-sizing: border-box; padding-right: 16px; }
+
+/* ==========================================================================
+   Redesign, part 4: rounded squares with small gaps on a dark rounded plate
+   ========================================================================== */
+#board {
+	border: 4px solid #1f1f1f;
+	border-spacing: 2px;
+	background-color: #1f1f1f;
+	border-radius: 24px;
+}
+#board .cell {
+	border: none;
+	border-radius: 11px;
+	background-color: #2e2e2e;
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+	overflow: hidden; /* clips the colour bar and owner strip to the rounded corners */
+}
+#board .cell:hover { background-color: #383838; }
+#board .board-corner { background-color: #2a2a2a; }
+/* The middle is one cell per row; they are joined into a single rounded panel: flat colour, the gap
+   between rows is filled with a shadow, and only the first and last row get rounded corners. */
+#board .board-center {
+	border-radius: 0;
+	background: #252525;
+	box-shadow: 0 2px 0 0 #252525;
+}
+#board tbody tr:nth-child(2) .board-center { border-radius: 18px 18px 0 0; }
+#board tbody tr:nth-last-child(2) .board-center { border-radius: 0 0 18px 18px; box-shadow: none; }
+/* the colour bar had a black hairline against the old black cell borders */
+#board .cell-color-bar { border-width: 0 !important; box-shadow: none; }
