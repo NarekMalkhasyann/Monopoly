@@ -1020,106 +1020,6 @@ a.statscellcolor {
 	cursor: help;
 }
 
-/* Property Deed popup */
-#deed {
-	display: none;
-	position: fixed;
-	border: 1px solid var(--gray);
-	border-radius: var(--radius-lg);
-	width: 240px;
-	min-height: 290px;
-	background-color: var(--dark);
-	color: var(--white);
-	box-shadow: var(--shadow-modal);
-	z-index: 25;
-	overflow: hidden;
-}
-
-#deed td {
-	border: none;
-	font-size: 12px;
-	padding: 3px 4px;
-}
-
-#deed-header {
-	width: calc(100% - 16px);
-	margin: 8px auto;
-	border: 1px solid var(--black);
-	border-radius: var(--radius-sm);
-	padding: 6px;
-	text-align: center;
-	text-transform: uppercase;
-	font-family: 'Montserrat', sans-serif;
-	font-weight: 700;
-	color: var(--black);
-	background-color: var(--white);
-}
-
-#deed-name {
-	font-size: 14px;
-	font-weight: 700;
-}
-
-#deed-category {
-	margin-top: 4px;
-	font-size: 10px;
-	font-weight: 600;
-	letter-spacing: 0.5px;
-	text-transform: none;
-	white-space: pre-line;
-	line-height: 1.35;
-	opacity: 0.85;
-}
-
-#deed-table {
-	margin: 8px auto;
-	width: calc(100% - 16px);
-	border-spacing: 0 2px;
-	color: var(--white);
-}
-
-#deed-table tr + tr td {
-	border-top: 1px solid var(--divider);
-}
-
-#deed-special, #deed-mortgaged {
-	padding: 16px 14px;
-	text-align: center;
-	font-size: 12px;
-	line-height: 1.5;
-}
-
-#deed-special-name, #deed-mortgaged-name {
-	font-size: 15px;
-	font-weight: 700;
-	text-transform: uppercase;
-	margin-bottom: 10px;
-}
-
-#deed-special-text {
-	text-align: left;
-	color: var(--white-o);
-	margin-bottom: 12px;
-}
-
-#deed-special-footer {
-	padding-top: 10px;
-	border-top: 1px solid var(--divider);
-	text-align: left;
-	font-weight: 600;
-}
-
-#deed-mortgaged p {
-	margin: 6px 0;
-	color: var(--orange);
-}
-
-#deed-mortgaged > div:nth-of-type(2) {
-	color: var(--orange);
-	font-weight: 700;
-	letter-spacing: 1px;
-}
-
 /* Enlarged square preview shown on hover over a cell */
 .enlarge {
 	width: 160px;
@@ -2113,7 +2013,7 @@ td.statscellname[title="Mortgaged"]::after {
 .propertycellname { font-size: 13px; font-weight: 600; }
 
 /* Hover cards: dark rounded cards with a colour header, like the preview's deed cards */
-.enlarge, #deed {
+.enlarge {
 	border: none;
 	border-radius: 20px;
 	background: #222222;
@@ -2122,20 +2022,6 @@ td.statscellname[title="Mortgaged"]::after {
 .enlarge-color { height: 44px; border-bottom: none; }
 .enlarge-name { font-size: 17px; font-weight: 800; padding: 8px 10px 2px; }
 .enlarge-price { font-size: 14px; color: var(--green); }
-#deed-header {
-	width: 100%;
-	margin: 0;
-	border: none;
-	border-radius: 0;
-	padding: 14px 12px 12px;
-}
-#deed-name { font-size: 18px; font-weight: 800; }
-#deed-table { width: calc(100% - 20px); margin: 10px auto; border-spacing: 0 3px; }
-#deed-table tr + tr td { border-top: none; padding: 5px 8px; }
-#deed-table tr:not(:first-child):not(:last-child) td { background: #ffffff0a; }
-#deed-table tr:not(:first-child):not(:last-child) td:first-child { border-radius: 8px 0 0 8px; }
-#deed-table tr:not(:first-child):not(:last-child) td:last-child { border-radius: 0 8px 8px 0; }
-
 /* Trade window */
 #trade { background: #000000cc; }
 .trade-modal { background: #1f1f1f; border: none; border-radius: 24px; box-shadow: inset 0 0 0 1px #ffffff14, 0 40px 100px rgba(0, 0, 0, 0.8); padding: 24px 26px 20px; }
@@ -2185,3 +2071,38 @@ td.statscellname[title="Mortgaged"]::after {
 	#control #nextbutton { width: 100%; height: 48px; border-radius: 14px; font-size: 15px; }
 	#control > table > tbody > tr:last-child > td > div { display: flex; gap: 8px; }
 }
+
+/* ==========================================================================
+   Title-deed card (hover): colour header with logo, owner + price, rent rows, footer
+   ========================================================================== */
+#deed {
+	display: none;
+	position: fixed;
+	width: 280px;
+	box-sizing: border-box;
+	z-index: 25;
+	overflow: hidden;
+	border: none;
+	border-radius: 20px;
+	background: #222222;
+	color: var(--white);
+	font-family: 'Montserrat', sans-serif;
+	box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+#deed-head { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 14px 14px; color: #161616; text-align: center; }
+#deed-logo { display: none; align-items: center; justify-content: center; padding: 5px 10px; border-radius: 9px; background: #f3f3f3; max-width: 200px; }
+#deed-logo img { display: block; max-height: 34px; max-width: 100%; object-fit: contain; }
+#deed-kind { font-size: 10px; font-weight: 700; letter-spacing: 0.22em; opacity: 0.7; }
+#deed-name { font-size: 21px; font-weight: 800; line-height: 1.15; }
+#deed-category { font-size: 11px; font-weight: 600; opacity: 0.7; }
+#deed-meta { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px 6px; font-size: 12px; color: rgba(255, 255, 255, 0.6); }
+#deed-meta b { color: #fff; }
+#deed-owner { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; color: #fff; }
+#deed-owner i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+#deed-rows { padding: 4px 10px 6px; display: flex; flex-direction: column; gap: 2px; }
+.deed-row { display: flex; justify-content: space-between; padding: 6px 12px; border-radius: 9px; font-size: 13px; color: rgba(255, 255, 255, 0.85); }
+.deed-row b { font-variant-numeric: tabular-nums; }
+.deed-row.deed-lit { background: rgba(172, 250, 0, 0.12); box-shadow: inset 0 0 0 1px rgba(172, 250, 0, 0.4); color: var(--green); font-weight: 700; }
+#deed-foot { margin: 6px 16px 0; padding: 10px 0 14px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; font-size: 12px; color: rgba(255, 255, 255, 0.7); }
+#deed-banner { display: none; margin: 0 16px 16px; padding: 8px 12px; border-radius: 9px; background: rgba(250, 204, 21, 0.12); box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.4); color: #facc15; font-size: 12px; font-weight: 700; text-align: center; }
+#deed.deed-mortgaged #deed-rows { opacity: 0.45; }

@@ -2221,47 +2221,80 @@ function showStats() {
 
 function showdeed(property) {
 	var sq = square[property];
-	$("#deed").show();
+	var $deed = $("#deed");
+	if (!sq || !(sq.groupNumber >= 1)) {
+		return;
+	}
+	$deed.show();
 
-	$("#deed-normal").hide();
-	$("#deed-mortgaged").hide();
-	$("#deed-special").hide();
+	var owner = sq.owner > 0 ? player[sq.owner] : null;
+	var isProperty = sq.groupNumber >= 3;
 
-	if (sq.mortgage) {
-		$("#deed-mortgaged").show();
-		document.getElementById("deed-mortgaged-name").textContent = sq.name;
-		document.getElementById("deed-mortgaged-mortgage").textContent = (sq.price / 2);
-
+	// Header: colour, brand logo (or a plain icon for stations / utilities), name, category.
+	document.getElementById("deed-head").style.backgroundColor = sq.color || "#9ca3af";
+	document.getElementById("deed-kind").textContent = isProperty ? "TITLE DEED" : (sq.groupNumber == 1 ? "STATION" : "UTILITY");
+	document.getElementById("deed-name").textContent = sq.name;
+	document.getElementById("deed-category").textContent = sq.category ? sq.category.en + " \u00b7 " + sq.category.hy : "";
+	var logoBox = document.getElementById("deed-logo");
+	var logoImg = document.getElementById("deed-logo-img");
+	if (sq.logo) {
+		logoImg.src = "images/card-logos/" + sq.logo + ".png";
+		logoBox.style.display = "flex";
 	} else {
+		logoBox.style.display = "none";
+	}
 
-		if (sq.groupNumber >= 3) {
-			$("#deed-normal").show();
-			document.getElementById("deed-header").style.backgroundColor = sq.color;
-			document.getElementById("deed-name").textContent = sq.name;
-			document.getElementById("deed-category").textContent = sq.category ? sq.category.en + "\n" + sq.category.hy : "";
-			document.getElementById("deed-baserent").textContent = sq.baserent;
-			document.getElementById("deed-rent1").textContent = sq.rent1;
-			document.getElementById("deed-rent2").textContent = sq.rent2;
-			document.getElementById("deed-rent3").textContent = sq.rent3;
-			document.getElementById("deed-rent4").textContent = sq.rent4;
-			document.getElementById("deed-rent5").textContent = sq.rent5;
-			document.getElementById("deed-mortgage").textContent = (sq.price / 2);
-			document.getElementById("deed-houseprice").textContent = sq.houseprice;
-			document.getElementById("deed-hotelprice").textContent = sq.houseprice;
+	// Owner and price.
+	var ownerEl = document.getElementById("deed-owner");
+	ownerEl.innerHTML = "";
+	if (owner) {
+		var dot = document.createElement("i");
+		dot.style.background = owner.color;
+		ownerEl.appendChild(dot);
+		ownerEl.appendChild(document.createTextNode("Owned by " + owner.name));
+	} else {
+		ownerEl.textContent = "Unowned";
+	}
+	document.getElementById("deed-price").textContent = "$" + sq.price;
 
-		} else if (sq.groupNumber == 2) {
-			$("#deed-special").show();
-			document.getElementById("deed-special-name").textContent = sq.name;
-			document.getElementById("deed-special-text").innerHTML = utiltext();
-			document.getElementById("deed-special-mortgage").textContent = (sq.price / 2);
-
-		} else if (sq.groupNumber == 1) {
-			$("#deed-special").show();
-			document.getElementById("deed-special-name").textContent = sq.name;
-			document.getElementById("deed-special-text").innerHTML = transtext();
-			document.getElementById("deed-special-mortgage").textContent = (sq.price / 2);
+	// Rent rows; the one that applies now (if somebody owns it) is lit.
+	var rows = [];
+	var lit = -1;
+	var ownedInGroup = 0;
+	if (owner) {
+		for (var g = 0; g < sq.group.length; g++) {
+			if (square[sq.group[g]].owner === sq.owner) {
+				ownedInGroup++;
+			}
 		}
 	}
+	if (isProperty) {
+		rows = [["Rent", "$" + sq.baserent], ["1 house", "$" + sq.rent1], ["2 houses", "$" + sq.rent2], ["3 houses", "$" + sq.rent3], ["4 houses", "$" + sq.rent4], ["Hotel", "$" + sq.rent5]];
+		if (owner) {
+			lit = sq.hotel ? 5 : sq.house;
+		}
+	} else if (sq.groupNumber == 1) {
+		rows = [["1 station", "$25"], ["2 stations", "$50"], ["3 stations", "$100"], ["4 stations", "$200"]];
+		if (owner) {
+			lit = ownedInGroup - 1;
+		}
+	} else {
+		rows = [["1 utility", "4 \u00d7 dice"], ["2 utilities", "10 \u00d7 dice"]];
+		if (owner) {
+			lit = ownedInGroup - 1;
+		}
+	}
+	var rowsHTML = "";
+	for (var r = 0; r < rows.length; r++) {
+		rowsHTML += "<div class='deed-row" + (r === lit ? " deed-lit" : "") + "'><span>" + rows[r][0] + "</span><b>" + rows[r][1] + "</b></div>";
+	}
+	document.getElementById("deed-rows").innerHTML = rowsHTML;
+
+	// Footer: house cost (properties) and mortgage value.
+	document.getElementById("deed-foot-left").textContent = isProperty ? "House $" + sq.houseprice + " each" : (sq.groupNumber == 1 ? "No houses" : "Rent follows the dice");
+	document.getElementById("deed-foot-right").textContent = sq.mortgage ? "Unmortgage $" + Math.round(sq.price * 0.55) : "Mortgage $" + (sq.price / 2);
+	document.getElementById("deed-banner").style.display = sq.mortgage ? "block" : "none";
+	$deed.toggleClass("deed-mortgaged", !!sq.mortgage);
 }
 
 function hidedeed() {
