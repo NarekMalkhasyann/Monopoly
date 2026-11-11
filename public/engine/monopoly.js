@@ -1418,6 +1418,7 @@ function updateMoney() {
 	var p = player[turn];
 
 	document.getElementById("pmoney").innerHTML = "$" + p.money;
+	$("#manage-cash").text("$" + p.money);
 	$(".money-bar-row").hide();
 
 	for (var i = 1; i <= pcount; i++) {
@@ -1491,6 +1492,7 @@ function updateDice() {
 
 function updateOwned() {
 	var p = player[turn];
+	$("#manage-cash").text("$" + p.money);
 	var checkedproperty = getCheckedProperty();
 	$("#option").show();
 	$("#owned").show();

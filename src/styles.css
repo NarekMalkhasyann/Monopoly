@@ -2168,3 +2168,20 @@ td.statscellname[title="Mortgaged"]::after {
 .trade-actions { background: transparent !important; box-shadow: none !important; }
 .trade-cell tr .propertycellcolor { width: 10px !important; height: 10px; min-width: 10px; border: none !important; }
 .trade-cell tr td, .trade-cell tr .propertycellname { color: inherit !important; font-size: inherit; font-weight: inherit; }
+
+/* ===== Manage as a pop-up (like Trade) ===== */
+#control #manage {
+	position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+	z-index: 16; width: min(620px, calc(100vw - 24px)); max-height: calc(100dvh - 24px);
+	box-sizing: border-box; overflow: auto; border: none; border-radius: 24px; background: #1f1f1f;
+	box-shadow: 0 0 0 100vmax #000000bf, 0 40px 100px #000c, inset 0 0 0 1px #ffffff14;
+}
+.manage-head { display: flex; align-items: center; gap: 18px; padding: 18px 24px; border-bottom: 1px solid #ffffff12; }
+.manage-titles { flex: 1; display: flex; flex-direction: column; line-height: 1.3; text-align: left; }
+.manage-title { font-size: 20px; font-weight: 800; }
+.manage-sub { font-size: 12px; color: #ffffff99; }
+.manage-cashbox { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+.manage-cashbox span { font-size: 11px; color: #ffffff80; letter-spacing: .1em; font-weight: 600; }
+.manage-cashbox b { font-size: 22px; font-weight: 800; color: #acfa00; }
+#control #manage #owned { max-height: none; overflow: visible; padding: 18px 24px 22px; }
+#control #manage .mg-foot { display: block; }
