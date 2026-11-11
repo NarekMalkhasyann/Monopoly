@@ -32,6 +32,22 @@ export default function GameBar() {
 	});
 	useEffect(() => subscribeGameInfo(setInfo), []);
 
+	// The player cards show the first letter of the name on their coloured token (styles.css reads data-initial).
+	useEffect(() => {
+		const mark = () => {
+			for (let n = 1; n <= 8; n++) {
+				const nameEl = document.getElementById(`p${n}moneyname`);
+				const box = nameEl && nameEl.parentElement;
+				const name = nameEl ? (nameEl.textContent || '').trim() : '';
+				const letter = /^Player \d+$/.test(name) ? name.slice(7) : name.charAt(0).toUpperCase(); // default names show their number
+				if (box && box.dataset.initial !== letter) box.dataset.initial = letter;
+			}
+		};
+		mark();
+		const t = setInterval(mark, 1000);
+		return () => clearInterval(t);
+	}, []);
+
 	// Online games: mark each player's card in the money bar as connected / away (CSS draws the dot from data-presence).
 	useEffect(() => {
 		for (let n = 1; n <= 8; n++) {
@@ -75,6 +91,12 @@ export default function GameBar() {
 	return (
 		<div className="game-bar" ref={barRef}>
 			<button className="btn-ghost" onClick={leave}>← Menu</button>
+			<span className="gb-brand">
+				<span className="gb-mark" aria-hidden="true">A</span>
+				<b>ACT Monopoly</b>
+				<span className="gb-sub">{isOnline ? `Game #${online.room.id} · Online · ${online.room.players.length} players` : 'Local game'}</span>
+			</span>
+			{isOnline && <span className="gb-conn"><i aria-hidden="true" />{online.room.players.length - offlineCount} connected</span>}
 			{isOnline ? (
 				<>
 					{info.desync ? (
