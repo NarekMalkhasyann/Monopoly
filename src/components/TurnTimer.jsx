@@ -26,6 +26,7 @@ function anchorFor(btn) {
 const visible = (el) => !!(el && (el.offsetWidth || el.offsetHeight));
 
 const TURN = {
+	key: 'tt-turn',
 	seconds: () => Number(window.turnTimerSeconds) || TOTAL_SECONDS,
 	label: (name, secs) => `${name}'s turn ends in ${secs} seconds`,
 	title: (secs) => `The turn ends by itself in ${secs} s`,
@@ -41,6 +42,7 @@ const TURN = {
 };
 
 const AUCTION = {
+	key: 'tt-auction',
 	seconds: () => Number(window.auctionTimerSeconds) || AUCTION_SECONDS,
 	label: (name, secs) => `${name} must bid or pass in ${secs} seconds`,
 	title: (secs) => `"Pass" is pressed by itself in ${secs} s`,
@@ -92,7 +94,7 @@ function SweepTimer({ kind }) {
 	const tone = view.left <= 5 ? 'danger' : view.left <= 10 ? 'warn' : 'ok';
 	const done = 360 * (1 - view.left / view.total); // degrees already swept, clockwise from the top
 	return createPortal(
-		<div className={`turn-timer ${tone}${view.paused ? ' paused' : ''}`}
+		<div className={`turn-timer ${kind.key} ${tone}${view.paused ? ' paused' : ''}`}
 			style={{ left: view.x, top: view.y, width: view.w, height: view.h, borderRadius: view.radius, '--done': `${done.toFixed(1)}deg` }}
 			role="timer" aria-label={kind.label(view.name, secs)} title={kind.title(secs)} />,
 		view.host,

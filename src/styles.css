@@ -1848,3 +1848,36 @@ td.statscellname[title="Mortgaged"]::after {
 	.moneybarcell::before { left: 10px; border-width: 10px; }
 	.moneybarcell div:nth-child(2) { font-size: 15px; }
 }
+
+/* ==========================================================================
+   Redesign, part 2: End turn button and Manage / Trade tabs
+   The engine sets the button's title to "End turn ..." when it becomes End turn (value can't be
+   matched by CSS), so the title is the hook. The coral fill is drawn by the timer overlay.
+   ========================================================================== */
+#nextbutton[title^="End turn"] {
+	background: #2c2423;
+	color: var(--white);
+	border: 1px solid #ff6b5e73;
+	border-radius: 14px;
+	font-weight: 700;
+}
+#nextbutton[title^="End turn"]:hover { background: #382a28; border-color: #ff6b5ea6; }
+#nextbutton { border-radius: 14px; font-weight: 800; }
+
+/* Buy / Manage / Trade: three quiet buttons instead of a tab strip; the open one is lime */
+#menu { height: auto; }
+#menutable { background: transparent; border-spacing: 6px 0; border-collapse: separate; height: auto; overflow: visible; margin: 0 -6px; width: calc(100% + 12px); }
+.menu-item {
+	height: 40px;
+	border: 1px solid #ffffff2e;
+	border-right: 1px solid #ffffff2e;
+	border-radius: 12px;
+	background: #ffffff0a;
+}
+.menu-item:last-child { border-right: 1px solid #ffffff2e; }
+.menu-item:hover { background-color: #ffffff14; }
+#control:not(:has(#buy[style*="display: none"])) #buy-menu-item,
+#control:has(#buy[style*="display: none"]) #manage-menu-item {
+	background-color: var(--green-tint-2);
+	border-color: var(--green-line);
+}
