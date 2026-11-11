@@ -2098,3 +2098,90 @@ td.statscellname[title="Mortgaged"]::after {
 		radial-gradient(circle 6px at 28% 72%, #1d1d1d 96%, transparent 100%),
 		radial-gradient(circle 6px at 72% 72%, #1d1d1d 96%, transparent 100%);
 }
+
+/* ==========================================================================
+   Redesign, part 7: Manage list, Trade window and the hover cards
+   ========================================================================== */
+
+/* Manage tab: the action buttons and the property list read as one card */
+#option { background: #ffffff0a; border-bottom: 1px solid #ffffff12; padding: 10px; }
+#manage { border-radius: 14px; background: #262626; box-shadow: inset 0 0 0 1px #ffffff0d; }
+#option input[type="button"] { border-radius: 10px; padding: 9px 16px; }
+#owned { padding: 6px 8px; }
+.property-cell-row { border-radius: 10px; }
+.propertycellcolor { border-radius: 5px; }
+.propertycellname { font-size: 13px; font-weight: 600; }
+
+/* Hover cards: dark rounded cards with a colour header, like the preview's deed cards */
+.enlarge, #deed {
+	border: none;
+	border-radius: 20px;
+	background: #222222;
+	box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.enlarge-color { height: 44px; border-bottom: none; }
+.enlarge-name { font-size: 17px; font-weight: 800; padding: 8px 10px 2px; }
+.enlarge-price { font-size: 14px; color: var(--green); }
+#deed-header {
+	width: 100%;
+	margin: 0;
+	border: none;
+	border-radius: 0;
+	padding: 14px 12px 12px;
+}
+#deed-name { font-size: 18px; font-weight: 800; }
+#deed-table { width: calc(100% - 20px); margin: 10px auto; border-spacing: 0 3px; }
+#deed-table tr + tr td { border-top: none; padding: 5px 8px; }
+#deed-table tr:not(:first-child):not(:last-child) td { background: #ffffff0a; }
+#deed-table tr:not(:first-child):not(:last-child) td:first-child { border-radius: 8px 0 0 8px; }
+#deed-table tr:not(:first-child):not(:last-child) td:last-child { border-radius: 0 8px 8px 0; }
+
+/* Trade window */
+#trade { background: #000000cc; }
+.trade-modal { background: #1f1f1f; border: none; border-radius: 24px; box-shadow: inset 0 0 0 1px #ffffff14, 0 40px 100px rgba(0, 0, 0, 0.8); padding: 24px 26px 20px; }
+.trade-head h3 { font-size: 22px; font-weight: 800; }
+.trade-close { border-radius: 10px; width: 38px; height: 38px; }
+.trade-cell { border: none; border-radius: 14px; background: #262626; box-shadow: inset 0 0 0 1px #ffffff0d; }
+#trade table { border-spacing: 6px; }
+#trade tr:has(input[type="checkbox"]:checked) td { background: #2e3a17; }
+#trade input[type="button"] { border-radius: 12px; height: 44px; padding: 0 22px; }
+
+/* ==========================================================================
+   Redesign, part 7b: phone layout of the turn panel (matches the desktop panel's look)
+   ========================================================================== */
+@media (max-width: 1128px) {
+	#control {
+		border: none;
+		border-radius: 20px;
+		background: linear-gradient(160deg, #2c2c2c, #232323);
+		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 40px rgba(0, 0, 0, 0.45);
+	}
+	#control #quickstats {
+		padding: 0;
+		min-width: 0;
+		border: none !important;
+		background: none;
+		box-shadow: none;
+		border-radius: 0;
+		text-align: left;
+	}
+	#control #quickstats::before {
+		content: "YOUR TURN";
+		display: block;
+		font-size: 10px;
+		font-weight: 600;
+		letter-spacing: 0.22em;
+		color: rgba(255, 255, 255, 0.5);
+	}
+	#control #quickstats .qs-name { justify-content: flex-start; }
+	#control #quickstats #pname { font-size: 22px; font-weight: 800; }
+	#control #quickstats .qs-name > span:last-child { display: none; }
+	#control #quickstats #pmoney { font-size: 14px; font-weight: 700; color: var(--green); margin-top: 0; }
+	/* turn the quick-stats row into: name on the left, dice on the right */
+	#control > table > tbody > tr:first-child > td:last-child { align-items: center; justify-content: space-between; }
+	#control #quickstats + div { display: flex; gap: 6px; }
+	#control .die, #control .die-no-img { width: 46px; height: 46px; margin: 0; border-radius: 12px; }
+	#control .die-no-img + .die-no-img, #control .die + .die { margin-left: 0; }
+	#control #nextbutton { width: 100%; height: 48px; border-radius: 14px; font-size: 15px; }
+	#control > table > tbody > tr:last-child > td > div { display: flex; gap: 8px; }
+}
