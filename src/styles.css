@@ -2143,3 +2143,28 @@ td.statscellname[title="Mortgaged"]::after {
 .mg-rent { line-height: 12px; }
 .mg-sub .mg-rent:first-child { margin-left: 0; }
 #owned { max-height: 300px; }
+
+/* ===== Trade window as in the preview ===== */
+#trade-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+.trade-with { font-size: 11px; font-weight: 700; color: #ffffff80; letter-spacing: .1em; }
+.trade-chip { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: transparent; color: #ffffffcc; border: none; box-shadow: inset 0 0 0 1px #ffffff2e; cursor: pointer; }
+.trade-chip i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.trade-chip.on { background: #acfa00; color: #1d1d1d; font-weight: 800; box-shadow: none; }
+#trade-rightp-name select { display: none; }
+.trade-title { font-weight: 800; font-size: 14px; margin-bottom: 2px; }
+#trade-leftp-name, #trade-rightp-name { font-size: 11px; color: #ffffff8c; margin-bottom: 8px; }
+#trade-leftp-money, #trade-rightp-money { width: 100px; height: 40px; border-radius: 11px; background: #161616; border: none; box-shadow: inset 0 0 0 1px #ffffff26; color: #fff; font: 800 16px Montserrat, sans-serif; padding: 0 12px; text-align: right; }
+.trade-cell table { border-spacing: 0; display: block; }
+.trade-cell tbody { display: flex; flex-wrap: wrap; gap: 6px; }
+.trade-cell tr { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border-radius: 10px; background: #262626; box-shadow: inset 0 0 0 1px #ffffff0d; cursor: pointer; font-size: 12.5px; font-weight: 600; color: #ffffffb3; }
+.trade-cell tr td { display: block; padding: 0; }
+.trade-cell tr .propertycellname { background: transparent !important; }
+.trade-cell tr .propertycellcheckbox { display: none; }
+.trade-cell tr .propertycellcolor { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.trade-cell tr:has(input[type="checkbox"]:checked) { background: #2e3a17; box-shadow: inset 0 0 0 1.5px #acfa00; color: #fff; }
+#trade tr:has(input[type="checkbox"]:checked) td { background: transparent; }
+#trade-summary { font-size: 12.5px; line-height: 1.6; text-align: left; }
+#trade-summary b { color: #acfa00; }
+.trade-actions { background: transparent !important; box-shadow: none !important; }
+.trade-cell tr .propertycellcolor { width: 10px !important; height: 10px; min-width: 10px; border: none !important; }
+.trade-cell tr td, .trade-cell tr .propertycellname { color: inherit !important; font-size: inherit; font-weight: inherit; }
