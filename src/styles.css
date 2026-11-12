@@ -2297,3 +2297,12 @@ td.statscellname[title="Mortgaged"]::after {
 	.moneybarcell div:nth-child(2) { font-size: 17px; }
 	.mb-chips i { width: 11px; height: 11px; }
 }
+
+/* Quick-trade icon on opponents' cards (not on the card of the player whose turn it is) */
+.mb-trade { display: none; grid-column: 2; grid-row: 1 / span 2; width: 34px; height: 34px; border-radius: 10px; border: 1px solid #ffffff2e; background: transparent; color: #ffffffcc; place-items: center; cursor: pointer; padding: 0; }
+.mb-trade:hover { background: #ffffff14; color: #fff; }
+.moneybarcell { grid-template-columns: minmax(0, 1fr) auto auto; }
+.moneybarcell div:nth-child(2) { grid-column: 3; }
+#moneybar tr:not(:has(.money-bar-arrow:not([style*="none"]))) .mb-trade { display: grid; }
+@media (max-width: 1129px) { .mb-trade { width: 30px; height: 30px; } }
+.trade-grid > tbody > tr:nth-child(3) > td { color: #ffffff99; font-size: 13px; }
