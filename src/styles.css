@@ -2264,3 +2264,36 @@ td.statscellname[title="Mortgaged"]::after {
 .trade-foot { padding: 16px 28px; }
 @media (max-width: 760px) { #trade .trade-modal { height: calc(100dvh - 24px); } #trade table.trade-grid { overflow-y: auto; grid-template-rows: none; } }
 #trade .trade-money input { color: #fff !important; background: transparent !important; } .trade-of { white-space: nowrap; }
+
+/* ==========================================================================
+   Redesign, part 8: player list as in the preview (big avatar, name + TURN pill, property chips, cash on the right)
+   ========================================================================== */
+.moneybarcell {
+	display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 12px; row-gap: 7px;
+	padding: 14px 16px 14px 72px;
+}
+.moneybarcell::before { left: 16px; border-width: 21px; box-shadow: none; }
+.moneybarcell div:first-child { font-size: 15px; font-weight: 700; grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 8px; }
+.moneybarcell div:nth-child(2) { font-size: 22px; font-weight: 800; grid-column: 2; grid-row: 1 / span 2; margin: 0; text-align: right; }
+.moneybarcell .mb-chips { grid-column: 1; grid-row: 2; display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; font-size: 0; }
+.mb-chips i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.moneybarcell div:first-child[data-initial]::before { left: 16px; width: 42px; font-size: 17px; }
+.mb-turn { display: none; font-size: 10px; font-weight: 800; letter-spacing: .1em; padding: 3px 8px; border-radius: 999px; background: #acfa00; color: #1d1d1d; }
+#moneybar tr:has(.money-bar-arrow:not([style*="none"])) .mb-turn { display: inline-block; }
+#moneybar tr:has(.money-bar-arrow:not([style*="none"])) .moneybarcell div:nth-child(2) { color: var(--green); }
+.moneybarcell[data-presence]::after { top: 50%; right: auto; left: 0; display: none; }
+@media (min-width: 1130px) {
+	#moneybarwrap { left: var(--board-right, auto); right: 28px; top: 20px; min-width: 0; }
+	#moneybar { float: none; background: transparent; border: none; box-shadow: none; padding: 0; }
+	#moneybar table { width: 100%; border-spacing: 0 12px; }
+	#viewstats { width: 100%; height: 46px; font-size: 14px; font-weight: 600; border-radius: 12px; }
+	.moneybararrowcell { width: 0; padding: 0; }
+	.money-bar-arrow { display: none !important; }
+}
+@media (max-width: 1129px) {
+	.moneybarcell { padding: 8px 14px 8px 52px; }
+	.moneybarcell::before { left: 8px; border-width: 15px; }
+	.moneybarcell div:first-child[data-initial]::before { left: 8px; width: 30px; font-size: 13px; }
+	.moneybarcell div:nth-child(2) { font-size: 17px; }
+	.mb-chips i { width: 11px; height: 11px; }
+}

@@ -1445,6 +1445,15 @@ function updateMoney() {
 		document.getElementById("p" + i + "moneybar").style.border = "2px solid " + p_i.color;
 		document.getElementById("p" + i + "money").innerHTML = p_i.money;
 		document.getElementById("p" + i + "moneyname").innerHTML = p_i.name;
+
+		// Small colour chips for the properties the player owns.
+		var chipsHTML = "";
+		for (var s = 0; s < 40; s++) {
+			if (square[s].owner === i) {
+				chipsHTML += "<i title='" + square[s].name.replace(/'/g, "&#39;") + "' style='background:" + (square[s].groupNumber >= 3 ? square[s].color : "#9ca3af") + "'></i>";
+			}
+		}
+		document.getElementById("p" + i + "chips").innerHTML = chipsHTML;
 	}
 
 	if (document.getElementById("landed").innerHTML === "") {
