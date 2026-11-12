@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { autoEndTurn, autoPass, isReplaying } from '../onlineGame.js';
 
-// Two countdowns, both drawn as a radial sweep inside the button that darkens clockwise from 12 o'clock
-// (like a clock hand) until the button is full, and both pressing the button for a player who does nothing:
+// Two countdowns, both drawn as a fill inside the button that grows from left to right
+// until the button is full, and both pressing the button for a player who does nothing:
 //   * 30 s after "End turn" appears the turn ends by itself. The clock waits while a pop-up, an auction,
 //     the trade window or the stats window is open, or while an online game is still catching up on clicks.
 //   * 15 s for each bidder in an auction: when it runs out, "Pass" is pressed. It starts again for every new
@@ -92,10 +92,10 @@ function SweepTimer({ kind }) {
 	if (!view) return null;
 	const secs = Math.ceil(view.left);
 	const tone = view.left <= 5 ? 'danger' : view.left <= 10 ? 'warn' : 'ok';
-	const done = 360 * (1 - view.left / view.total); // degrees already swept, clockwise from the top
+	const done = 100 * (1 - view.left / view.total); // percent of the button already filled, from the left
 	return createPortal(
 		<div className={`turn-timer ${kind.key} ${tone}${view.paused ? ' paused' : ''}`}
-			style={{ left: view.x, top: view.y, width: view.w, height: view.h, borderRadius: view.radius, '--done': `${done.toFixed(1)}deg` }}
+			style={{ left: view.x, top: view.y, width: view.w, height: view.h, borderRadius: view.radius, '--done': `${done.toFixed(1)}%` }}
 			role="timer" aria-label={kind.label(view.name, secs)} title={kind.title(secs)} />,
 		view.host,
 	);

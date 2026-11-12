@@ -277,12 +277,12 @@ body.online-game #setup { display: none !important; }
 .replay-tally td, .replay-tally th { text-align: left; }
 @media (max-width: 560px) { .filters label { flex: 1 1 120px; } .filters input, .filters select { width: 100%; box-sizing: border-box; } }
 
-/* ---------- turn timer: radial sweep inside the "End turn" button, clockwise ---------- */
+/* ---------- turn timer: fill inside the "End turn" button, growing from left to right ---------- */
 .turn-timer {
 	position: absolute; z-index: 1; pointer-events: none; overflow: hidden;
 	--sweep: #06401cd9; /* translucent dark green */
-	/* the part of the button already used up, drawn clockwise from 12 o'clock around the button's centre */
-	background: conic-gradient(from 0deg, var(--sweep) 0 var(--done), transparent var(--done) 360deg);
+	/* the part of the button already used up, drawn from the left edge */
+	background: linear-gradient(90deg, var(--sweep) 0 var(--done), transparent var(--done) 100%);
 }
 .turn-timer.warn { --sweep: #06401cd9; }
 .turn-timer.danger { --sweep: #06401cd9; } /* stays green; the pulsing red border is the warning */
