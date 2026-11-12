@@ -18,9 +18,11 @@ function anchorFor(btn) {
 	let el = btn.parentElement;
 	while (el && el !== document.body && el !== document.documentElement && getComputedStyle(el).position === 'static') el = el.parentElement;
 	const root = !el || el === document.documentElement || (el === document.body && getComputedStyle(el).position === 'static');
-	if (root) return { host: document.body, ox: -window.scrollX, oy: -window.scrollY };
+	if (root) return { host: document.body, ox: -window.scrollX, oy: -window.scrollY, k: 1 };
 	const r = el.getBoundingClientRect();
-	return { host: el, ox: r.left + el.clientLeft - el.scrollLeft, oy: r.top + el.clientTop - el.scrollTop };
+	// The centre panel is shrunk with a CSS transform on small-height screens: convert screen pixels back to its own.
+	const k = el.offsetWidth ? r.width / el.offsetWidth : 1;
+	return { host: el, ox: r.left + (el.clientLeft - el.scrollLeft) * k, oy: r.top + (el.clientTop - el.scrollTop) * k, k };
 }
 
 const visible = (el) => !!(el && (el.offsetWidth || el.offsetHeight));
@@ -80,10 +82,10 @@ function SweepTimer({ kind }) {
 				c.firedAt = now;
 				kind.expire();
 			}
-			const { host, ox, oy } = anchorFor(btn);
+			const { host, ox, oy, k } = anchorFor(btn);
 			const r = btn.getBoundingClientRect();
 			const radius = getComputedStyle(btn).borderRadius;
-			const next = { left: Math.round(c.left * 10) / 10, total, paused, name, host, x: Math.round(r.left - ox), y: Math.round(r.top - oy), w: Math.round(r.width), h: Math.round(r.height), radius };
+			const next = { left: Math.round(c.left * 10) / 10, total, paused, name, host, x: Math.round((r.left - ox) / k), y: Math.round((r.top - oy) / k), w: Math.round(r.width / k), h: Math.round(r.height / k), radius };
 			setView((v) => (v && v.left === next.left && v.total === total && v.paused === paused && v.host === host && v.x === next.x && v.y === next.y && v.w === next.w && v.h === next.h && v.name === name ? v : next));
 		}, 100);
 		return () => clearInterval(id);

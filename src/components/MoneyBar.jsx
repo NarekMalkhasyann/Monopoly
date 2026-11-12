@@ -42,6 +42,7 @@ export default function MoneyBar() {
 									<button type="button" className="mb-trade" aria-label={`Trade with player ${n}`} title="Trade with this player" onClick={() => quickTrade(n)}>
 										<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 8h13l-3-3M17 16H4l3 3" /></svg>
 									</button>
+									<span className="mb-letter" id={`p${n}letter`} />
 								</td>
 							</tr>
 						))}

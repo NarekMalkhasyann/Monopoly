@@ -1,51 +1,43 @@
-// The 40-square board. Squares are table cells with ids cell0..cell39 (0 = GO,
-// numbered anticlockwise). The engine fills each cell with its name, colour bar
-// and player tokens at start-up, so here we only lay out the empty grid.
+// The 40-square board: an 11 x 11 CSS grid. Squares are cells with ids cell0..cell39 (0 = GO,
+// numbered anticlockwise). The engine fills each cell with its name, colour bar and logo
+// at start-up, so here we only place the empty cells on the grid.
+// (#board is the element the engine shows and hides, #board-grid is the grid itself.)
 
-const range = (from, to) => {
-	// inclusive, works in both directions
-	const out = [];
-	if (from <= to) for (let i = from; i <= to; i++) out.push(i);
-	else for (let i = from; i >= to; i--) out.push(i);
-	return out;
-};
+// [row, column] on the grid, 1-based.
+function place(id) {
+	if (id === 20) return [1, 1];
+	if (id === 30) return [1, 11];
+	if (id === 10) return [11, 1];
+	if (id === 0) return [11, 11];
+	if (id > 20 && id < 30) return [1, id - 19]; // top, left to right
+	if (id > 10 && id < 20) return [20 - id + 1, 1]; // left, top to bottom
+	if (id > 30) return [id - 30 + 1, 11]; // right, top to bottom
+	return [11, 11 - id]; // bottom, left to right
+}
 
-function Cell({ id, kind }) {
-	return <td className={`cell board-${kind}`} id={`cell${id}`} />;
+function kind(id) {
+	if (id % 10 === 0) return 'corner';
+	if (id < 10) return 'bottom';
+	if (id < 20) return 'left';
+	if (id < 30) return 'top';
+	return 'right';
 }
 
 export default function Board() {
-	const topRow = range(21, 29); // left to right along the top
-	const leftSide = range(19, 11); // top to bottom on the left
-	const rightSide = range(31, 39); // top to bottom on the right
-	const bottomRow = range(9, 1); // left to right along the bottom
+	const cells = [];
+	for (let id = 0; id < 40; id++) {
+		const [row, col] = place(id);
+		cells.push(<div key={id} className={`cell board-${kind(id)}`} id={`cell${id}`} style={{ gridRow: row, gridColumn: col }} />);
+	}
 
 	return (
-		<table id="board">
-			<tbody>
-				<tr>
-					<Cell id={20} kind="corner" />
-					{topRow.map((i) => <Cell key={i} id={i} kind="top" />)}
-					<Cell id={30} kind="corner" />
-				</tr>
-
-				{leftSide.map((left, row) => (
-					<tr key={left}>
-						<Cell id={left} kind="left" />
-						<td colSpan={9} className="board-center">
-							{/* the jail box sits in the row of squares 11 / 39 */}
-							{left === 11 && <div id="jail" />}
-						</td>
-						<Cell id={rightSide[row]} kind="right" />
-					</tr>
-				))}
-
-				<tr>
-					<Cell id={10} kind="corner" />
-					{bottomRow.map((i) => <Cell key={i} id={i} kind="bottom" />)}
-					<Cell id={0} kind="corner" />
-				</tr>
-			</tbody>
-		</table>
+		<div id="board">
+			<div id="board-grid">
+				{cells}
+				<div className="board-center" />
+				{/* the jail box sits over the top right of the "Just Visiting" corner */}
+				<div id="jail" />
+			</div>
+		</div>
 	);
 }

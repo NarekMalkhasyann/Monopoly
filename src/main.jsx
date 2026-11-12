@@ -2,6 +2,7 @@ import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import './styles.css';
+import './board.css';
 
 // The game engine (public/engine/*.js) looks up its elements by id when the
 // page finishes loading (window.onload), so the markup must already be in the
