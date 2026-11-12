@@ -1292,7 +1292,11 @@ function addAlert(alertText) {
 
 	$alert = $("#alert");
 
-	$(document.createElement("div")).text(alertText).appendTo($alert);
+	var $line = $(document.createElement("div")).text(alertText).appendTo($alert);
+	// Coloured dot in front of the line: the colour of the player the line is about.
+	for (var pi = 1; pi <= pcount; pi++) {
+		if (player[pi] && alertText.indexOf(player[pi].name) === 0) { $line.css("--dot", player[pi].color); break; }
+	}
 
 	// Animate scrolling down alert element.
 	$alert.stop().animate({"scrollTop": $alert.prop("scrollHeight")}, 1000);
@@ -1518,6 +1522,9 @@ function updateDice() {
 
 function updateOwned() {
 	var p = player[turn];
+	var ownedCount = 0;
+	for (var oc = 0; oc < 40; oc++) { if (square[oc].owner == turn) { ownedCount++; } }
+	document.getElementById("manage-menu-item").setAttribute("data-count", ownedCount);
 	$("#manage-cash").text("$" + p.money);
 	var checkedproperty = getCheckedProperty();
 	$("#option").show();

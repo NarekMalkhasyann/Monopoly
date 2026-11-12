@@ -2317,3 +2317,34 @@ td.statscellname[title="Mortgaged"]::after {
 .mp-group li:hover { background: #383838; }
 .mp-chip { width: 10px; height: 10px; border: none; }
 .mp-houses { margin-left: 2px; }
+
+/* ==========================================================================
+   Redesign, part 9: centre panel as in the preview
+   Order: YOUR TURN + name, dice, log with coloured dots, [Buy ... | End turn], [Manage | Trade].
+   ========================================================================== */
+@media (min-width: 1130px) {
+	#control > table > tbody { display: flex; flex-direction: column; }
+	#control > table > tbody > tr, #control > table > tbody > tr:first-child { display: contents; }
+	#control > table > tbody > tr:first-child > td:first-child { display: contents; }
+	#control > table > tbody > tr:first-child > td:last-child { order: 0; margin-bottom: 14px; width: auto; align-self: center; }
+	#control #buy { order: 1; display: block; }
+	#control > table > tbody > tr:last-child > td { order: 2; }
+	#control #menu { order: 3; margin-top: 12px; }
+	#buy-menu-item { display: none; }
+	#menutable { border-spacing: 10px 0; margin: 0 -10px; width: calc(100% + 20px); }
+	.menu-item { height: 44px; border-radius: 12px; background: #262626; border: 1px solid #ffffff2e; position: relative; overflow: visible; }
+	.menu-item a { display: flex; align-items: center; justify-content: center; gap: 8px; height: 100%; font-size: 14px; font-weight: 600; color: #fff; }
+	#manage-menu-item[data-count]:not([data-count="0"])::after { content: attr(data-count); position: absolute; top: -7px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #acfa00; color: #1d1d1d; font: 800 10.5px Montserrat, sans-serif; display: grid; place-items: center; }
+	/* the log: plain lines with a coloured dot, the newest one bright */
+	#control #alert { height: 96px; background: none; border: none; padding: 0; box-shadow: none; display: flex; flex-direction: column; gap: 6px; justify-content: flex-end; overflow-y: auto; scrollbar-width: none; font-size: 12.5px; color: #ffffffb3; }
+	#control #alert div { display: flex; gap: 8px; align-items: baseline; }
+	#control #alert div::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dot, #acfa00); flex-shrink: 0; transform: translateY(-1px); }
+	#control #alert div:last-child { color: #fff; }
+	/* the engine's own Buy button is mirrored by #buyproxy in the action row */
+	#landed #buybutton { display: none; }
+	#control #landed { background: none; border: none; padding: 0; margin: 6px 0 0; font-size: 12px; color: #ffffffa6; }
+	#buyproxy { flex: 1; height: 50px; border: none; border-radius: 14px; background: #acfa00; color: #1d1d1d; font: 800 16px Montserrat, sans-serif; cursor: pointer; box-shadow: 0 8px 24px #acfa0040; }
+	#buyproxy[hidden] { display: none; }
+	#control > table > tbody > tr:last-child > td > div:has(#buyproxy:not([hidden])) #nextbutton { flex: none; width: 150px; }
+	#control > table > tbody > tr:last-child > td > div { align-items: center; }
+}
