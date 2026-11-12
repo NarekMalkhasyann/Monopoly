@@ -23,11 +23,23 @@ function read() {
 }
 const signature = (list) => JSON.stringify(list);
 
-function moveDeed(e) { // the engine only follows the mouse over its own lists; this panel is at the right edge, so the card goes to the left
+// The engine only follows the mouse over its own lists, so this panel places the card itself:
+// beside the hovered chip (left of it if there is room, else right), never under the pointer, and always fully on screen.
+function moveDeed(e) {
 	const d = document.getElementById('deed');
 	if (!d) return;
-	d.style.top = `${Math.min(e.clientY + 20, window.innerHeight - (d.offsetHeight || 279))}px`;
-	d.style.left = `${Math.max(8, e.clientX - 250)}px`;
+	const w = d.offsetWidth || 280;
+	const h = d.offsetHeight || 340;
+	const r = e.currentTarget.getBoundingClientRect();
+	const gap = 14;
+	let left;
+	if (r.left - gap - w >= 8) left = r.left - gap - w;
+	else if (r.right + gap + w <= window.innerWidth - 8) left = r.right + gap;
+	else left = Math.max(8, Math.min(window.innerWidth - w - 8, e.clientX - w / 2)); // narrow screen: centred on the pointer, above or below the chip
+	let top = Math.max(8, Math.min(window.innerHeight - h - 8, e.clientY - h / 2));
+	if (left < r.right && left + w > r.left) top = r.top - gap - h >= 8 ? r.top - gap - h : Math.min(window.innerHeight - h - 8, r.bottom + gap);
+	d.style.left = `${left}px`;
+	d.style.top = `${top}px`;
 }
 
 export default function MyProperties() {

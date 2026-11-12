@@ -1802,6 +1802,7 @@ td.statscellname[title="Mortgaged"]::after {
 #deed {
 	display: none;
 	position: fixed;
+	pointer-events: none; /* the card never steals the hover from the chip under it */
 	width: 280px;
 	box-sizing: border-box;
 	z-index: 25;
