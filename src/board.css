@@ -39,7 +39,7 @@
 	overflow: hidden; /* clips the colour bar and owner strip to the rounded corners */
 	transition: background-color 0.15s;
 }
-.cell:hover { background: #383838; }
+.cell:hover { background: #383838; cursor: pointer; }
 .board-corner { background: #2a2a2a; }
 
 /* the middle of the board: one rounded panel (the centre control panel is laid over it, see layout) */
@@ -79,13 +79,13 @@
 .board-left .cell-anchor, .board-right .cell-anchor { grid-template: minmax(0, 1fr) / auto minmax(0, 1fr) auto; }
 .board-corner .cell-anchor { grid-template: minmax(0, 1fr) / minmax(0, 1fr); }
 
-/* top: bar above, owner below. bottom: the other way round. left: owner on the left, bar on the right. right: mirrored. */
-.board-top .cell-color-bar { grid-row: 1; }
+/* the colour bar always faces the middle of the board. top: owner above, bar below. bottom: bar above, owner below. left: owner on the left, bar on the right. right: mirrored. */
+.board-top .cell-owner { grid-row: 1; }
 .board-top .cell-logo, .board-top .cell-name { grid-row: 2; }
-.board-top .cell-owner { grid-row: 3; }
-.board-bottom .cell-owner { grid-row: 1; }
+.board-top .cell-color-bar { grid-row: 3; }
+.board-bottom .cell-color-bar { grid-row: 1; }
 .board-bottom .cell-logo, .board-bottom .cell-name { grid-row: 2; }
-.board-bottom .cell-color-bar { grid-row: 3; }
+.board-bottom .cell-owner { grid-row: 3; }
 .board-left .cell-owner { grid-column: 1; }
 .board-left .cell-logo, .board-left .cell-name { grid-column: 2; }
 .board-left .cell-color-bar { grid-column: 3; }
@@ -109,8 +109,8 @@
 }
 .board-top .cell-owner, .board-bottom .cell-owner { height: 16px; }
 .board-left .cell-owner, .board-right .cell-owner { width: 16px; }
-.board-top .cell-owner { border-radius: 0 0 8px 8px; }
-.board-bottom .cell-owner { border-radius: 8px 8px 0 0; }
+.board-top .cell-owner { border-radius: 8px 8px 0 0; }
+.board-bottom .cell-owner { border-radius: 0 0 8px 8px; }
 .board-left .cell-owner { border-radius: 8px 0 0 8px; }
 .board-right .cell-owner { border-radius: 0 8px 8px 0; }
 
@@ -127,8 +127,8 @@
 	pointer-events: none;
 	overflow-wrap: break-word;
 }
-.board-top .cell-name { align-self: end; margin-bottom: 11px; }
-.board-bottom .cell-name { align-self: start; margin-top: 11px; }
+.board-top .cell-name { align-self: start; margin-top: 11px; }
+.board-bottom .cell-name { align-self: end; margin-bottom: 11px; }
 .board-corner .cell-name { font-size: 12px; font-weight: 700; }
 .cell-name.has-logo { display: none; }
 

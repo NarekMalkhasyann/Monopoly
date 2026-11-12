@@ -3062,23 +3062,47 @@ window.onload = function() {
 
 	var drag, dragX, dragY, dragObj, dragTop, dragLeft;
 
-	$(".cell-position-holder, #jail").on("mouseover", function(){
-		$("#" + this.enlargeId).show();
-
-	}).on("mouseout", function() {
-		$("#" + this.enlargeId).hide();
-
-	}).on("mousemove", function(e) {
-		var element = document.getElementById(this.enlargeId);
-
-		var enlargeHeight = element.offsetHeight || 204;
-		if (e.clientY + 20 > window.innerHeight - enlargeHeight) {
-			element.style.top = (window.innerHeight - enlargeHeight) + "px";
-		} else {
-			element.style.top = (e.clientY + 20) + "px";
+	// Click a square to see its title deed (with the houses / hotel built there now); click it again or anywhere else to close.
+	// (Hovering a square no longer shows anything.)
+	var pinnedDeed = null;
+	$(".cell").on("click", function() {
+		var i = parseInt(this.id.slice(4), 10);
+		if (pinnedDeed === i) {
+			hidedeed();
+			pinnedDeed = null;
+			return;
 		}
-
-		element.style.left = (e.clientX + 10) + "px";
+		if (!square[i] || !(square[i].groupNumber >= 1)) {
+			hidedeed();
+			pinnedDeed = null;
+			return;
+		}
+		showdeed(i);
+		pinnedDeed = i;
+		var deed = document.getElementById("deed");
+		var r = this.getBoundingClientRect();
+		var place = function() { // the card's height settles once its logo has loaded, so keep it on screen at that point too
+			var w = deed.offsetWidth || 280;
+			var h = deed.offsetHeight || 340;
+			var left = r.right + 12 + w <= window.innerWidth - 8 ? r.right + 12 : Math.max(8, r.left - 12 - w);
+			deed.style.left = left + "px";
+			deed.style.top = Math.max(8, Math.min(window.innerHeight - h - 8, r.top + r.height / 2 - h / 2)) + "px";
+		};
+		place();
+		setTimeout(place, 80);
+		document.getElementById("deed-logo-img").onload = place;
+	});
+	$(document).on("click", function(e) {
+		if (pinnedDeed !== null && !$(e.target).closest(".cell").length) {
+			hidedeed();
+			pinnedDeed = null;
+		}
+	});
+	$(document).on("keydown", function(e) {
+		if (e.key === "Escape" && pinnedDeed !== null) {
+			hidedeed();
+			pinnedDeed = null;
+		}
 	});
 
 
