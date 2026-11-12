@@ -319,245 +319,74 @@ input[type="checkbox"] {
 /* ==========================================================================
    Monopoly Board Styling
    ========================================================================== */
-#board {
-	display: none;
-	border: 3px solid var(--dark);
-	border-spacing: 0px;
-	margin: 15px;
-	background-color: var(--dark);
-	border-radius: var(--radius-lg);
-	box-shadow: var(--shadow-modal);
-	overflow: hidden;
-}
 
-.cell {
-	position: relative;
-	top: 0px;
-	left: 0px;
-	padding: 0px;
-	vertical-align: bottom;
-	background-color: var(--dark);
-	border: 1px solid var(--black);
-	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-	color: var(--white);
-	transition: background-color 0.15s;
-}
 
-.cell:hover {
-	background-color: #323232;
-}
 
-.board-center {
-	width: 675px;
-	border: none;
-	vertical-align: bottom;
-	background: var(--dark-gray);
-}
 
-.board-corner {
-	width: 102px;
-	height: 102px;
-	background-color: var(--dark);
-	font-weight: 700;
-}
 
-.board-top {
-	width: 72px;
-	height: 102px;
-}
 
-.board-bottom {
-	width: 72px;
-	height: 102px;
-}
 
-.board-left {
-	width: 102px;
-	height: 72px;
-}
 
-.board-right {
-	width: 102px;
-	height: 72px;
-}
+
+
+
+
+
+
+
+
+
 
 /* Property colour strips on the board cells (colour set by JS) */
-.cell-color-bar {
-	position: absolute;
-	z-index: 2;
-	box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.25);
-}
 
-.board-top .cell-color-bar {
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 22px;
-	border-bottom: 1.5px solid var(--black);
-}
 
-.board-bottom .cell-color-bar {
-	bottom: 0;
-	left: 0;
-	width: 100%;
-	height: 22px;
-	border-top: 1.5px solid var(--black);
-}
 
-.board-left .cell-color-bar {
-	top: 0;
-	right: 0;
-	width: 22px;
-	height: 100%;
-	border-left: 1.5px solid var(--black);
-}
 
-.board-right .cell-color-bar {
-	top: 0;
-	left: 0;
-	width: 22px;
-	height: 100%;
-	border-right: 1.5px solid var(--black);
-}
+
+
+
+
+
 
 /* Owner marker: thin strip in the owner's colour on the edge opposite the colour bar */
-.cell-owner {
-	display: none;
-	position: absolute;
-	z-index: 5;
-	box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
-}
 
-.board-top .cell-owner {
-	bottom: 0;
-	left: 0;
-	width: 100%;
-	height: 6px;
-}
 
-.board-bottom .cell-owner {
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 6px;
-}
 
-.board-left .cell-owner {
-	top: 0;
-	left: 0;
-	width: 6px;
-	height: 100%;
-}
 
-.board-right .cell-owner {
-	top: 0;
-	right: 0;
-	width: 6px;
-	height: 100%;
-}
+
+
+
+
+
 
 /* Cell names & positioning */
-.cell-anchor {
-	width: 100%;
-	height: 100%;
-	position: relative;
-	bottom: 0px;
-	left: 0px;
-}
 
-.cell-name {
-	position: absolute;
-	text-align: center;
-	width: 100%;
-	font-size: 9px;
-	font-weight: 600;
-	line-height: 1.25;
-	color: var(--white);
-	padding: 2px 2px;
-	z-index: 3;
-	pointer-events: none;
-	overflow-wrap: break-word;
-}
 
-.board-top .cell-name {
-	bottom: 11px;
-	left: 0;
-}
 
-.board-bottom .cell-name {
-	top: 11px;
-	left: 0;
-}
 
-.board-left .cell-name {
-	top: 50%;
-	left: 0;
-	transform: translateY(-50%);
-	padding-right: 25px;
-	padding-left: 8px;
-}
 
-.board-right .cell-name {
-	top: 50%;
-	left: 0;
-	transform: translateY(-50%);
-	padding-left: 25px;
-	padding-right: 8px;
-}
 
-.board-corner .cell-name {
-	top: 50%;
-	left: 0;
-	transform: translateY(-50%);
-	font-size: 12px;
-	font-weight: 700;
-}
 
-.cell-position-holder {
-	width: 100%;
-	height: 100%;
-	z-index: 4;
-	position: relative;
-}
 
-.cell-position {
-	height: 14px;
-	width: 14px;
-	border-radius: 50%;
-	position: absolute;
-	top: 0px;
-	left: 0px;
-	border: 1.5px solid var(--white);
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-	transition: transform 0.2s ease;
-}
 
-.cell-position:hover {
-	transform: scale(1.35);
-	z-index: 10;
-}
 
-#jail {
-	border: 2px solid var(--black);
-	height: 65px;
-	width: 65px;
-	position: relative;
-	top: 73px;
-	left: -73px;
-	z-index: 2;
-	background: var(--dark);
-	border-radius: var(--radius-sm);
-	font-weight: 700;
-}
+
+
+
+
+
+
+
+
+
+
+
 
 /* ==========================================================================
    Control Box (Center Gameplay Panel)
    ========================================================================== */
 #control {
-	position: absolute;
 	z-index: 9;
-	top: 245px;
-	left: 245px;
 	padding: 16px;
 	display: none;
 	background: var(--dark);
@@ -798,10 +627,7 @@ input[type="checkbox"] {
    Sidebar: Money Bar
    ========================================================================== */
 #moneybarwrap {
-	position: absolute;
 	min-width: 180px;
-	top: 15px;
-	right: 15px;
 	user-select: none;
 }
 
@@ -823,35 +649,15 @@ input[type="checkbox"] {
 	width: 100%;
 }
 
-.moneybarcell[data-presence] { position: relative; padding-right: 30px; }
-.moneybarcell[data-presence]::after {
-	content: ""; position: absolute; top: 10px; right: 10px; width: 12px; height: 12px; border-radius: 50%;
-	background: #6b6b6b; border: 2px solid #3f3f3f;
-}
-.moneybarcell[data-presence="online"]::after { background: #34d058; border-color: #1f7a35; box-shadow: 0 0 8px #34d058; }
 
-.moneybarcell {
-	width: 130px;
-	min-width: 130px;
-	padding: 8px 12px;
-	background: var(--row);
-	border: 1px solid var(--divider);
-	border-radius: var(--radius);
-	color: var(--white);
-	font-weight: 600;
-	text-align: left;
-	transition: background-color 0.2s;
-}
 
-.moneybarcell:hover {
-	background: var(--row-hover);
-}
 
-.moneybarcell div:nth-child(2) {
-	color: var(--orange);
-	font-size: 15px;
-	font-weight: 700;
-}
+
+
+
+
+
+
 
 .moneybararrowcell {
 	background: transparent;
@@ -1183,9 +989,24 @@ a.statscellcolor {
    the control panel and player list stack below it at normal size, so buttons
    stay easy to tap.
    ========================================================================== */
-#stage {
-	width: 100%;
-	position: relative;
+/* The game screen is a grid: the board (#stage) and the player list side by side; the centre panel
+   (#control) is placed in the board's grid cell and centred over it. Phones: one column. */
+#game-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	align-items: start;
+}
+#stage { grid-area: 1 / 1; width: 100%; min-width: 0; }
+#control { grid-area: 1 / 1; }
+#moneybarwrap { grid-area: 2 / 1; }
+@media (min-width: 1130px) {
+	#game-layout { grid-template-columns: auto minmax(340px, 1fr); column-gap: 28px; padding-right: 28px; }
+	#control { place-self: center; transform: scale(var(--fit, 1)); }
+	#moneybarwrap { grid-area: 1 / 2; padding-top: 15px; }
+}
+@media (max-width: 1129px) {
+	#control { grid-area: 2 / 1; justify-self: center; }
+	#moneybarwrap { grid-area: 3 / 1; justify-self: center; }
 }
 
 #stage-inner {
@@ -1200,7 +1021,6 @@ a.statscellcolor {
 
 	/* Control panel: leaves the board and becomes a normal block under it */
 	#control {
-		position: static;
 		margin: 8px auto 12px;
 		width: min(100%, 420px);
 	}
@@ -1248,7 +1068,6 @@ a.statscellcolor {
 	/* Player list: a horizontal strip under the control panel.
 	   The turn arrow points down at the player whose turn it is. */
 	#moneybarwrap {
-		position: static;
 		min-width: 0;
 		width: 100%;
 		max-width: 640px;
@@ -1262,11 +1081,11 @@ a.statscellcolor {
 		z-index: 1; /* stay below the pop-up overlay */
 	}
 
+	/* Players in a two-column grid. The engine shows and hides rows with an inline
+	   display value, so rows are never given their own display. */
 	#moneybar > table,
 	#moneybar > table > tbody {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
+		display: block;
 		width: 100%;
 	}
 
@@ -1275,14 +1094,9 @@ a.statscellcolor {
 	}
 
 	#moneybar > table > tbody {
-		gap: 4px;
-	}
-
-	/* Each player is a flex item. The engine shows and hides rows with an inline
-	   display value, so rows are sized here but never given their own display. */
-	#moneybar tr {
-		flex: 1 1 105px;
-		max-width: 150px;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 8px;
 	}
 
 	#moneybar td {
@@ -1301,17 +1115,11 @@ a.statscellcolor {
 		transform: rotate(90deg);
 	}
 
-	#moneybar .moneybarcell {
-		width: 100%;
-		min-width: 0;
-		padding: 6px 10px;
-		overflow-wrap: anywhere;
-	}
+	
 
 	/* "View stats" takes a full row of its own, without an arrow slot */
 	#moneybar #moneybarrowbutton {
-		flex: 1 0 100%;
-		max-width: none;
+		grid-column: 1 / -1;
 	}
 
 	#moneybar #moneybarrowbutton td:first-child {
@@ -1468,10 +1276,7 @@ a.statscellcolor {
 @media (min-width: 1300px) {
 	#moneybarwrap {
 		--stats-fs: clamp(17px, calc(100vw / 80), 24px); /* 17px at 1300px, 24px at 1920px */
-		/* Sits right next to the board (915px wide incl. margins) */
-		left: 940px;
-		right: auto;
-		width: clamp(340px, calc(100vw - 970px), 480px);
+		max-width: 480px;
 		font-size: var(--stats-fs);
 	}
 
@@ -1487,17 +1292,9 @@ a.statscellcolor {
 		border-spacing: 0 0.45em;
 	}
 
-	.moneybarcell {
-		width: auto;
-		min-width: 0;
-		padding: 0.7em 1em;
-		font-size: 1em;
-	}
+	
 
-	.moneybarcell div:nth-child(2) {
-		font-size: 1.5em;
-		margin-top: 0.15em;
-	}
+	
 
 	.moneybararrowcell {
 		width: 2.2em;
@@ -1530,23 +1327,11 @@ a.statscellcolor {
 	z-index: 1; /* under pop-ups and the stats window at every width */
 }
 
-.moneybarcell {
-	background: rgba(255, 255, 255, 0.04);
-	border-radius: 10px;
-	border-width: 0 0 0 4px !important; /* beats the engine's inline 2px border; colour stays */
-	font-weight: 500;
-	color: var(--white-o);
-}
 
-.moneybarcell:hover {
-	background: rgba(255, 255, 255, 0.07);
-}
 
-.moneybarcell div:nth-child(2) {
-	color: var(--white);
-	font-weight: 700;
-	font-variant-numeric: tabular-nums;
-}
+
+
+
 
 /* Current player: the engine shows the arrow only in this row */
 #moneybar tr:has(.money-bar-arrow:not([style*="none"])) .moneybarcell {
@@ -1687,24 +1472,18 @@ td.statscellname[title="Mortgaged"]::after {
 #token-layer { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 6; pointer-events: none; }
 .tk { position: absolute; width: 24px; height: 24px; border-radius: 50%; box-sizing: border-box; border: 1.5px solid var(--white); box-shadow: 0 2px 4px rgba(0, 0, 0, .5); pointer-events: auto; transition: left .11s linear, top .11s linear, transform .15s ease; }
 .tk:hover { transform: scale(1.25); z-index: 2; }
-.cell-position-holder .cell-position, #jailpositionholder .cell-position { visibility: hidden; }
+
 @media (prefers-reduced-motion: reduce) { .tk { transition: none; } }
 
 /* Brand logos: on the board squares (above the name), in the hover card and in the title deed */
-.cell-logo {
-	position: absolute;
-	z-index: 3;
-	object-fit: contain;
-	pointer-events: none;
-	border-radius: 3px;
-}
+
 
 /* The logo replaces the name: it is centred in the part of the square next to the colour bar (22 px) */
-.board-top .cell-logo { top: 22px; left: 6px; width: calc(100% - 12px); height: calc(100% - 22px); padding: 8px 0; box-sizing: border-box; }
-.board-bottom .cell-logo { top: 0; left: 6px; width: calc(100% - 12px); height: calc(100% - 22px); padding: 8px 0; box-sizing: border-box; }
-.board-left .cell-logo { top: 0; left: 0; width: calc(100% - 22px); height: 100%; padding: 8px 7px; box-sizing: border-box; }
-.board-right .cell-logo { top: 0; left: 22px; width: calc(100% - 22px); height: 100%; padding: 8px 7px; box-sizing: border-box; }
-.cell-name.has-logo { display: none; }
+
+
+
+
+
 
 .enlarge.has-logo { width: 240px; }
 .enlarge-logo { display: block; width: calc(100% - 28px); height: 120px; margin: 12px auto 0; object-fit: contain; }
@@ -1714,39 +1493,19 @@ td.statscellname[title="Mortgaged"]::after {
    A coloured token on the left (same colour as the player's piece), the name
    and money stacked, a soft lime ring around whoever's turn it is.
    ========================================================================== */
-.moneybarcell {
-	position: relative;
-	padding: 11px 34px 11px 54px;
-	border-width: 0 !important; /* colour stays on the element; the token below inherits it */
-	border-radius: 14px;
-	background: #ffffff0a;
-	box-shadow: inset 0 0 0 1px #ffffff0d;
-	transition: background-color 0.2s, box-shadow 0.2s;
-}
-.moneybarcell::before {
-	content: "";
-	position: absolute;
-	left: 14px;
-	top: 50%;
-	width: 0;
-	height: 0;
-	border: 14px solid;
-	border-color: inherit;
-	border-radius: 50%;
-	transform: translateY(-50%);
-	box-shadow: 0 0 0 3px #272727;
-}
-.moneybarcell div:first-child { font-size: 13px; font-weight: 600; line-height: 1.2; }
-.moneybarcell div:nth-child(2) { font-size: 17px; font-weight: 800; letter-spacing: -0.01em; margin-top: 2px; }
+
+
+
+
 #moneybar tr:has(.money-bar-arrow:not([style*="none"])) .moneybarcell {
 	background: linear-gradient(135deg, #2f3a1a, #262b1b);
 	box-shadow: inset 0 0 0 1.5px var(--green);
 }
-.moneybarcell[data-presence]::after { top: 12px; right: 12px; }
+
 @media (max-width: 1128px) {
-	#moneybar .moneybarcell { padding: 8px 28px 8px 38px; }
-	.moneybarcell::before { left: 10px; border-width: 10px; }
-	.moneybarcell div:nth-child(2) { font-size: 15px; }
+	
+	
+	
 }
 
 /* ==========================================================================
@@ -1787,52 +1546,37 @@ td.statscellname[title="Mortgaged"]::after {
    A thicker strip in the owner's colour on the outer edge (the engine sets the colour and shows it
    only once a property is bought). The logo / name steps aside so nothing is covered.
    ========================================================================== */
-.cell-owner { z-index: 5; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 0 10px rgba(0, 0, 0, 0.35); }
-.board-top .cell-owner, .board-bottom .cell-owner { height: 16px; }
-.board-left .cell-owner, .board-right .cell-owner { width: 16px; }
-.board-top .cell-owner { border-radius: 0 0 8px 8px; }
-.board-bottom .cell-owner { border-radius: 8px 8px 0 0; }
-.board-left .cell-owner { border-radius: 8px 0 0 8px; }
-.board-right .cell-owner { border-radius: 0 8px 8px 0; }
 
-.board-top:has(.cell-owner[style*="display: block"]) .cell-logo { height: calc(100% - 38px); }
-.board-bottom:has(.cell-owner[style*="display: block"]) .cell-logo { top: 16px; height: calc(100% - 38px); }
-.board-left:has(.cell-owner[style*="display: block"]) .cell-logo { left: 16px; width: calc(100% - 38px); }
-.board-right:has(.cell-owner[style*="display: block"]) .cell-logo { width: calc(100% - 38px); }
-.board-top:has(.cell-owner[style*="display: block"]) .cell-name { bottom: 22px; }
-.board-bottom:has(.cell-owner[style*="display: block"]) .cell-name { top: 22px; }
-.board-left:has(.cell-owner[style*="display: block"]) .cell-name { box-sizing: border-box; padding-left: 16px; }
-.board-right:has(.cell-owner[style*="display: block"]) .cell-name { box-sizing: border-box; padding-right: 16px; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* ==========================================================================
    Redesign, part 4: rounded squares with small gaps on a dark rounded plate
    ========================================================================== */
-#board {
-	border: 4px solid #1f1f1f;
-	border-spacing: 2px;
-	background-color: #1f1f1f;
-	border-radius: 24px;
-}
-#board .cell {
-	border: none;
-	border-radius: 11px;
-	background-color: #2e2e2e;
-	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-	overflow: hidden; /* clips the colour bar and owner strip to the rounded corners */
-}
-#board .cell:hover { background-color: #383838; }
-#board .board-corner { background-color: #2a2a2a; }
+
+
+
+
 /* The middle is one cell per row; they are joined into a single rounded panel: flat colour, the gap
    between rows is filled with a shadow, and only the first and last row get rounded corners. */
-#board .board-center {
-	border-radius: 0;
-	background: #252525;
-	box-shadow: 0 2px 0 0 #252525;
-}
-#board tbody tr:nth-child(2) .board-center { border-radius: 18px 18px 0 0; }
-#board tbody tr:nth-last-child(2) .board-center { border-radius: 0 0 18px 18px; box-shadow: none; }
+
+
+
 /* the colour bar had a black hairline against the old black cell borders */
-#board .cell-color-bar { border-width: 0 !important; box-shadow: none; }
+
 
 /* ==========================================================================
    Redesign, part 5: the panel in the middle of the board (desktop)
@@ -1841,7 +1585,6 @@ td.statscellname[title="Mortgaged"]::after {
    ========================================================================== */
 @media (min-width: 1130px) {
 	#control {
-		top: 150px;
 		width: 480px;
 		box-sizing: border-box;
 		padding: 26px 28px 24px;
@@ -1896,22 +1639,9 @@ td.statscellname[title="Mortgaged"]::after {
 }
 
 /* Redesign, part 6: the first letter of the player's name on the token (set by GameBar.jsx) */
-.moneybarcell div:first-child[data-initial]::before {
-	content: attr(data-initial);
-	position: absolute;
-	left: 14px;
-	top: 50%;
-	width: 28px;
-	transform: translateY(-50%);
-	text-align: center;
-	font-size: 14px;
-	font-weight: 800;
-	color: #fff;
-	text-shadow: 0 0 3px #000, 0 0 3px #000, 0 1px 2px #000;
-	pointer-events: none;
-}
+
 @media (max-width: 1128px) {
-	.moneybarcell div:first-child[data-initial]::before { left: 10px; width: 20px; font-size: 11px; }
+	
 }
 
 /* ==========================================================================
@@ -2268,22 +1998,18 @@ td.statscellname[title="Mortgaged"]::after {
 /* ==========================================================================
    Redesign, part 8: player list as in the preview (big avatar, name + TURN pill, property chips, cash on the right)
    ========================================================================== */
-.moneybarcell {
-	display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 12px; row-gap: 7px;
-	padding: 14px 16px 14px 72px;
-}
-.moneybarcell::before { left: 16px; border-width: 21px; box-shadow: none; }
-.moneybarcell div:first-child { font-size: 15px; font-weight: 700; grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 8px; }
-.moneybarcell div:nth-child(2) { font-size: 22px; font-weight: 800; grid-column: 2; grid-row: 1 / span 2; margin: 0; text-align: right; }
-.moneybarcell .mb-chips { grid-column: 1; grid-row: 2; display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; font-size: 0; }
-.mb-chips i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
-.moneybarcell div:first-child[data-initial]::before { left: 16px; width: 42px; font-size: 17px; }
+
+
+
+
+
+
 .mb-turn { display: none; font-size: 10px; font-weight: 800; letter-spacing: .1em; padding: 3px 8px; border-radius: 999px; background: #acfa00; color: #1d1d1d; }
 #moneybar tr:has(.money-bar-arrow:not([style*="none"])) .mb-turn { display: inline-block; }
 #moneybar tr:has(.money-bar-arrow:not([style*="none"])) .moneybarcell div:nth-child(2) { color: var(--green); }
-.moneybarcell[data-presence]::after { top: 50%; right: auto; left: 0; display: none; }
+
 @media (min-width: 1130px) {
-	#moneybarwrap { left: var(--board-right, auto); right: 28px; top: 20px; min-width: 0; }
+	#moneybarwrap { min-width: 0; }
 	#moneybar { float: none; background: transparent; border: none; box-shadow: none; padding: 0; }
 	#moneybar table { width: 100%; border-spacing: 0 12px; }
 	#viewstats { width: 100%; height: 46px; font-size: 14px; font-weight: 600; border-radius: 12px; }
@@ -2291,20 +2017,16 @@ td.statscellname[title="Mortgaged"]::after {
 	.money-bar-arrow { display: none !important; }
 }
 @media (max-width: 1129px) {
-	.moneybarcell { padding: 8px 14px 8px 52px; }
-	.moneybarcell::before { left: 8px; border-width: 15px; }
-	.moneybarcell div:first-child[data-initial]::before { left: 8px; width: 30px; font-size: 13px; }
-	.moneybarcell div:nth-child(2) { font-size: 17px; }
-	.mb-chips i { width: 11px; height: 11px; }
+	
+	
+	
+	
+	
 }
 
 /* Quick-trade icon on opponents' cards (not on the card of the player whose turn it is) */
-.mb-trade { display: none; grid-column: 2; grid-row: 1 / span 2; width: 34px; height: 34px; border-radius: 10px; border: 1px solid #ffffff2e; background: transparent; color: #ffffffcc; place-items: center; cursor: pointer; padding: 0; }
-.mb-trade:hover { background: #ffffff14; color: #fff; }
-.moneybarcell { grid-template-columns: minmax(0, 1fr) auto auto; }
-.moneybarcell div:nth-child(2) { grid-column: 3; }
-#moneybar tr:not(:has(.money-bar-arrow:not([style*="none"]))) .mb-trade { display: grid; }
-@media (max-width: 1129px) { .mb-trade { width: 30px; height: 30px; } }
+
+
 .trade-grid > tbody > tr:nth-child(3) > td { color: #ffffff99; font-size: 13px; }
 
 /* "My properties" card as in the preview: pill chips that wrap */
@@ -2340,11 +2062,100 @@ td.statscellname[title="Mortgaged"]::after {
 	#control #alert div { display: flex; gap: 8px; align-items: baseline; }
 	#control #alert div::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dot, #acfa00); flex-shrink: 0; transform: translateY(-1px); }
 	#control #alert div:last-child { color: #fff; }
-	/* the engine's own Buy button is mirrored by #buyproxy in the action row */
-	#landed #buybutton { display: none; }
 	#control #landed { background: none; border: none; padding: 0; margin: 6px 0 0; font-size: 12px; color: #ffffffa6; }
-	#buyproxy { flex: 1; height: 50px; border: none; border-radius: 14px; background: #acfa00; color: #1d1d1d; font: 800 16px Montserrat, sans-serif; cursor: pointer; box-shadow: 0 8px 24px #acfa0040; }
-	#buyproxy[hidden] { display: none; }
 	#control > table > tbody > tr:last-child > td > div:has(#buyproxy:not([hidden])) #nextbutton { flex: none; width: 150px; }
 	#control > table > tbody > tr:last-child > td > div { align-items: center; }
+}
+
+/* the engine's own Buy button is mirrored by #buyproxy in the action row (all screen sizes) */
+#landed #buybutton { display: none; }
+#buyproxy { flex: 1; height: 50px; border: none; border-radius: 14px; background: #acfa00; color: #1d1d1d; font: 800 16px Montserrat, sans-serif; cursor: pointer; box-shadow: 0 8px 24px #acfa0040; }
+#buyproxy[hidden] { display: none; }
+
+/* ==========================================================================
+   Player cards (the money bar), grid only:
+
+     [ avatar ]  name  [TURN]                 [trade]  [ cash ]
+     [        ]  property chips               [     ]  [      ]
+
+   The avatar is the cell's ::before (a circle drawn with a border, whose colour the engine sets on the
+   cell) with the first letter of the name (.mb-letter) stacked on it in the same grid area.
+   ========================================================================== */
+#moneybar td.moneybarcell {
+	text-align: left;
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto auto;
+	grid-template-areas: "av name trade money" "av chips trade money";
+	align-items: center;
+	column-gap: 12px;
+	row-gap: 7px;
+	padding: 14px 16px;
+	border-width: 0 !important; /* the colour stays on the element; the avatar below inherits it */
+	border-radius: 14px;
+	background: #ffffff0a;
+	box-shadow: inset 0 0 0 1px #ffffff0d;
+	transition: background-color 0.2s, box-shadow 0.2s;
+}
+.moneybarcell:hover { background: #ffffff12; }
+.moneybarcell::before {
+	content: "";
+	grid-area: av;
+	align-self: center;
+	justify-self: start;
+	width: 0;
+	height: 0;
+	border: 21px solid;
+	border-color: inherit;
+	border-radius: 50%;
+}
+.mb-letter {
+	grid-area: av;
+	place-self: center;
+	font-size: 17px;
+	font-weight: 800;
+	color: #fff;
+	text-shadow: 0 0 3px #000, 0 0 3px #000, 0 1px 2px #000;
+	pointer-events: none;
+}
+.moneybarcell > div:first-child { grid-area: name; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; line-height: 1.2; min-width: 0; }
+.moneybarcell > div:nth-child(2) { grid-area: money; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; text-align: right; }
+.mb-chips { grid-area: chips; display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; font-size: 0; }
+.mb-chips i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.mb-trade {
+	grid-area: trade;
+	display: none;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	border-radius: 10px;
+	border: 1px solid #ffffff2e;
+	background: transparent;
+	color: #ffffffcc;
+	place-items: center;
+	cursor: pointer;
+}
+.mb-trade:hover { background: #ffffff14; color: #fff; }
+#moneybar tr:not(:has(.money-bar-arrow:not([style*="none"]))) .mb-trade { display: grid; }
+
+/* online: a small status dot on the avatar */
+.moneybarcell[data-presence]::after {
+	content: "";
+	grid-area: av;
+	place-self: end;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: #6b6b6b;
+	border: 2px solid #3f3f3f;
+}
+.moneybarcell[data-presence="online"]::after { background: #34d058; border-color: #1f7a35; box-shadow: 0 0 8px #34d058; }
+
+@media (max-width: 1129px) {
+	#moneybar td.moneybarcell { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "av name money" "av chips money"; padding: 10px; column-gap: 10px; }
+	#moneybar td.moneybarcell::before { border-width: 15px; }
+	.mb-letter { font-size: 13px; }
+	#moneybar td.moneybarcell > div:first-child { font-size: 13px; flex-wrap: wrap; }
+	#moneybar td.moneybarcell > div:nth-child(2) { font-size: 15px; }
+	.mb-chips i { width: 11px; height: 11px; }
+	#moneybar .mb-trade, .moneybararrowcell { display: none !important; }
 }

@@ -107,14 +107,16 @@ export default function App() {
 			<div id="game-root" style={showGame ? undefined : { display: 'none' }}>
 				<Popups />
 				<Deed />
-				<div id="stage">
-					<div id="stage-inner">
-						<Board />
-						<BoardTokens />
+				<div id="game-layout">
+					<div id="stage">
+						<div id="stage-inner">
+							<Board />
+							<BoardTokens />
+						</div>
 					</div>
+					<ControlPanel />
+					<MoneyBar />
 				</div>
-				<ControlPanel />
-				<MoneyBar />
 				<Setup />
 				<TradePanel />
 				<Dice3D active={showGame} />

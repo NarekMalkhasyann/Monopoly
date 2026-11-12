@@ -503,7 +503,4 @@ body.online-game #setup { display: none !important; }
 	.gb-conn { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #ffffffb3; }
 	.gb-conn i { width: 8px; height: 8px; border-radius: 50%; background: #34d058; box-shadow: 0 0 8px #34d058; }
 	body.in-game { padding-top: 64px; }
-	/* things positioned from the top of the page move down by the header's height */
-	body.in-game #control { top: 214px; }
-	body.in-game #moneybarwrap { top: 79px; }
 }

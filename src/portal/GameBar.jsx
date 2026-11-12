@@ -32,15 +32,15 @@ export default function GameBar() {
 	});
 	useEffect(() => subscribeGameInfo(setInfo), []);
 
-	// The player cards show the first letter of the name on their coloured token (styles.css reads data-initial).
+	// The player cards show the first letter of the name on their coloured token (the .mb-letter element on each card).
 	useEffect(() => {
 		const mark = () => {
 			for (let n = 1; n <= 8; n++) {
 				const nameEl = document.getElementById(`p${n}moneyname`);
-				const box = nameEl && nameEl.parentElement;
+				const box = document.getElementById(`p${n}letter`);
 				const name = nameEl ? (nameEl.textContent || '').trim() : '';
 				const letter = /^Player \d+$/.test(name) ? name.slice(7) : name.charAt(0).toUpperCase(); // default names show their number
-				if (box && box.dataset.initial !== letter) box.dataset.initial = letter;
+				if (box && box.textContent !== letter) box.textContent = letter;
 			}
 		};
 		mark();

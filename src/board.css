@@ -1,0 +1,153 @@
+/* ==========================================================================
+   The board, laid out with CSS grid only (no absolute positioning).
+
+   #board        the element the engine shows / hides
+   #board-grid   11 x 11 grid: corners 102px, squares 72px, 2px gaps
+   .cell         one square (grid placement comes from Board.jsx)
+   .cell-anchor  grid inside a square; the engine puts these in it:
+                 colour bar, owner strip, logo or name, and an invisible token holder
+   ========================================================================== */
+#board {
+	display: none;
+	width: max-content;
+	margin: 15px;
+	border: 4px solid #1f1f1f;
+	border-radius: 24px;
+	background: #1f1f1f;
+	box-shadow: var(--shadow-modal);
+	overflow: hidden;
+}
+
+#board-grid {
+	display: grid;
+	grid-template-columns: 102px repeat(9, 72px) 102px;
+	grid-template-rows: 102px repeat(9, 72px) 102px;
+	gap: 2px;
+	padding: 2px;
+}
+
+/* ---- squares ---- */
+.cell {
+	display: grid;
+	min-width: 0;
+	min-height: 0;
+	border-radius: 11px;
+	background: #2e2e2e;
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+	color: var(--white);
+	font-weight: 700;
+	overflow: hidden; /* clips the colour bar and owner strip to the rounded corners */
+	transition: background-color 0.15s;
+}
+.cell:hover { background: #383838; }
+.board-corner { background: #2a2a2a; }
+
+/* the middle of the board: one rounded panel (the centre control panel is laid over it, see layout) */
+.board-center {
+	grid-area: 2 / 2 / 11 / 11;
+	border-radius: 18px;
+	background: #252525;
+}
+
+/* the jail box: over the top right of the "Just Visiting" corner (row 11, column 1) */
+#jail {
+	grid-area: 11 / 1;
+	align-self: start;
+	justify-self: end;
+	margin: 8px 8px 0 0;
+	width: 62px;
+	height: 62px;
+	box-sizing: border-box;
+	border: 2px solid var(--black);
+	border-radius: 8px;
+	background: var(--dark);
+	z-index: 2;
+	display: grid;
+	place-items: center;
+	font-size: 11px;
+}
+#jail > span { grid-area: 1 / 1; align-self: start; margin-top: 3px; }
+#jailpositionholder { grid-area: 1 / 1; }
+
+/* ---- inside a square: a small grid with a bar track, a content track and an owner track ---- */
+.cell-anchor {
+	display: grid;
+	min-width: 0;
+	min-height: 0;
+}
+.board-top .cell-anchor, .board-bottom .cell-anchor { grid-template: auto minmax(0, 1fr) auto / minmax(0, 1fr); }
+.board-left .cell-anchor, .board-right .cell-anchor { grid-template: minmax(0, 1fr) / auto minmax(0, 1fr) auto; }
+.board-corner .cell-anchor { grid-template: minmax(0, 1fr) / minmax(0, 1fr); }
+
+/* top: bar above, owner below. bottom: the other way round. left: owner on the left, bar on the right. right: mirrored. */
+.board-top .cell-color-bar { grid-row: 1; }
+.board-top .cell-logo, .board-top .cell-name { grid-row: 2; }
+.board-top .cell-owner { grid-row: 3; }
+.board-bottom .cell-owner { grid-row: 1; }
+.board-bottom .cell-logo, .board-bottom .cell-name { grid-row: 2; }
+.board-bottom .cell-color-bar { grid-row: 3; }
+.board-left .cell-owner { grid-column: 1; }
+.board-left .cell-logo, .board-left .cell-name { grid-column: 2; }
+.board-left .cell-color-bar { grid-column: 3; }
+.board-right .cell-color-bar { grid-column: 1; }
+.board-right .cell-logo, .board-right .cell-name { grid-column: 2; }
+.board-right .cell-owner { grid-column: 3; }
+.board-top .cell-anchor > *, .board-bottom .cell-anchor > * { grid-column: 1; }
+.board-left .cell-anchor > *, .board-right .cell-anchor > * { grid-row: 1; }
+.board-corner .cell-anchor > * { grid-area: 1 / 1; }
+
+/* colour bar */
+.cell-color-bar { z-index: 2; }
+.board-top .cell-color-bar, .board-bottom .cell-color-bar { height: 22px; }
+.board-left .cell-color-bar, .board-right .cell-color-bar { width: 22px; }
+
+/* owner strip (the engine sets its colour and shows it once the property is bought) */
+.cell-owner {
+	display: none;
+	z-index: 5;
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 0 10px rgba(0, 0, 0, 0.35);
+}
+.board-top .cell-owner, .board-bottom .cell-owner { height: 16px; }
+.board-left .cell-owner, .board-right .cell-owner { width: 16px; }
+.board-top .cell-owner { border-radius: 0 0 8px 8px; }
+.board-bottom .cell-owner { border-radius: 8px 8px 0 0; }
+.board-left .cell-owner { border-radius: 8px 0 0 8px; }
+.board-right .cell-owner { border-radius: 0 8px 8px 0; }
+
+/* name (squares without a logo) */
+.cell-name {
+	z-index: 3;
+	align-self: center;
+	padding: 2px 4px;
+	font-size: 9px;
+	font-weight: 600;
+	line-height: 1.25;
+	text-align: center;
+	color: var(--white);
+	pointer-events: none;
+	overflow-wrap: break-word;
+}
+.board-top .cell-name { align-self: end; margin-bottom: 11px; }
+.board-bottom .cell-name { align-self: start; margin-top: 11px; }
+.board-corner .cell-name { font-size: 12px; font-weight: 700; }
+.cell-name.has-logo { display: none; }
+
+/* brand logo: replaces the name, centred in the part of the square next to the colour bar */
+.cell-logo {
+	z-index: 3;
+	justify-self: stretch;
+	align-self: stretch;
+	min-width: 0;
+	min-height: 0;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 8px 6px;
+	object-fit: contain;
+	pointer-events: none;
+	border-radius: 3px;
+}
+
+/* invisible helper the engine uses to know where a token is (the visible tokens are drawn by BoardTokens) */
+.cell-position-holder { grid-area: 1 / 1 / -1 / -1; z-index: 4; position: relative; }
+.cell-position { visibility: hidden; position: absolute; width: 14px; height: 14px; }
