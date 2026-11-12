@@ -2240,3 +2240,27 @@ td.statscellname[title="Mortgaged"]::after {
 	.trade-head, #trade-chips { padding-left: 14px; padding-right: 14px; }
 }
 #trade .trade-money input { text-align: left; width: 90px; }
+
+/* ===== Trade, closer to the preview ===== */
+#trade .trade-modal { display: flex; flex-direction: column; height: min(690px, calc(100dvh - 24px)); overflow: hidden; }
+#trade table.trade-grid { flex: 1; min-height: 0; grid-template-rows: auto minmax(0, 1fr) auto; align-content: stretch; row-gap: 14px; }
+.trade-grid > tbody > tr:nth-child(3) > td { max-height: none; min-height: 0; align-self: stretch; justify-content: flex-start; }
+.trade-who { text-align: left; }
+.trade-who #trade-leftp-name, .trade-who #trade-rightp-name { font-size: 0; }
+.trade-who #trade-leftp-name::before, .trade-who #trade-rightp-name::before { content: attr(data-label); font-size: 11.5px; color: #ffffff8c; }
+.trade-who #trade-rightp-name select { font-size: 0; }
+.trade-title { text-align: left; font-weight: 800; }
+.trade-grid .trade-cash .trade-money { flex: 1; height: 42px; }
+.trade-grid .trade-cash .trade-money.has-cash { box-shadow: inset 0 0 0 1.5px #acfa00; }
+.trade-cell tr { height: 40px; border-radius: 11px; }
+.trade-cell tr .propertycellcolor { width: 12px !important; height: 12px; min-width: 12px; border-radius: 3px; }
+.trade-cell tr .propertycellnote { order: 3; font-size: 11.5px; color: #ffffff99 !important; font-weight: 500; white-space: nowrap; }
+.trade-cell tr.trade-blocked { opacity: .5; cursor: not-allowed; }
+.trade-nojail { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 12px; border-radius: 11px; background: #262626; opacity: .5; box-shadow: inset 0 0 0 1px #ffffff0d; font-size: 13px; font-weight: 600; margin-top: auto; flex-shrink: 0; }
+.trade-nojail i { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid #ffffff40; box-sizing: border-box; }
+.trade-nojail em { margin-left: auto; font-style: normal; font-size: 11.5px; color: #ffffff80; font-weight: 500; }
+.trade-chip { height: 34px; padding: 0 14px; font-size: 13px; }
+.trade-chip i { width: 9px; height: 9px; }
+.trade-foot { padding: 16px 28px; }
+@media (max-width: 760px) { #trade .trade-modal { height: calc(100dvh - 24px); } #trade table.trade-grid { overflow-y: auto; grid-template-rows: none; } }
+#trade .trade-money input { color: #fff !important; background: transparent !important; } .trade-of { white-space: nowrap; }

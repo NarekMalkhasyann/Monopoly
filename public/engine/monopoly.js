@@ -390,23 +390,22 @@ function Game() {
 			currentSquare = square[i];
 
 			// A property cannot be traded if any properties in its group have been improved.
-			if (currentSquare.house > 0 || currentSquare.groupNumber === 0) {
+			// Such properties are still listed, but greyed out (see the "sell first" note).
+			if (currentSquare.groupNumber === 0) {
 				continue;
 			}
 
 			allGroupUninproved = true;
+			var groupHouses = 0;
 			var max = currentSquare.group.length;
 			for (var j = 0; j < max; j++) {
-
-				if (square[currentSquare.group[j]].house > 0) {
-					allGroupUninproved = false;
-					break;
-				}
+				var gh = square[currentSquare.group[j]];
+				groupHouses += gh.hotel ? 5 : gh.house;
 			}
-
-			if (!allGroupUninproved) {
-				continue;
+			if (groupHouses > 0) {
+				allGroupUninproved = false;
 			}
+			var blocked = !allGroupUninproved;
 
 			// Offered properties.
 			if (currentSquare.owner === initiator.index) {
@@ -442,6 +441,15 @@ function Game() {
 				}
 				currentTableCell.textContent = currentSquare.name;
 
+				currentTableCell = currentTableRow.appendChild(document.createElement("td"));
+				currentTableCell.className = "propertycellnote";
+				currentTableCell.textContent = blocked ? (groupHouses + (groupHouses === 1 ? " house" : " houses") + " in set \u00b7 sell first") : (currentSquare.mortgage ? "Mortgaged" : "");
+				if (blocked) {
+					currentTableRow.onclick = null;
+					currentTableRow.className = "trade-blocked";
+					currentTableCellCheckbox.disabled = true;
+				}
+
 			// Requested properties.
 			} else if (currentSquare.owner === recipient.index) {
 				currentTableRow = recipientSideTable.appendChild(document.createElement("tr"));
@@ -475,6 +483,15 @@ function Game() {
 					currentTableCell.style.color = "grey";
 				}
 				currentTableCell.textContent = currentSquare.name;
+
+				currentTableCell = currentTableRow.appendChild(document.createElement("td"));
+				currentTableCell.className = "propertycellnote";
+				currentTableCell.textContent = blocked ? (groupHouses + (groupHouses === 1 ? " house" : " houses") + " in set \u00b7 sell first") : (currentSquare.mortgage ? "Mortgaged" : "");
+				if (blocked) {
+					currentTableRow.onclick = null;
+					currentTableRow.className = "trade-blocked";
+					currentTableCellCheckbox.disabled = true;
+				}
 			}
 		}
 

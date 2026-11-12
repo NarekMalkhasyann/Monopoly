@@ -42,7 +42,7 @@ function decorate() {
 		}
 		const m = parseInt((document.getElementById('trade-' + prefix + 'p-money') || {}).value, 10);
 		if (m > 0) out.push('$' + m);
-		return out.length ? out.join(' + ') : 'nothing';
+		return out.length ? out.join(' and ') : 'nothing';
 	};
 	[['left', 'trade-leftp-name'], ['right', null]].forEach(([k]) => {
 		const nameEl = document.getElementById('trade-' + k + 'p-name');
@@ -53,16 +53,34 @@ function decorate() {
 		}
 		const pl = (win.player || []).find((x) => x && x.name === nm);
 		const av = document.getElementById('trade-' + k + 'p-avatar');
-		if (av) { av.textContent = (nm || '?').trim().charAt(0).toUpperCase(); av.style.background = pl ? pl.color : '#888'; }
+		if (av) { av.textContent = /^Player \d+$/.test(nm) ? nm.replace('Player ', '') : (nm || '?').trim().charAt(0).toUpperCase(); av.style.background = pl ? pl.color : '#888'; }
+		if (nameEl) nameEl.setAttribute('data-label', (nm || '') + (pl ? ' \u00b7 $' + pl.money : ''));
+		const prop = document.getElementById('trade-' + k + 'p-property');
+		if (prop) {
+			const has = prop.querySelector('input[id$="checkbox40"], input[id$="checkbox41"]');
+			const old = prop.querySelector('.trade-nojail');
+			if (has && old) old.remove();
+			if (!has && !old) {
+				const d = document.createElement('div');
+				d.className = 'trade-nojail';
+				d.innerHTML = '<i></i><span>Get Out of Jail Free card</span><em>' + (k === 'left' ? 'none' : 'none') + '</em>';
+				prop.appendChild(d);
+			}
+		}
 		const of = document.getElementById('trade-' + k + 'p-of');
 		if (of) of.textContent = pl ? 'of $' + pl.money : '';
 	});
+	const incoming = !select;
+	const tl = document.getElementById('trade-leftp-title');
+	const tr = document.getElementById('trade-rightp-title');
+	if (tl) tl.textContent = incoming ? 'They give' : 'You give';
+	if (tr) tr.textContent = incoming ? 'You give' : 'You get';
 	const sum = document.getElementById('trade-summary');
 	if (sum) {
-		const n1 = (document.getElementById('trade-leftp-name') || {}).textContent || '';
-		const n2 = (holder && (select ? select.options[select.selectedIndex]?.textContent : holder.textContent)) || '';
 		sum.innerHTML = '';
-		[[n1 + ' gives', side('left')], [n2 + ' gives', side('right')]].forEach(([k, v], idx) => {
+		const l = side('left'), r = side('right');
+		const rows = incoming ? [['You get', l], ['You give', r]] : [['You give', l], ['You get', r]];
+		rows.forEach(([k, v]) => {
 			const d = document.createElement('div');
 			const b = document.createElement('b');
 			b.textContent = k;
@@ -71,6 +89,10 @@ function decorate() {
 			sum.appendChild(d);
 		});
 	}
+	['left', 'right'].forEach((k) => {
+		const m = document.getElementById('trade-' + k + 'p-money');
+		if (m && m.parentElement) m.parentElement.classList.toggle('has-cash', parseInt(m.value, 10) > 0);
+	});
 }
 
 export default function TradePanel() {
@@ -80,7 +102,7 @@ export default function TradePanel() {
 		let queued = false;
 		const run = () => { if (queued) return; queued = true; setTimeout(() => { queued = false; decorate(); }, 0); };
 		const mo = new MutationObserver((recs) => {
-			if (recs.every((r) => r.target.closest && r.target.closest('#trade-chips, #trade-summary'))) return;
+			if (recs.every((r) => (r.target.closest && r.target.closest('#trade-chips, #trade-summary')) || [...r.addedNodes, ...r.removedNodes].every((n) => n.classList && n.classList.contains('trade-nojail')))) return;
 			run();
 		});
 		mo.observe(root, { childList: true, subtree: true });
@@ -100,8 +122,8 @@ export default function TradePanel() {
 			<table className="trade-grid">
 				<tbody>
 					<tr>
-						<td className="trade-cell"><span className="trade-avatar" id="trade-leftp-avatar" /><div className="trade-who"><div className="trade-title">Gives</div><div id="trade-leftp-name" /></div></td>
-						<td className="trade-cell"><span className="trade-avatar" id="trade-rightp-avatar" /><div className="trade-who"><div className="trade-title">Gets</div><div id="trade-rightp-name" /></div></td>
+						<td className="trade-cell"><span className="trade-avatar" id="trade-leftp-avatar" /><div className="trade-who"><div className="trade-title" id="trade-leftp-title">You give</div><div id="trade-leftp-name" /></div></td>
+						<td className="trade-cell"><span className="trade-avatar" id="trade-rightp-avatar" /><div className="trade-who"><div className="trade-title" id="trade-rightp-title">You get</div><div id="trade-rightp-name" /></div></td>
 					</tr>
 					<tr>
 						<td className="trade-cell trade-cash">
