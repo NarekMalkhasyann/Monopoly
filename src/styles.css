@@ -1020,106 +1020,6 @@ a.statscellcolor {
 	cursor: help;
 }
 
-/* Property Deed popup */
-#deed {
-	display: none;
-	position: fixed;
-	border: 1px solid var(--gray);
-	border-radius: var(--radius-lg);
-	width: 240px;
-	min-height: 290px;
-	background-color: var(--dark);
-	color: var(--white);
-	box-shadow: var(--shadow-modal);
-	z-index: 25;
-	overflow: hidden;
-}
-
-#deed td {
-	border: none;
-	font-size: 12px;
-	padding: 3px 4px;
-}
-
-#deed-header {
-	width: calc(100% - 16px);
-	margin: 8px auto;
-	border: 1px solid var(--black);
-	border-radius: var(--radius-sm);
-	padding: 6px;
-	text-align: center;
-	text-transform: uppercase;
-	font-family: 'Montserrat', sans-serif;
-	font-weight: 700;
-	color: var(--black);
-	background-color: var(--white);
-}
-
-#deed-name {
-	font-size: 14px;
-	font-weight: 700;
-}
-
-#deed-category {
-	margin-top: 4px;
-	font-size: 10px;
-	font-weight: 600;
-	letter-spacing: 0.5px;
-	text-transform: none;
-	white-space: pre-line;
-	line-height: 1.35;
-	opacity: 0.85;
-}
-
-#deed-table {
-	margin: 8px auto;
-	width: calc(100% - 16px);
-	border-spacing: 0 2px;
-	color: var(--white);
-}
-
-#deed-table tr + tr td {
-	border-top: 1px solid var(--divider);
-}
-
-#deed-special, #deed-mortgaged {
-	padding: 16px 14px;
-	text-align: center;
-	font-size: 12px;
-	line-height: 1.5;
-}
-
-#deed-special-name, #deed-mortgaged-name {
-	font-size: 15px;
-	font-weight: 700;
-	text-transform: uppercase;
-	margin-bottom: 10px;
-}
-
-#deed-special-text {
-	text-align: left;
-	color: var(--white-o);
-	margin-bottom: 12px;
-}
-
-#deed-special-footer {
-	padding-top: 10px;
-	border-top: 1px solid var(--divider);
-	text-align: left;
-	font-weight: 600;
-}
-
-#deed-mortgaged p {
-	margin: 6px 0;
-	color: var(--orange);
-}
-
-#deed-mortgaged > div:nth-of-type(2) {
-	color: var(--orange);
-	font-weight: 700;
-	letter-spacing: 1px;
-}
-
 /* Enlarged square preview shown on hover over a cell */
 .enlarge {
 	width: 160px;
@@ -2097,4 +1997,354 @@ td.statscellname[title="Mortgaged"]::after {
 		radial-gradient(circle 6px at 72% 50%, #1d1d1d 96%, transparent 100%),
 		radial-gradient(circle 6px at 28% 72%, #1d1d1d 96%, transparent 100%),
 		radial-gradient(circle 6px at 72% 72%, #1d1d1d 96%, transparent 100%);
+}
+
+/* ==========================================================================
+   Redesign, part 7: Manage list, Trade window and the hover cards
+   ========================================================================== */
+
+/* Manage tab: the action buttons and the property list read as one card */
+#option { background: #ffffff0a; border-bottom: 1px solid #ffffff12; padding: 10px; }
+#manage { border-radius: 14px; background: #262626; box-shadow: inset 0 0 0 1px #ffffff0d; }
+#option input[type="button"] { border-radius: 10px; padding: 9px 16px; }
+#owned { padding: 6px 8px; }
+.property-cell-row { border-radius: 10px; }
+.propertycellcolor { border-radius: 5px; }
+.propertycellname { font-size: 13px; font-weight: 600; }
+
+/* Hover cards: dark rounded cards with a colour header, like the preview's deed cards */
+.enlarge {
+	border: none;
+	border-radius: 20px;
+	background: #222222;
+	box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.enlarge-color { height: 44px; border-bottom: none; }
+.enlarge-name { font-size: 17px; font-weight: 800; padding: 8px 10px 2px; }
+.enlarge-price { font-size: 14px; color: var(--green); }
+/* Trade window */
+#trade { background: #000000cc; }
+.trade-modal { background: #1f1f1f; border: none; border-radius: 24px; box-shadow: inset 0 0 0 1px #ffffff14, 0 40px 100px rgba(0, 0, 0, 0.8); padding: 24px 26px 20px; }
+.trade-head h3 { font-size: 22px; font-weight: 800; }
+.trade-close { border-radius: 10px; width: 38px; height: 38px; }
+.trade-cell { border: none; border-radius: 14px; background: #262626; box-shadow: inset 0 0 0 1px #ffffff0d; }
+#trade table { border-spacing: 6px; }
+#trade tr:has(input[type="checkbox"]:checked) td { background: #2e3a17; }
+#trade input[type="button"] { border-radius: 12px; height: 44px; padding: 0 22px; }
+
+/* ==========================================================================
+   Redesign, part 7b: phone layout of the turn panel (matches the desktop panel's look)
+   ========================================================================== */
+@media (max-width: 1128px) {
+	#control {
+		border: none;
+		border-radius: 20px;
+		background: linear-gradient(160deg, #2c2c2c, #232323);
+		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 40px rgba(0, 0, 0, 0.45);
+	}
+	#control #quickstats {
+		padding: 0;
+		min-width: 0;
+		border: none !important;
+		background: none;
+		box-shadow: none;
+		border-radius: 0;
+		text-align: left;
+	}
+	#control #quickstats::before {
+		content: "YOUR TURN";
+		display: block;
+		font-size: 10px;
+		font-weight: 600;
+		letter-spacing: 0.22em;
+		color: rgba(255, 255, 255, 0.5);
+	}
+	#control #quickstats .qs-name { justify-content: flex-start; }
+	#control #quickstats #pname { font-size: 22px; font-weight: 800; }
+	#control #quickstats .qs-name > span:last-child { display: none; }
+	#control #quickstats #pmoney { font-size: 14px; font-weight: 700; color: var(--green); margin-top: 0; }
+	/* turn the quick-stats row into: name on the left, dice on the right */
+	#control > table > tbody > tr:first-child > td:last-child { align-items: center; justify-content: space-between; }
+	#control #quickstats + div { display: flex; gap: 6px; }
+	#control .die, #control .die-no-img { width: 46px; height: 46px; margin: 0; border-radius: 12px; }
+	#control .die-no-img + .die-no-img, #control .die + .die { margin-left: 0; }
+	#control #nextbutton { width: 100%; height: 48px; border-radius: 14px; font-size: 15px; }
+	#control > table > tbody > tr:last-child > td > div { display: flex; gap: 8px; }
+}
+
+/* ==========================================================================
+   Title-deed card (hover): colour header with logo, owner + price, rent rows, footer
+   ========================================================================== */
+#deed {
+	display: none;
+	position: fixed;
+	width: 280px;
+	box-sizing: border-box;
+	z-index: 25;
+	overflow: hidden;
+	border: none;
+	border-radius: 20px;
+	background: #222222;
+	color: var(--white);
+	font-family: 'Montserrat', sans-serif;
+	box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+#deed-head { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 14px 14px; color: #161616; text-align: center; }
+#deed-logo { display: none; align-items: center; justify-content: center; padding: 5px 10px; border-radius: 9px; background: #f3f3f3; max-width: 200px; }
+#deed-logo img { display: block; max-height: 34px; max-width: 100%; object-fit: contain; }
+#deed-kind { font-size: 10px; font-weight: 700; letter-spacing: 0.22em; opacity: 0.7; }
+#deed-name { font-size: 21px; font-weight: 800; line-height: 1.15; }
+#deed-category { font-size: 11px; font-weight: 600; opacity: 0.7; }
+#deed-meta { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px 6px; font-size: 12px; color: rgba(255, 255, 255, 0.6); }
+#deed-meta b { color: #fff; }
+#deed-owner { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; color: #fff; }
+#deed-owner i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+#deed-rows { padding: 4px 10px 6px; display: flex; flex-direction: column; gap: 2px; }
+.deed-row { display: flex; justify-content: space-between; padding: 6px 12px; border-radius: 9px; font-size: 13px; color: rgba(255, 255, 255, 0.85); }
+.deed-row b { font-variant-numeric: tabular-nums; }
+.deed-row.deed-lit { background: rgba(172, 250, 0, 0.12); box-shadow: inset 0 0 0 1px rgba(172, 250, 0, 0.4); color: var(--green); font-weight: 700; }
+#deed-foot { margin: 6px 16px 0; padding: 10px 0 14px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; font-size: 12px; color: rgba(255, 255, 255, 0.7); }
+#deed-banner { display: none; margin: 0 16px 16px; padding: 8px 12px; border-radius: 9px; background: rgba(250, 204, 21, 0.12); box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.4); color: #facc15; font-size: 12px; font-weight: 700; text-align: center; }
+#deed.deed-mortgaged #deed-rows { opacity: 0.45; }
+
+/* ===== Manage list as in the preview ===== */
+#option { display: none !important; }
+#owned { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+#owned .mg-empty { padding: 14px; color: #ffffff99; font-size: 13px; }
+.mg-card { border-radius: 14px; background: #262626; box-shadow: inset 0 0 0 1px #ffffff0d; overflow: hidden; }
+.mg-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #2b2b2b; }
+.mg-swatch { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+.mg-title { font-weight: 700; font-size: 13px; }
+.mg-badge { font-size: 9.5px; font-weight: 800; letter-spacing: .06em; padding: 3px 7px; border-radius: 999px; background: #3a3a3a; color: #ffffffb3; }
+.mg-badge.mg-set { background: #acfa00; color: #1d1d1d; }
+.mg-note { margin-left: auto; font-size: 11px; color: #ffffff99; }
+#owned .mg-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid #ffffff0d; border-radius: 0; cursor: pointer; }
+#owned .mg-row:hover, #owned .mg-row.mg-sel { background: #ffffff0a; }
+#owned .mg-row input[type=checkbox] { display: none; }
+.mg-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.mg-name { font-weight: 600; font-size: 13.5px; }
+.mg-mort .mg-name { color: #ffffff80; }
+.mg-sub { display: flex; gap: 3px; align-items: center; height: 8px; }
+.mg-pip { width: 8px; height: 8px; border-radius: 2px; background: #3a3a3a; display: inline-block; }
+.mg-pip.on { background: #22c55e; }
+.mg-pip.mg-hotel { width: 14px; }
+.mg-pip.mg-hotel.on { background: #ef4444; }
+.mg-rent { font-size: 11px; color: #ffffffa6; margin-left: 6px; line-height: 8px; }
+.mg-btn { width: 34px; height: 34px; border-radius: 9px; font: 800 17px Montserrat, sans-serif; flex-shrink: 0; cursor: pointer; padding: 0; }
+.mg-buy { border: none; background: #acfa00; color: #1d1d1d; }
+.mg-sell { border: 1px solid #ffffff40; background: transparent; color: #fff; }
+.mg-mort-btn { height: 34px; padding: 0 10px; border-radius: 9px; font: 700 11.5px Montserrat, sans-serif; flex-shrink: 0; border: 1px solid #ffffff40; background: transparent; color: #fff; cursor: pointer; min-width: 52px; }
+.mg-mort-btn.mg-back { border-color: #facc15; background: #facc151f; color: #facc15; }
+.mg-btn:disabled, .mg-mort-btn:disabled { border: 1px solid #ffffff1f; background: transparent; color: #ffffff40; cursor: not-allowed; }
+.mg-foot { margin: 2px 2px 0; font-size: 11px; line-height: 1.5; color: #ffffff80; }
+#owned { max-height: 440px; text-align: left; }
+.mg-card { flex-shrink: 0; }
+.mg-sub { height: auto; min-height: 12px; }
+.mg-rent { line-height: 12px; }
+.mg-sub .mg-rent:first-child { margin-left: 0; }
+#owned { max-height: 300px; }
+
+/* ===== Trade window as in the preview ===== */
+#trade-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+.trade-with { font-size: 11px; font-weight: 700; color: #ffffff80; letter-spacing: .1em; }
+.trade-chip { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: transparent; color: #ffffffcc; border: none; box-shadow: inset 0 0 0 1px #ffffff2e; cursor: pointer; }
+.trade-chip i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.trade-chip.on { background: #acfa00; color: #1d1d1d; font-weight: 800; box-shadow: none; }
+#trade-rightp-name select { display: none; }
+.trade-title { font-weight: 800; font-size: 14px; margin-bottom: 2px; }
+#trade-leftp-name, #trade-rightp-name { font-size: 11px; color: #ffffff8c; margin-bottom: 8px; }
+#trade-leftp-money, #trade-rightp-money { width: 100px; height: 40px; border-radius: 11px; background: #161616; border: none; box-shadow: inset 0 0 0 1px #ffffff26; color: #fff; font: 800 16px Montserrat, sans-serif; padding: 0 12px; text-align: right; }
+.trade-cell table { border-spacing: 0; display: block; }
+.trade-cell tbody { display: flex; flex-wrap: wrap; gap: 6px; }
+.trade-cell tr { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border-radius: 10px; background: #262626; box-shadow: inset 0 0 0 1px #ffffff0d; cursor: pointer; font-size: 12.5px; font-weight: 600; color: #ffffffb3; }
+.trade-cell tr td { display: block; padding: 0; }
+.trade-cell tr .propertycellname { background: transparent !important; }
+.trade-cell tr .propertycellcheckbox { display: none; }
+.trade-cell tr .propertycellcolor { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.trade-cell tr:has(input[type="checkbox"]:checked) { background: #2e3a17; box-shadow: inset 0 0 0 1.5px #acfa00; color: #fff; }
+#trade tr:has(input[type="checkbox"]:checked) td { background: transparent; }
+#trade-summary { font-size: 12.5px; line-height: 1.6; text-align: left; }
+#trade-summary b { color: #acfa00; }
+.trade-actions { background: transparent !important; box-shadow: none !important; }
+.trade-cell tr .propertycellcolor { width: 10px !important; height: 10px; min-width: 10px; border: none !important; }
+.trade-cell tr td, .trade-cell tr .propertycellname { color: inherit !important; font-size: inherit; font-weight: inherit; }
+
+/* ===== Manage as a pop-up (like Trade) ===== */
+#control #manage {
+	position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+	z-index: 16; width: min(620px, calc(100vw - 24px)); max-height: calc(100dvh - 24px);
+	box-sizing: border-box; overflow: auto; border: none; border-radius: 24px; background: #1f1f1f;
+	box-shadow: 0 0 0 100vmax #000000bf, 0 40px 100px #000c, inset 0 0 0 1px #ffffff14;
+}
+.manage-head { display: flex; align-items: center; gap: 18px; padding: 18px 24px; border-bottom: 1px solid #ffffff12; }
+.manage-titles { flex: 1; display: flex; flex-direction: column; line-height: 1.3; text-align: left; }
+.manage-title { font-size: 20px; font-weight: 800; }
+.manage-sub { font-size: 12px; color: #ffffff99; }
+.manage-cashbox { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+.manage-cashbox span { font-size: 11px; color: #ffffff80; letter-spacing: .1em; font-weight: 600; }
+.manage-cashbox b { font-size: 22px; font-weight: 800; color: #acfa00; }
+#control #manage #owned { max-height: none; overflow: visible; padding: 18px 24px 22px; }
+#control #manage .mg-foot { display: block; }
+
+/* ===== Trade window, wide layout as in the preview ===== */
+#trade .trade-modal { width: min(1020px, calc(100vw - 24px)); padding: 0; overflow: auto; }
+.trade-head { margin: 0; padding: 20px 28px; border-bottom: 1px solid #ffffff12; }
+.trade-titles { display: flex; flex-direction: column; line-height: 1.25; text-align: left; }
+.trade-titles span { font-size: 12px; color: #ffffff99; }
+#trade-chips { margin: 0; padding: 14px 28px; border-bottom: 1px solid #ffffff12; }
+.trade-with { margin-right: 4px; font-size: 12px; }
+#trade table.trade-grid { display: grid; grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr); row-gap: 12px; border-spacing: 0; padding: 18px 28px; width: auto; position: relative; }
+.trade-grid > tbody, .trade-grid > tbody > tr { display: contents; }
+.trade-grid > tbody > tr > td { display: flex; align-items: center; gap: 10px; background: transparent !important; box-shadow: none !important; padding: 0; text-align: left; }
+.trade-grid > tbody > tr > td:nth-child(1) { grid-column: 1; }
+.trade-grid > tbody > tr > td:nth-child(2) { grid-column: 3; }
+.trade-grid > tbody > tr:nth-child(1) > td { grid-row: 1; }
+.trade-grid > tbody > tr:nth-child(3) > td { grid-row: 2; align-items: stretch; flex-direction: column; align-self: start; max-height: 300px; overflow-y: auto; padding-right: 4px; }
+.trade-grid > tbody > tr:nth-child(2) > td { grid-row: 3; }
+.trade-grid::after { content: ""; position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; transform: translate(-50%, -50%); background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff66' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 8h13l-3-3M17 16H4l3 3'/%3E%3C/svg%3E") center/contain no-repeat; }
+.trade-avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #161616; flex-shrink: 0; }
+.trade-who { display: flex; flex-direction: column; line-height: 1.2; }
+.trade-title { font-size: 15px; margin: 0; }
+.trade-who #trade-leftp-name, .trade-who #trade-rightp-name { margin: 0; }
+.trade-cashlabel { font-size: 12px; color: #ffffffa6; width: 90px; }
+.trade-money { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px; border-radius: 11px; background: #161616; box-shadow: inset 0 0 0 1px #ffffff26; }
+.trade-money b { color: #ffffff80; }
+.trade-money input { all: unset; width: 90px; text-align: left; font: 800 17px Montserrat, sans-serif; color: #fff; }
+#trade-leftp-money, #trade-rightp-money { background: transparent; box-shadow: none; height: auto; padding: 0; }
+.trade-of { font-size: 11.5px; color: #ffffff80; }
+/* property rows: full-width rows with a tick box */
+.trade-cell tbody { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 6px; }
+.trade-cell tr { display: flex; width: 100%; box-sizing: border-box; height: 42px; padding: 0 12px; gap: 10px; border-radius: 12px; }
+.trade-cell tr .propertycellcheckbox { display: block; order: 0; width: auto; }
+.trade-cell tr .propertycellcolor { order: 1; }
+.trade-cell tr .propertycellname { order: 2; flex: 1; font-size: 13.5px; }
+.trade-cell input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid #ffffff40; background: transparent; margin: 0; display: grid; place-items: center; cursor: pointer; }
+.trade-cell input[type="checkbox"]:checked { background: #acfa00; border-color: #acfa00; }
+.trade-cell input[type="checkbox"]:checked::after { content: "\2713"; color: #1d1d1d; font-weight: 800; font-size: 13px; line-height: 1; }
+.trade-foot { display: flex; align-items: center; gap: 18px; padding: 16px 28px; border-top: 1px solid #ffffff12; background: #1a1a1a; }
+.trade-footinfo { flex: 1; display: flex; flex-direction: column; gap: 3px; font-size: 13px; line-height: 1.4; text-align: left; }
+.trade-rules { font-size: 11.5px; color: #ffffff80; }
+#trade-summary { font-size: 13px; line-height: 1.4; }
+.trade-actions { display: flex; gap: 10px; flex-shrink: 0; }
+.trade-actions input[type="button"] { height: 48px; padding: 0 22px; border-radius: 13px; margin: 0; }
+@media (max-width: 760px) {
+	#trade table.trade-grid { grid-template-columns: 1fr; padding: 14px; }
+	.trade-grid > tbody > tr > td:nth-child(2) { grid-column: 1; }
+	.trade-grid > tbody > tr:nth-child(1) > td:nth-child(2) { grid-row: 4; }
+	.trade-grid > tbody > tr:nth-child(3) > td:nth-child(2) { grid-row: 5; }
+	.trade-grid > tbody > tr:nth-child(2) > td:nth-child(2) { grid-row: 6; }
+	.trade-grid::after { display: none; }
+	.trade-foot { flex-direction: column; align-items: stretch; }
+	.trade-actions { justify-content: stretch; }
+	.trade-actions input { flex: 1; }
+	.trade-head, #trade-chips { padding-left: 14px; padding-right: 14px; }
+}
+#trade .trade-money input { text-align: left; width: 90px; }
+
+/* ===== Trade, closer to the preview ===== */
+#trade .trade-modal { display: flex; flex-direction: column; height: min(690px, calc(100dvh - 24px)); overflow: hidden; }
+#trade table.trade-grid { flex: 1; min-height: 0; grid-template-rows: auto minmax(0, 1fr) auto; align-content: stretch; row-gap: 14px; }
+.trade-grid > tbody > tr:nth-child(3) > td { max-height: none; min-height: 0; align-self: stretch; justify-content: flex-start; }
+.trade-who { text-align: left; }
+.trade-who #trade-leftp-name, .trade-who #trade-rightp-name { font-size: 0; }
+.trade-who #trade-leftp-name::before, .trade-who #trade-rightp-name::before { content: attr(data-label); font-size: 11.5px; color: #ffffff8c; }
+.trade-who #trade-rightp-name select { font-size: 0; }
+.trade-title { text-align: left; font-weight: 800; }
+.trade-grid .trade-cash .trade-money { flex: 1; height: 42px; }
+.trade-grid .trade-cash .trade-money.has-cash { box-shadow: inset 0 0 0 1.5px #acfa00; }
+.trade-cell tr { height: 40px; border-radius: 11px; }
+.trade-cell tr .propertycellcolor { width: 12px !important; height: 12px; min-width: 12px; border-radius: 3px; }
+.trade-cell tr .propertycellnote { order: 3; font-size: 11.5px; color: #ffffff99 !important; font-weight: 500; white-space: nowrap; }
+.trade-cell tr.trade-blocked { opacity: .5; cursor: not-allowed; }
+.trade-nojail { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 12px; border-radius: 11px; background: #262626; opacity: .5; box-shadow: inset 0 0 0 1px #ffffff0d; font-size: 13px; font-weight: 600; margin-top: auto; flex-shrink: 0; }
+.trade-nojail i { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid #ffffff40; box-sizing: border-box; }
+.trade-nojail em { margin-left: auto; font-style: normal; font-size: 11.5px; color: #ffffff80; font-weight: 500; }
+.trade-chip { height: 34px; padding: 0 14px; font-size: 13px; }
+.trade-chip i { width: 9px; height: 9px; }
+.trade-foot { padding: 16px 28px; }
+@media (max-width: 760px) { #trade .trade-modal { height: calc(100dvh - 24px); } #trade table.trade-grid { overflow-y: auto; grid-template-rows: none; } }
+#trade .trade-money input { color: #fff !important; background: transparent !important; } .trade-of { white-space: nowrap; }
+
+/* ==========================================================================
+   Redesign, part 8: player list as in the preview (big avatar, name + TURN pill, property chips, cash on the right)
+   ========================================================================== */
+.moneybarcell {
+	display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 12px; row-gap: 7px;
+	padding: 14px 16px 14px 72px;
+}
+.moneybarcell::before { left: 16px; border-width: 21px; box-shadow: none; }
+.moneybarcell div:first-child { font-size: 15px; font-weight: 700; grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 8px; }
+.moneybarcell div:nth-child(2) { font-size: 22px; font-weight: 800; grid-column: 2; grid-row: 1 / span 2; margin: 0; text-align: right; }
+.moneybarcell .mb-chips { grid-column: 1; grid-row: 2; display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; font-size: 0; }
+.mb-chips i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.moneybarcell div:first-child[data-initial]::before { left: 16px; width: 42px; font-size: 17px; }
+.mb-turn { display: none; font-size: 10px; font-weight: 800; letter-spacing: .1em; padding: 3px 8px; border-radius: 999px; background: #acfa00; color: #1d1d1d; }
+#moneybar tr:has(.money-bar-arrow:not([style*="none"])) .mb-turn { display: inline-block; }
+#moneybar tr:has(.money-bar-arrow:not([style*="none"])) .moneybarcell div:nth-child(2) { color: var(--green); }
+.moneybarcell[data-presence]::after { top: 50%; right: auto; left: 0; display: none; }
+@media (min-width: 1130px) {
+	#moneybarwrap { left: var(--board-right, auto); right: 28px; top: 20px; min-width: 0; }
+	#moneybar { float: none; background: transparent; border: none; box-shadow: none; padding: 0; }
+	#moneybar table { width: 100%; border-spacing: 0 12px; }
+	#viewstats { width: 100%; height: 46px; font-size: 14px; font-weight: 600; border-radius: 12px; }
+	.moneybararrowcell { width: 0; padding: 0; }
+	.money-bar-arrow { display: none !important; }
+}
+@media (max-width: 1129px) {
+	.moneybarcell { padding: 8px 14px 8px 52px; }
+	.moneybarcell::before { left: 8px; border-width: 15px; }
+	.moneybarcell div:first-child[data-initial]::before { left: 8px; width: 30px; font-size: 13px; }
+	.moneybarcell div:nth-child(2) { font-size: 17px; }
+	.mb-chips i { width: 11px; height: 11px; }
+}
+
+/* Quick-trade icon on opponents' cards (not on the card of the player whose turn it is) */
+.mb-trade { display: none; grid-column: 2; grid-row: 1 / span 2; width: 34px; height: 34px; border-radius: 10px; border: 1px solid #ffffff2e; background: transparent; color: #ffffffcc; place-items: center; cursor: pointer; padding: 0; }
+.mb-trade:hover { background: #ffffff14; color: #fff; }
+.moneybarcell { grid-template-columns: minmax(0, 1fr) auto auto; }
+.moneybarcell div:nth-child(2) { grid-column: 3; }
+#moneybar tr:not(:has(.money-bar-arrow:not([style*="none"]))) .mb-trade { display: grid; }
+@media (max-width: 1129px) { .mb-trade { width: 30px; height: 30px; } }
+.trade-grid > tbody > tr:nth-child(3) > td { color: #ffffff99; font-size: 13px; }
+
+/* "My properties" card as in the preview: pill chips that wrap */
+#myprops { margin-top: 4px; padding: 16px 18px; gap: 16px; border: none; border-radius: 16px; background: #222; box-shadow: inset 0 0 0 1px #ffffff0d; font-size: 12.5px; }
+.mp-head { margin: 0 0 10px; font-size: 14px; gap: 8px; }
+.mp-head i { width: 10px; height: 10px; border: none; }
+.mp-head span { font-size: 12px; color: #ffffff80; }
+.mp-group ul { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+.mp-group li { display: inline-flex; gap: 8px; padding: 7px 12px; border-radius: 10px; background: #2e2e2e; font-size: 12.5px; font-weight: 600; }
+.mp-group li:hover { background: #383838; }
+.mp-chip { width: 10px; height: 10px; border: none; }
+.mp-houses { margin-left: 2px; }
+
+/* ==========================================================================
+   Redesign, part 9: centre panel as in the preview
+   Order: YOUR TURN + name, dice, log with coloured dots, [Buy ... | End turn], [Manage | Trade].
+   ========================================================================== */
+@media (min-width: 1130px) {
+	#control > table > tbody { display: flex; flex-direction: column; }
+	#control > table > tbody > tr, #control > table > tbody > tr:first-child { display: contents; }
+	#control > table > tbody > tr:first-child > td:first-child { display: contents; }
+	#control > table > tbody > tr:first-child > td:last-child { order: 0; margin-bottom: 14px; width: auto; align-self: center; }
+	#control #buy { order: 1; display: block; }
+	#control > table > tbody > tr:last-child > td { order: 2; }
+	#control #menu { order: 3; margin-top: 12px; }
+	#buy-menu-item { display: none; }
+	#menutable { border-spacing: 10px 0; margin: 0 -10px; width: calc(100% + 20px); }
+	.menu-item { height: 44px; border-radius: 12px; background: #262626; border: 1px solid #ffffff2e; position: relative; overflow: visible; }
+	.menu-item a { display: flex; align-items: center; justify-content: center; gap: 8px; height: 100%; font-size: 14px; font-weight: 600; color: #fff; }
+	#manage-menu-item[data-count]:not([data-count="0"])::after { content: attr(data-count); position: absolute; top: -7px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #acfa00; color: #1d1d1d; font: 800 10.5px Montserrat, sans-serif; display: grid; place-items: center; }
+	/* the log: plain lines with a coloured dot, the newest one bright */
+	#control #alert { height: 96px; background: none; border: none; padding: 0; box-shadow: none; display: flex; flex-direction: column; gap: 6px; justify-content: flex-end; overflow-y: auto; scrollbar-width: none; font-size: 12.5px; color: #ffffffb3; }
+	#control #alert div { display: flex; gap: 8px; align-items: baseline; }
+	#control #alert div::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dot, #acfa00); flex-shrink: 0; transform: translateY(-1px); }
+	#control #alert div:last-child { color: #fff; }
+	/* the engine's own Buy button is mirrored by #buyproxy in the action row */
+	#landed #buybutton { display: none; }
+	#control #landed { background: none; border: none; padding: 0; margin: 6px 0 0; font-size: 12px; color: #ffffffa6; }
+	#buyproxy { flex: 1; height: 50px; border: none; border-radius: 14px; background: #acfa00; color: #1d1d1d; font: 800 16px Montserrat, sans-serif; cursor: pointer; box-shadow: 0 8px 24px #acfa0040; }
+	#buyproxy[hidden] { display: none; }
+	#control > table > tbody > tr:last-child > td > div:has(#buyproxy:not([hidden])) #nextbutton { flex: none; width: 150px; }
+	#control > table > tbody > tr:last-child > td > div { align-items: center; }
 }

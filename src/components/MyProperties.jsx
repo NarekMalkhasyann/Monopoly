@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useOnline } from '../online.js';
 
-// Online games only: under "View stats", the properties each player owns, mine first.
+// Under "View stats", the properties each player owns, mine first.
 // Hover a property to see its title-deed card (the engine's own showdeed / hidedeed).
 // The engine keeps the state in page-wide variables (player, square), so this looks at them twice a second
 // and redraws only when something changed.
@@ -33,7 +33,14 @@ function moveDeed(e) { // the engine only follows the mouse over its own lists; 
 export default function MyProperties() {
 	const { room, you } = useOnline();
 	const [list, setList] = useState([]);
-	const active = !!room && room.status === 'active';
+	const online = !!room && room.status === 'active';
+	const [local, setLocal] = useState(false); // a local (hot-seat) game is running
+	useEffect(() => {
+		if (room) return undefined;
+		const t = setInterval(() => setLocal(!!(document.body.classList.contains('in-game') && window.player && window.pcount > 0)), 500);
+		return () => clearInterval(t);
+	}, [room]);
+	const active = online || local;
 
 	useEffect(() => {
 		if (!active) return undefined;
@@ -45,8 +52,8 @@ export default function MyProperties() {
 	}, [active]);
 
 	if (!active) return null;
-	const me = room.players.find((x) => x.userId === (you && you.userId));
-	const mine = me ? list.find((x) => x.name === me.name) : null;
+	const meName = online ? (room.players.find((x) => x.userId === (you && you.userId)) || {}).name : (window.player && window.player[window.turn] ? window.player[window.turn].name : null); // local game: whoever's turn it is
+	const mine = meName ? list.find((x) => x.name === meName) : null;
 	const others = list.filter((x) => x !== mine && x.props.length);
 	const groups = mine ? [mine, ...others] : others;
 

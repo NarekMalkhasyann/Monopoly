@@ -390,23 +390,22 @@ function Game() {
 			currentSquare = square[i];
 
 			// A property cannot be traded if any properties in its group have been improved.
-			if (currentSquare.house > 0 || currentSquare.groupNumber === 0) {
+			// Such properties are still listed, but greyed out (see the "sell first" note).
+			if (currentSquare.groupNumber === 0) {
 				continue;
 			}
 
 			allGroupUninproved = true;
+			var groupHouses = 0;
 			var max = currentSquare.group.length;
 			for (var j = 0; j < max; j++) {
-
-				if (square[currentSquare.group[j]].house > 0) {
-					allGroupUninproved = false;
-					break;
-				}
+				var gh = square[currentSquare.group[j]];
+				groupHouses += gh.hotel ? 5 : gh.house;
 			}
-
-			if (!allGroupUninproved) {
-				continue;
+			if (groupHouses > 0) {
+				allGroupUninproved = false;
 			}
+			var blocked = !allGroupUninproved;
 
 			// Offered properties.
 			if (currentSquare.owner === initiator.index) {
@@ -442,6 +441,15 @@ function Game() {
 				}
 				currentTableCell.textContent = currentSquare.name;
 
+				currentTableCell = currentTableRow.appendChild(document.createElement("td"));
+				currentTableCell.className = "propertycellnote";
+				currentTableCell.textContent = blocked ? (groupHouses + (groupHouses === 1 ? " house" : " houses") + " in set \u00b7 sell first") : (currentSquare.mortgage ? "Mortgaged" : "");
+				if (blocked) {
+					currentTableRow.onclick = null;
+					currentTableRow.className = "trade-blocked";
+					currentTableCellCheckbox.disabled = true;
+				}
+
 			// Requested properties.
 			} else if (currentSquare.owner === recipient.index) {
 				currentTableRow = recipientSideTable.appendChild(document.createElement("tr"));
@@ -475,6 +483,15 @@ function Game() {
 					currentTableCell.style.color = "grey";
 				}
 				currentTableCell.textContent = currentSquare.name;
+
+				currentTableCell = currentTableRow.appendChild(document.createElement("td"));
+				currentTableCell.className = "propertycellnote";
+				currentTableCell.textContent = blocked ? (groupHouses + (groupHouses === 1 ? " house" : " houses") + " in set \u00b7 sell first") : (currentSquare.mortgage ? "Mortgaged" : "");
+				if (blocked) {
+					currentTableRow.onclick = null;
+					currentTableRow.className = "trade-blocked";
+					currentTableCellCheckbox.disabled = true;
+				}
 			}
 		}
 
@@ -1275,7 +1292,11 @@ function addAlert(alertText) {
 
 	$alert = $("#alert");
 
-	$(document.createElement("div")).text(alertText).appendTo($alert);
+	var $line = $(document.createElement("div")).text(alertText).appendTo($alert);
+	// Coloured dot in front of the line: the colour of the player the line is about.
+	for (var pi = 1; pi <= pcount; pi++) {
+		if (player[pi] && alertText.indexOf(player[pi].name) === 0) { $line.css("--dot", player[pi].color); break; }
+	}
 
 	// Animate scrolling down alert element.
 	$alert.stop().animate({"scrollTop": $alert.prop("scrollHeight")}, 1000);
@@ -1418,6 +1439,7 @@ function updateMoney() {
 	var p = player[turn];
 
 	document.getElementById("pmoney").innerHTML = "$" + p.money;
+	$("#manage-cash").text("$" + p.money);
 	$(".money-bar-row").hide();
 
 	for (var i = 1; i <= pcount; i++) {
@@ -1427,6 +1449,15 @@ function updateMoney() {
 		document.getElementById("p" + i + "moneybar").style.border = "2px solid " + p_i.color;
 		document.getElementById("p" + i + "money").innerHTML = p_i.money;
 		document.getElementById("p" + i + "moneyname").innerHTML = p_i.name;
+
+		// Small colour chips for the properties the player owns.
+		var chipsHTML = "";
+		for (var s = 0; s < 40; s++) {
+			if (square[s].owner === i) {
+				chipsHTML += "<i title='" + square[s].name.replace(/'/g, "&#39;") + "' style='background:" + (square[s].groupNumber >= 3 ? square[s].color : "#9ca3af") + "'></i>";
+			}
+		}
+		document.getElementById("p" + i + "chips").innerHTML = chipsHTML;
 	}
 
 	if (document.getElementById("landed").innerHTML === "") {
@@ -1491,6 +1522,10 @@ function updateDice() {
 
 function updateOwned() {
 	var p = player[turn];
+	var ownedCount = 0;
+	for (var oc = 0; oc < 40; oc++) { if (square[oc].owner == turn) { ownedCount++; } }
+	document.getElementById("manage-menu-item").setAttribute("data-count", ownedCount);
+	$("#manage-cash").text("$" + p.money);
 	var checkedproperty = getCheckedProperty();
 	$("#option").show();
 	$("#owned").show();
@@ -1515,63 +1550,87 @@ function updateOwned() {
 		}
 	}
 
+	// Manage list: one card per colour group, with -/+/mortgage buttons on each row.
+	var groups = [], groupOf = {};
 	for (var i = 0; i < 40; i++) {
 		sq = square[i];
 		if (sq.owner == turn) {
-
-			mortgagetext = "";
-			if (sq.mortgage) {
-				mortgagetext = "title='Mortgaged' style='color: grey;'";
+			var key = sq.groupNumber >= 3 ? sq.color : "g" + sq.groupNumber;
+			if (!(key in groupOf)) {
+				groupOf[key] = groups.length;
+				groups.push({sq: sq, rows: []});
 			}
-
-			housetext = "";
-			if (sq.house >= 1 && sq.house <= 4) {
-				for (var x = 1; x <= sq.house; x++) {
-					housetext += "<img src='images/Monopoly-base-images/house.png' alt='' title='House' class='house' />";
-				}
-			} else if (sq.hotel) {
-				housetext += "<img src='images/Monopoly-base-images/hotel.png' alt='' title='Hotel' class='hotel' />";
-			}
-
-			if (HTML === "") {
-				HTML += "<table>";
-				firstproperty = i;
-			}
-
-			HTML += "<tr class='property-cell-row'><td class='propertycellcheckbox'><input type='checkbox' id='propertycheckbox" + i + "' /></td><td class='propertycellcolor' style='background: " + sq.color + ";";
-
-			if (sq.groupNumber == 1 || sq.groupNumber == 2) {
-				HTML += " border: 1px solid grey; width: 18px;";
-			}
-
-			HTML += "' onmouseover='showdeed(" + i + ");' onmouseout='hidedeed();'></td><td class='propertycellname' " + mortgagetext + ">" + sq.name + housetext + "</td></tr>";
+			groups[groupOf[key]].rows.push(i);
 		}
 	}
+	var cards = [];
+	if (p.communityChestJailCard) { cards.push(40); }
+	if (p.chanceJailCard) { cards.push(41); }
 
-	if (p.communityChestJailCard) {
-		if (HTML === "") {
-			firstproperty = 40;
-			HTML += "<table>";
-		}
-		HTML += "<tr class='property-cell-row'><td class='propertycellcheckbox'><input type='checkbox' id='propertycheckbox40' /></td><td class='propertycellcolor' style='background: white;'></td><td class='propertycellname'>Get Out of Jail Free Card</td></tr>";
-
-	}
-	if (p.chanceJailCard) {
-		if (HTML === "") {
-			firstproperty = 41;
-			HTML += "<table>";
-		}
-		HTML += "<tr class='property-cell-row'><td class='propertycellcheckbox'><input type='checkbox' id='propertycheckbox41' /></td><td class='propertycellcolor' style='background: white;'></td><td class='propertycellname'>Get Out of Jail Free Card</td></tr>";
-	}
-
-	if (HTML === "") {
-		HTML = p.name + ", you don't have any properties.";
+	if (groups.length === 0 && cards.length === 0) {
+		HTML = "<div class='mg-empty'>" + p.name + ", you don't have any properties.</div>";
 		$("#option").hide();
 	} else {
-		HTML += "</table>";
+		firstproperty = groups.length ? groups[0].rows[0] : cards[0];
+		for (var g = 0; g < groups.length; g++) {
+			var gs = groups[g].sq;
+			var title = gs.groupNumber == 1 ? "Stations" : gs.groupNumber == 2 ? "Utilities" : (gs.category ? gs.category.en : "Properties");
+			var owned = groups[g].rows.length, total = gs.group.length;
+			var full = owned === total;
+			HTML += "<div class='mg-card'><div class='mg-head'><i class='mg-swatch' style='background:" + gs.color + "'></i><span class='mg-title'>" + title + "</span><span class='mg-badge" + (full ? " mg-set" : "") + "'>" + (full ? "SET" : owned + " OF " + total) + "</span><span class='mg-note'>" + (gs.groupNumber >= 3 ? (full ? "$" + gs.houseprice + " / house" : "need all " + total) : "") + "</span></div>";
+			for (var r = 0; r < groups[g].rows.length; r++) {
+				var i = groups[g].rows[r];
+				sq = square[i];
+				var pips = "";
+				if (sq.groupNumber >= 3) {
+					for (var k = 1; k <= 4; k++) { pips += "<i class='mg-pip" + (sq.house >= k ? " on" : "") + "'></i>"; }
+					pips += "<i class='mg-pip mg-hotel" + (sq.hotel ? " on" : "") + "'></i>";
+				}
+				var rent = sq.mortgage ? "Mortgaged" : "Rent $" + currentRent(sq, full);
+				HTML += "<div class='property-cell-row mg-row" + (sq.mortgage ? " mg-mort" : "") + "' data-sq='" + i + "'><input type='checkbox' id='propertycheckbox" + i + "' /><div class='mg-main'><span class='propertycellname mg-name' onmouseover='showdeed(" + i + ");' onmouseout='hidedeed();'>" + sq.name + "</span><span class='mg-sub'>" + pips + "<span class='mg-rent'>" + rent + "</span></span></div>" +
+					"<button type='button' class='mg-btn mg-sell' data-act='sell' aria-label='Sell a house'>&minus;</button><button type='button' class='mg-btn mg-buy' data-act='buy' aria-label='Build a house'>+</button><button type='button' class='mg-mort-btn' data-act='mort'></button></div>";
+			}
+			HTML += "</div>";
+		}
+		if (cards.length) {
+			HTML += "<div class='mg-card'><div class='mg-head'><i class='mg-swatch' style='background:#fff'></i><span class='mg-title'>Cards</span></div>";
+			for (var c = 0; c < cards.length; c++) {
+				HTML += "<div class='property-cell-row mg-row' data-sq='" + cards[c] + "'><input type='checkbox' id='propertycheckbox" + cards[c] + "' /><div class='mg-main'><span class='mg-name'>Get Out of Jail Free Card</span></div></div>";
+			}
+			HTML += "</div>";
+		}
+		var housesum = 32, hotelsum = 12;
+		for (var i = 0; i < 40; i++) {
+			if (square[i].hotel == 1) { hotelsum--; } else { housesum -= square[i].house; }
+		}
+		HTML += "<p class='mg-foot'>Bank has " + housesum + " houses and " + hotelsum + " hotels. Build evenly across a complete set. Unmortgage = mortgage value + 10%.</p>";
 	}
 
 	document.getElementById("owned").innerHTML = HTML;
+
+	// Per-row button state: ask the engine's own rules by selecting each row in turn.
+	$("#owned .mg-row[data-sq]").each(function() {
+		var n = +this.getAttribute("data-sq");
+		if (n >= 40) { return; }
+		$(".propertycellcheckbox, #owned input[type=checkbox]").prop("checked", false);
+		document.getElementById("propertycheckbox" + n).checked = true;
+		updateOption();
+		var $row = $(this), q = square[n];
+		function usable(id) {
+			var el = document.getElementById(id);
+			return el.style.display !== "none" && !el.disabled;
+		}
+		$row.find("[data-act=sell]").prop("disabled", !usable("sellhousebutton")).toggle(q.groupNumber >= 3);
+		$row.find("[data-act=buy]").prop("disabled", !usable("buyhousebutton")).toggle(q.groupNumber >= 3);
+		var mb = $row.find("[data-act=mort]");
+		var ok = usable("mortgagebutton");
+		mb.prop("disabled", !ok).toggleClass("mg-back", !!q.mortgage);
+		mb.text(q.mortgage ? "\u2212$" + Math.round(q.price * 0.55) : "+$" + (q.price * 0.5));
+		mb.attr("title", document.getElementById("mortgagebutton").title);
+		$row.find("[data-act=buy]").attr("title", document.getElementById("buyhousebutton").title);
+		$row.find("[data-act=sell]").attr("title", document.getElementById("sellhousebutton").title);
+	});
+	$("#owned input[type=checkbox]").prop("checked", false);
 
 	// Select previously selected property.
 	if (checkedproperty > -1 && document.getElementById("propertycheckbox" + checkedproperty)) {
@@ -1579,24 +1638,38 @@ function updateOwned() {
 	} else if (firstproperty > -1) {
 		document.getElementById("propertycheckbox" + firstproperty).checked = true;
 	}
-	$(".property-cell-row").click(function() {
-		var row = this;
 
-		// Toggle check the current checkbox.
-		$(this).find(".propertycellcheckbox > input").prop("checked", function(index, val) {
-			return !val;
-		});
-
-		// Set all other checkboxes to false.
-		$(".propertycellcheckbox > input").prop("checked", function(index, val) {
-			if (!$.contains(row, this)) {
-				return false;
-			}
-		});
-
+	function selectRow(n) {
+		$("#owned input[type=checkbox]").prop("checked", false);
+		document.getElementById("propertycheckbox" + n).checked = true;
+		$(".mg-row").removeClass("mg-sel");
+		$(".mg-row[data-sq=" + n + "]").addClass("mg-sel");
 		updateOption();
+	}
+	$(".property-cell-row").click(function(e) {
+		var n = +this.getAttribute("data-sq");
+		var btn = $(e.target).closest(".mg-btn, .mg-mort-btn");
+		selectRow(n);
+		if (btn.length && !btn.prop("disabled")) {
+			var id = btn.attr("data-act") == "sell" ? "sellhousebutton" : btn.attr("data-act") == "buy" ? "buyhousebutton" : "mortgagebutton";
+			document.getElementById(id).click();
+		}
 	});
+	var cur = getCheckedProperty();
+	if (cur > -1) { $(".mg-row[data-sq=" + cur + "]").addClass("mg-sel"); }
 	updateOption();
+}
+
+function currentRent(sq, fullSet) {
+	if (sq.groupNumber == 1) {
+		var n = 0;
+		for (var i = 0; i < sq.group.length; i++) { if (square[sq.group[i]].owner == sq.owner) { n++; } }
+		return sq.baserent * Math.pow(2, Math.max(0, n - 1));
+	}
+	if (sq.groupNumber == 2) { return "4\u00d7 dice"; }
+	if (sq.hotel) { return sq.rent5; }
+	if (sq.house >= 1) { return sq["rent" + sq.house]; }
+	return fullSet ? sq.baserent * 2 : sq.baserent;
 }
 
 function updateOption() {
@@ -2221,47 +2294,80 @@ function showStats() {
 
 function showdeed(property) {
 	var sq = square[property];
-	$("#deed").show();
+	var $deed = $("#deed");
+	if (!sq || !(sq.groupNumber >= 1)) {
+		return;
+	}
+	$deed.show();
 
-	$("#deed-normal").hide();
-	$("#deed-mortgaged").hide();
-	$("#deed-special").hide();
+	var owner = sq.owner > 0 ? player[sq.owner] : null;
+	var isProperty = sq.groupNumber >= 3;
 
-	if (sq.mortgage) {
-		$("#deed-mortgaged").show();
-		document.getElementById("deed-mortgaged-name").textContent = sq.name;
-		document.getElementById("deed-mortgaged-mortgage").textContent = (sq.price / 2);
-
+	// Header: colour, brand logo (or a plain icon for stations / utilities), name, category.
+	document.getElementById("deed-head").style.backgroundColor = sq.color || "#9ca3af";
+	document.getElementById("deed-kind").textContent = isProperty ? "TITLE DEED" : (sq.groupNumber == 1 ? "STATION" : "UTILITY");
+	document.getElementById("deed-name").textContent = sq.name;
+	document.getElementById("deed-category").textContent = sq.category ? sq.category.en + " \u00b7 " + sq.category.hy : "";
+	var logoBox = document.getElementById("deed-logo");
+	var logoImg = document.getElementById("deed-logo-img");
+	if (sq.logo) {
+		logoImg.src = "images/card-logos/" + sq.logo + ".png";
+		logoBox.style.display = "flex";
 	} else {
+		logoBox.style.display = "none";
+	}
 
-		if (sq.groupNumber >= 3) {
-			$("#deed-normal").show();
-			document.getElementById("deed-header").style.backgroundColor = sq.color;
-			document.getElementById("deed-name").textContent = sq.name;
-			document.getElementById("deed-category").textContent = sq.category ? sq.category.en + "\n" + sq.category.hy : "";
-			document.getElementById("deed-baserent").textContent = sq.baserent;
-			document.getElementById("deed-rent1").textContent = sq.rent1;
-			document.getElementById("deed-rent2").textContent = sq.rent2;
-			document.getElementById("deed-rent3").textContent = sq.rent3;
-			document.getElementById("deed-rent4").textContent = sq.rent4;
-			document.getElementById("deed-rent5").textContent = sq.rent5;
-			document.getElementById("deed-mortgage").textContent = (sq.price / 2);
-			document.getElementById("deed-houseprice").textContent = sq.houseprice;
-			document.getElementById("deed-hotelprice").textContent = sq.houseprice;
+	// Owner and price.
+	var ownerEl = document.getElementById("deed-owner");
+	ownerEl.innerHTML = "";
+	if (owner) {
+		var dot = document.createElement("i");
+		dot.style.background = owner.color;
+		ownerEl.appendChild(dot);
+		ownerEl.appendChild(document.createTextNode("Owned by " + owner.name));
+	} else {
+		ownerEl.textContent = "Unowned";
+	}
+	document.getElementById("deed-price").textContent = "$" + sq.price;
 
-		} else if (sq.groupNumber == 2) {
-			$("#deed-special").show();
-			document.getElementById("deed-special-name").textContent = sq.name;
-			document.getElementById("deed-special-text").innerHTML = utiltext();
-			document.getElementById("deed-special-mortgage").textContent = (sq.price / 2);
-
-		} else if (sq.groupNumber == 1) {
-			$("#deed-special").show();
-			document.getElementById("deed-special-name").textContent = sq.name;
-			document.getElementById("deed-special-text").innerHTML = transtext();
-			document.getElementById("deed-special-mortgage").textContent = (sq.price / 2);
+	// Rent rows; the one that applies now (if somebody owns it) is lit.
+	var rows = [];
+	var lit = -1;
+	var ownedInGroup = 0;
+	if (owner) {
+		for (var g = 0; g < sq.group.length; g++) {
+			if (square[sq.group[g]].owner === sq.owner) {
+				ownedInGroup++;
+			}
 		}
 	}
+	if (isProperty) {
+		rows = [["Rent", "$" + sq.baserent], ["1 house", "$" + sq.rent1], ["2 houses", "$" + sq.rent2], ["3 houses", "$" + sq.rent3], ["4 houses", "$" + sq.rent4], ["Hotel", "$" + sq.rent5]];
+		if (owner) {
+			lit = sq.hotel ? 5 : sq.house;
+		}
+	} else if (sq.groupNumber == 1) {
+		rows = [["1 station", "$25"], ["2 stations", "$50"], ["3 stations", "$100"], ["4 stations", "$200"]];
+		if (owner) {
+			lit = ownedInGroup - 1;
+		}
+	} else {
+		rows = [["1 utility", "4 \u00d7 dice"], ["2 utilities", "10 \u00d7 dice"]];
+		if (owner) {
+			lit = ownedInGroup - 1;
+		}
+	}
+	var rowsHTML = "";
+	for (var r = 0; r < rows.length; r++) {
+		rowsHTML += "<div class='deed-row" + (r === lit ? " deed-lit" : "") + "'><span>" + rows[r][0] + "</span><b>" + rows[r][1] + "</b></div>";
+	}
+	document.getElementById("deed-rows").innerHTML = rowsHTML;
+
+	// Footer: house cost (properties) and mortgage value.
+	document.getElementById("deed-foot-left").textContent = isProperty ? "House $" + sq.houseprice + " each" : (sq.groupNumber == 1 ? "No houses" : "Rent follows the dice");
+	document.getElementById("deed-foot-right").textContent = sq.mortgage ? "Unmortgage $" + Math.round(sq.price * 0.55) : "Mortgage $" + (sq.price / 2);
+	document.getElementById("deed-banner").style.display = sq.mortgage ? "block" : "none";
+	$deed.toggleClass("deed-mortgaged", !!sq.mortgage);
 }
 
 function hidedeed() {
