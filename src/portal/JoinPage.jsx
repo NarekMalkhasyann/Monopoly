@@ -2,6 +2,16 @@ import { useEffect, useState } from 'react';
 import { joinByCode, clearError } from '../online.js';
 import { navigate } from '../router.jsx';
 import Shell from './Shell.jsx';
+import { Padlock } from './NoAccess.jsx';
+
+const NoAccessCard = () => (
+	<div className="card noaccess">
+		<span className="noaccess-icon"><Padlock size={34} /></span>
+		<h3>No access yet</h3>
+		<p>You don't have access to start or join games.<br />Wait until your account is approved.</p>
+		<button className="btn-ghost" onClick={() => navigate('/play')}>Back to Play</button>
+	</div>
+);
 
 // /join/:code - joins the room with this code, then continues at /play/:id.
 // A private room asks for its password first.
@@ -21,12 +31,14 @@ export default function JoinPage({ code, user }) {
 				setBusy(false);
 			});
 	};
-	useEffect(() => { clearError(); attempt(''); }, [code]);
+	const locked = user.role === 'not-approved';
+	useEffect(() => { clearError(); if (locked) { setBusy(false); return; } attempt(''); }, [code]);
 
 	return (
 		<Shell user={user} screen="home" title="Join a game">
 			<div className="page-head"><h2>Join a game</h2></div>
-			{busy && !error && <p className="muted">Joining room {code.toUpperCase()}…</p>}
+			{locked && <NoAccessCard />}
+			{busy && !error && !locked && <p className="muted">Joining room {code.toUpperCase()}…</p>}
 			{needPassword && (
 				<form className="card join-pass" onSubmit={(e) => { e.preventDefault(); if (password) attempt(password); }}>
 					<h3>Room {code.toUpperCase()} is private</h3>

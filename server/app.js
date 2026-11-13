@@ -45,7 +45,8 @@ const publicUser = (u) => ({ id: u.id, name: u.name, email: u.email, role: u.rol
 // Who is an administrator: ADMIN_EMAILS (comma separated) is applied at start-up, at sign-up and at every login,
 // and an admin can make other people admins in the panel. Everybody else is a 'player'.
 const adminEmails = () => (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
-const ROLES = ['player', 'admin'];
+const ROLES = ['player', 'admin', 'not-approved'];
+const NOT_APPROVED_MSG = "You don't have access to start or join games, wait until your account is approved";
 
 export function createApp(db, { secret, staticDir } = {}) {
 	if (!secret) throw new Error('JWT secret is required');
@@ -189,7 +190,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 		const byStatus = Object.fromEntries((await db.all("SELECT status, COUNT(*) AS n FROM games WHERE status != 'waiting' GROUP BY status")).map((r) => [r.status, r.n]));
 		const byMode = Object.fromEntries((await db.all("SELECT mode, COUNT(*) AS n FROM games WHERE status != 'waiting' GROUP BY mode")).map((r) => [r.mode, r.n]));
 		return {
-			users: { total: await n('SELECT COUNT(*) AS n FROM users'), admins: await n("SELECT COUNT(*) AS n FROM users WHERE role = 'admin'"), new7: await n('SELECT COUNT(*) AS n FROM users WHERE created_at >= ?', [now(Date.now() - 7 * 864e5)]) },
+			users: { total: await n('SELECT COUNT(*) AS n FROM users'), admins: await n("SELECT COUNT(*) AS n FROM users WHERE role = 'admin'"), pending: await n("SELECT COUNT(*) AS n FROM users WHERE role = 'not-approved'"), new7: await n('SELECT COUNT(*) AS n FROM users WHERE created_at >= ?', [now(Date.now() - 7 * 864e5)]) },
 			games: { total: await n("SELECT COUNT(*) AS n FROM games WHERE status != 'waiting'"), active: byStatus.active || 0, finished: byStatus.finished || 0, abandoned: byStatus.abandoned || 0, local: byMode.local || 0, online: byMode.online || 0, turns: await n("SELECT COALESCE(SUM(turn_count), 0) AS n FROM games WHERE status != 'waiting'"), waitingRooms: await n("SELECT COUNT(*) AS n FROM games WHERE status = 'waiting'") },
 			connected: rooms.connections().length,
 			gamesPerDay: await perDay('games'),
@@ -233,7 +234,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 			if (id === admin.id) throw new HttpError(409, 'You cannot change or delete your own account here');
 			if (method === 'PUT') {
 				const b = await readJson(req);
-				if (!ROLES.includes(b.role)) throw new HttpError(400, 'Role must be player or admin');
+				if (!ROLES.includes(b.role)) throw new HttpError(400, 'Role must be player, admin or not-approved');
 				await db.run('UPDATE users SET role = ? WHERE id = ?', [b.role, id]);
 				return [200, { user: userRow(await db.get(`SELECT ${USER_COLS} FROM users u WHERE u.id = ?`, [id])) }];
 			}
@@ -276,7 +277,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 			if (password.length < 8) throw new HttpError(400, 'Password must be at least 8 characters');
 			if (await q.userByEmail(email)) throw new HttpError(409, 'This email is already registered');
 			let id;
-			try { id = await db.insert('INSERT INTO users (name, email, password_hash, created_at) VALUES (?, ?, ?, ?)', [name, email, hashPassword(password), now()]); }
+			try { id = await db.insert('INSERT INTO users (name, email, password_hash, role, created_at) VALUES (?, ?, ?, \'not-approved\', ?)', [name, email, hashPassword(password), now()]); }
 			catch (e) {
 				if (/UNIQUE|unique|23505/.test(`${e.code} ${e.message}`)) throw new HttpError(409, 'This email is already registered'); // two sign-ups at the same moment
 				throw e;
@@ -307,6 +308,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 
 		if (method === 'POST' && path === '/api/games') {
 			const user = await authUser(req);
+			if (user.role === 'not-approved') throw new HttpError(403, NOT_APPROVED_MSG);
 			const b = await readJson(req);
 			const mode = b.mode === 'online' ? 'online' : 'local';
 			if (mode === 'online') throw new HttpError(400, 'Online games are created over the WebSocket (see server/rooms.js)');
@@ -359,6 +361,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 		}
 		if (method === 'POST' && (m = /^\/api\/games\/(\d+)\/resume$/.exec(path))) {
 			const user = await authUser(req);
+			if (user.role === 'not-approved') throw new HttpError(403, NOT_APPROVED_MSG);
 			if (!(await rooms.resume(Number(m[1]), user.id))) throw new HttpError(409, 'Only a player of an abandoned online game can bring it back');
 			return [200, { ok: true }];
 		}

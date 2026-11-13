@@ -18,7 +18,12 @@ const call = async (method, path, body, token) => {
 	return { status: r.status, body: await r.json() };
 };
 const PW = randomBytes(9).toString('hex'); // the test accounts' password: random on every run
-const register = async (name) => (await call('POST', '/api/auth/register', { name, email: `${name.toLowerCase()}@x.am`, password: PW })).body.token;
+const register = async (name) => {
+	const email = `${name.toLowerCase()}@x.am`;
+	const token = (await call('POST', '/api/auth/register', { name, email, password: PW })).body.token;
+	await db.run("UPDATE users SET role = 'player' WHERE email = ? AND role = 'not-approved'", [email]);
+	return token;
+};
 
 // A socket that records everything it receives
 function open(token) {
@@ -208,6 +213,21 @@ a.send({ t: 'join', code: ja.room.code }); assert.match((await a.next('error', (
 	await new Promise((r) => setTimeout(r, 1500));                                                  // abandoned again (nobody is in it)
 	assert.equal((await call('DELETE', `/api/games/${jp.room.id}`, null, tP)).status, 200);        // the host deletes it for everybody
 	assert.equal((await call('GET', `/api/games/${jp.room.id}`, null, tQ)).status, 404);
+}
+
+// ---- accounts waiting for approval cannot create or join rooms ----
+{
+	const email = 'wait@x.am';
+	const tW = (await call('POST', '/api/auth/register', { name: 'Wait', email, password: PW })).body.token;
+	const w = await open(tW); await w.next('hello');
+	w.send({ t: 'create' });
+	const e1 = await w.next('error');
+	assert.equal(e1.code, 'not-approved');
+	w.send({ t: 'join', code: 'ABCDE' });
+	assert.equal((await w.next('error')).code, 'not-approved');
+	await db.run("UPDATE users SET role = 'player' WHERE email = ?", [email]);
+	w.send({ t: 'create' });
+	await w.next('joined'); // approved: works on the same connection
 }
 
 // ---- admin: end a running online game for everybody ----

@@ -13,7 +13,7 @@ import { AdvancedToggle, AdvancedPanel, NO_ADVANCED, countAdvanced, applyAdvance
 //   /admin/games       every game of every player, filters like History
 
 const PAGE = 15;
-const TABS = [['/admin', 'Overview'], ['/admin/users', 'Users'], ['/admin/games', 'Games']];
+const TABS = [['/admin', 'Overview'], ['/admin/requests', 'New users req.'], ['/admin/users', 'Users'], ['/admin/games', 'Games']];
 
 const useDebounced = (value, ms = 300) => {
 	const [v, setV] = useState(value);
@@ -21,11 +21,11 @@ const useDebounced = (value, ms = 300) => {
 	return v;
 };
 
-function Tabs({ path }) {
+function Tabs({ path, pending }) {
 	return (
 		<div className="pills admin-tabs" role="tablist">
 			{TABS.map(([to, label]) => (
-				<button key={to} role="tab" aria-selected={path === to} className={`pill${path === to ? ' active' : ''}`} onClick={() => navigate(to)}>{label}</button>
+				<button key={to} role="tab" aria-selected={path === to} className={`pill${path === to ? ' active' : ''}`} onClick={() => navigate(to)}>{label}{to === '/admin/requests' && pending > 0 && <span className="tab-count">{pending}</span>}</button>
 			))}
 		</div>
 	);
@@ -186,8 +186,62 @@ function AdminGames({ userId }) {
 	);
 }
 
+// ---------- new users waiting for approval ----------
+// Approve = the account becomes a normal player. Reject = the account is deleted (the person can register again).
+function Requests({ onChanged }) {
+	const [users, setUsers] = useState(null);
+	const [error, setError] = useState('');
+	const [busy, setBusy] = useState(0);
+	const [ask, setAsk] = useState(null);
+	const load = useCallback(() => api('GET', '/admin/users?role=not-approved&sort=created&dir=asc&limit=100').then((r) => { setUsers(r.users); setError(''); }).catch((e) => setError(e.message)), []);
+	useEffect(() => { load(); }, [load]);
+	const act = async (u, approve) => {
+		setBusy(u.id);
+		try {
+			if (approve) await api('PUT', `/admin/users/${u.id}`, { role: 'player' });
+			else await api('DELETE', `/admin/users/${u.id}`);
+			setAsk(null);
+			await load();
+			onChanged();
+		} catch (e) { setError(e.message); setAsk(null); }
+		setBusy(0);
+	};
+	return (
+		<>
+			<p className="muted">New accounts can look around, but cannot start or join games until you approve them.</p>
+			{error && <p className="auth-error">{error}</p>}
+			{!users && !error && <p className="muted">Loading…</p>}
+			{users && users.length === 0 && <p className="muted">No new requests. Everybody is approved.</p>}
+			<div className="rows">
+				{(users || []).map((u) => (
+					<div className="row" key={u.id}>
+						<div className="row-main">
+							<div className="row-tags"><strong>{u.name}</strong> {roleBadge(u.role)}</div>
+							<span className="meta">{u.email} · registered {fmtDate(u.created_at)}</span>
+						</div>
+						<div className="req-actions">
+							<button className="btn-primary btn-sm" disabled={busy === u.id} onClick={() => act(u, true)}>Approve</button>
+							<button className="btn-ghost danger btn-sm" disabled={busy === u.id} onClick={() => setAsk(u)}>Reject</button>
+						</div>
+					</div>
+				))}
+			</div>
+			{ask && (
+				<Modal onClose={() => setAsk(null)}>
+					<h3 className="modal-title">Reject {ask.name}?</h3>
+					<p className="muted">The account {ask.email} is deleted. The person can register again later.</p>
+					<div className="modal-actions">
+						<button className="btn-ghost" onClick={() => setAsk(null)}>Cancel</button>
+						<button className="btn-danger" disabled={busy === ask.id} onClick={() => act(ask, false)}>Reject</button>
+					</div>
+				</Modal>
+			)}
+		</>
+	);
+}
+
 // ---------- users ----------
-const roleBadge = (role) => <span className={`badge ${role === 'admin' ? 'badge-done' : 'badge-plain'}`}>{role === 'admin' ? 'Admin' : 'Player'}</span>;
+const roleBadge = (role) => <span className={`badge ${role === 'admin' ? 'badge-done' : role === 'not-approved' ? 'badge-pending' : 'badge-plain'}`}>{role === 'admin' ? 'Admin' : role === 'not-approved' ? 'Not approved' : 'Player'}</span>;
 
 function Users() {
 	const [text, setText] = useState('');
@@ -220,7 +274,7 @@ function Users() {
 
 	return (
 		<>
-			<div className="pills">{pill('', 'Everyone')}{pill('admin', 'Admins')}{pill('player', 'Players')}</div>
+			<div className="pills">{pill('', 'Everyone')}{pill('admin', 'Admins')}{pill('player', 'Players')}{pill('not-approved', 'Not approved')}</div>
 			<div className="filters">
 				<input className="filter-search" type="search" placeholder="Search name or e-mail" value={text} onChange={(e) => setText(e.target.value)} aria-label="Search users" maxLength={40} />
 				<label>Sort
@@ -294,7 +348,8 @@ function UserPage({ id, me }) {
 							<p className="meta">Joined {fmtDate(u.created_at)} · last active {u.last_active ? fmtDate(u.last_active) : 'never'} · {u.games} game{u.games === 1 ? '' : 's'} · {u.wins} online win{u.wins === 1 ? '' : 's'}</p>
 						</div>
 						<div className="row-actions">
-							{!self && <button className="btn-ghost" disabled={busy} onClick={() => setRole(u.role === 'admin' ? 'player' : 'admin')}>{u.role === 'admin' ? 'Remove admin' : 'Make admin'}</button>}
+							{!self && u.role === 'not-approved' && <button className="btn-primary" disabled={busy} onClick={() => setRole('player')}>Approve</button>}
+							{!self && u.role !== 'not-approved' && <button className="btn-ghost" disabled={busy} onClick={() => setRole(u.role === 'admin' ? 'player' : 'admin')}>{u.role === 'admin' ? 'Remove admin' : 'Make admin'}</button>}
 							{!self && <button className="btn-ghost danger" disabled={busy} onClick={() => setAsk(true)}>Delete account</button>}
 						</div>
 					</div>
@@ -317,15 +372,19 @@ function UserPage({ id, me }) {
 }
 
 export default function Admin({ view, id, user }) {
+	const [pending, setPending] = useState(0);
+	const refresh = useCallback(() => { api('GET', '/admin/stats').then((s) => setPending(s.users.pending || 0)).catch(() => {}); }, []);
+	useEffect(() => { if (user.role === 'admin') refresh(); }, [refresh, view]);
 	if (user.role !== 'admin') {
 		return <><div className="page-head"><h2>Admin</h2></div><p className="notice">This area is for administrators only.</p></>;
 	}
-	const path = view === 'adminUsers' || view === 'adminUser' ? '/admin/users' : view === 'adminGames' ? '/admin/games' : '/admin';
+	const path = view === 'adminRequests' ? '/admin/requests' : view === 'adminUsers' || view === 'adminUser' ? '/admin/users' : view === 'adminGames' ? '/admin/games' : '/admin';
 	return (
 		<>
 			<div className="page-head"><h2>Admin</h2></div>
-			<Tabs path={path} />
+			<Tabs path={path} pending={pending} />
 			{view === 'admin' && <Overview />}
+			{view === 'adminRequests' && <Requests onChanged={refresh} />}
 			{view === 'adminUsers' && <Users />}
 			{view === 'adminUser' && <UserPage id={id} me={user} />}
 			{view === 'adminGames' && <AdminGames />}

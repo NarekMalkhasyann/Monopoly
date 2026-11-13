@@ -18,11 +18,17 @@ const call = async (method, path, body, token) => {
 	return { status: r.status, body: await r.json() };
 };
 
+const approve = (email) => db.run("UPDATE users SET role = 'player' WHERE email = ?", [email]);
 let r = await call('POST', '/api/auth/register', { name: 'Anna', email: 'a@x.am', password: 'short' });
 assert.equal(r.status, 400);
 r = await call('POST', '/api/auth/register', { name: 'Anna', email: 'a@x.am', password: PW });
 assert.equal(r.status, 201);
 const tokenA = r.body.token;
+// ---- approval: a new account waits until an administrator approves it ----
+assert.equal(r.body.user.role, 'not-approved');
+assert.equal((await call('POST', '/api/games', { players: [{ name: 'A' }, { name: 'B' }] }, tokenA)).status, 403);
+assert.equal((await call('GET', '/api/games', null, tokenA)).status, 200); // History still opens
+await approve('a@x.am');
 assert.equal((await call('POST', '/api/auth/register', { name: 'Anna', email: 'A@x.am', password: PW })).status, 409);
 assert.equal((await call('POST', '/api/auth/login', { email: 'a@x.am', password: 'wrongwrong' })).status, 401);
 r = await call('POST', '/api/auth/login', { email: 'a@x.am', password: PW });
@@ -47,6 +53,7 @@ assert.deepEqual(r.body.game.snapshot, { turn: 3 });
 
 // Another user cannot see or change it
 const tokenB = (await call('POST', '/api/auth/register', { name: 'Ben', email: 'b@x.am', password: 'password2' })).body.token;
+await approve('b@x.am');
 assert.equal((await call('GET', `/api/games/${id}`, null, tokenB)).status, 404);
 assert.equal((await call('DELETE', `/api/games/${id}`, null, tokenB)).status, 404);
 assert.equal((await call('GET', '/api/games', null, tokenB)).body.total, 0);
@@ -112,6 +119,22 @@ assert.equal((await call('GET', `/api/games/${id}`, null, tokenA)).status, 404);
 }
 // ---- admin panel ----
 {
+	// the approval flow through the panel: list, approve, reject
+	const tokenAdm = (await call('POST', '/api/auth/register', { name: 'Boss', email: 'boss@x.am', password: PW })).body.token;
+	const newbie = (await call('POST', '/api/auth/register', { name: 'Newbie', email: 'new@x.am', password: PW })).body;
+	const reject = (await call('POST', '/api/auth/register', { name: 'Nope', email: 'nope@x.am', password: PW })).body;
+	assert.equal(newbie.user.role, 'not-approved');
+	assert.equal((await call('GET', '/api/admin/users?role=not-approved', null, newbie.token)).status, 403); // cannot approve oneself
+	assert.equal((await call('PUT', `/api/admin/users/${newbie.user.id}`, { role: 'player' }, newbie.token)).status, 403);
+	assert.deepEqual((await call('GET', '/api/admin/users?role=not-approved&sort=created&dir=asc', null, tokenAdm)).body.users.map((u) => u.name), ['Newbie', 'Nope']);
+	assert.equal((await call('GET', '/api/admin/stats', null, tokenAdm)).body.users.pending, 2);
+	assert.equal((await call('PUT', `/api/admin/users/${newbie.user.id}`, { role: 'player' }, tokenAdm)).body.user.role, 'player');
+	assert.equal((await call('POST', '/api/games', { players: [{ name: 'N' }, { name: 'M' }] }, newbie.token)).status, 201); // works at once, no new login
+	assert.equal((await call('DELETE', `/api/admin/users/${reject.user.id}`, null, tokenAdm)).status, 200);
+	assert.equal((await call('POST', '/api/auth/login', { email: 'nope@x.am', password: PW })).status, 401);
+	assert.equal((await call('GET', '/api/admin/stats', null, tokenAdm)).body.users.pending, 0);
+	await db.run("DELETE FROM users WHERE email IN ('new@x.am', 'boss@x.am')");
+
 	// players cannot reach it, and a role in the list is applied when that person signs up
 	assert.equal((await call('GET', '/api/admin/stats')).status, 401);
 	assert.equal((await call('GET', '/api/admin/stats', null, tokenA)).status, 403);

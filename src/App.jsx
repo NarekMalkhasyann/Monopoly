@@ -25,7 +25,7 @@ import { getRunningKey } from './session.js';
 import { useLocation, matchRoute, navigate, gameKey } from './router.jsx';
 import './portal/portal.css';
 
-const TITLES = { home: 'Play', history: 'History', historyDetail: 'History', historyReplay: 'History', admin: 'Admin', adminUsers: 'Admin', adminUser: 'Admin', adminGames: 'Admin', join: 'Join a game', notfound: 'Not found' };
+const TITLES = { home: 'Play', history: 'History', historyDetail: 'History', historyReplay: 'History', admin: 'Admin', adminUsers: 'Admin', adminUser: 'Admin', adminGames: 'Admin', adminRequests: 'Admin', join: 'Join a game', notfound: 'Not found' };
 
 // Every page has its own address (see router.jsx):
 //   /login  /register  /play  /play/local  /play/:id  /join/:code  /history  /history/:id
@@ -76,7 +76,7 @@ export default function App() {
 
 	// The game already running on this page (e.g. a new local game just got its number: /play/local -> /play/12)
 	const running = getRunningKey();
-	const showGame = !!user && (route.name === 'local' || (route.name === 'game' && (gameLive || running === route.params.id)));
+	const showGame = !!user && (route.name === 'local' && user.role !== 'not-approved' || (route.name === 'game' && (gameLive || running === route.params.id)));
 	useEffect(() => { document.body.classList.toggle('in-game', showGame); }, [showGame]); // the board keeps its lighter grey; the portal pages are darker
 
 	let page = null;
@@ -86,11 +86,13 @@ export default function App() {
 		if (route.name === 'login' || route.name === 'register') {
 			page = <AuthScreen mode={route.name} onLogin={(u) => setUser(u)} />;
 		}
+	} else if (route.name === 'local' && user.role === 'not-approved') {
+		page = <Shell user={user} screen="home" title="Play"><Home user={user} blocked /></Shell>;
 	} else if (route.name === 'game') {
 		if (running !== route.params.id) page = <GamePage id={route.params.id} user={user} live={gameLive} onLive={setGameLive} />;
 	} else if (route.name === 'join') {
 		page = <JoinPage code={route.params.code} user={user} />;
-	} else if (['home', 'history', 'historyDetail', 'historyReplay', 'admin', 'adminUsers', 'adminUser', 'adminGames', 'notfound'].includes(route.name)) {
+	} else if (['home', 'history', 'historyDetail', 'historyReplay', 'admin', 'adminUsers', 'adminUser', 'adminGames', 'adminRequests', 'notfound'].includes(route.name)) {
 		const isAdmin = route.name.startsWith('admin');
 		page = (
 			<Shell user={user} screen={route.name === 'home' ? 'home' : route.name === 'notfound' ? '' : isAdmin ? 'admin' : 'history'} title={TITLES[route.name]}>

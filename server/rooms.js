@@ -330,8 +330,12 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 	}
 	const busyMessage = (room) => `Your account already has an open room (${room.code}), probably on another device. Leave it there first.`;
 
+	// the role is read fresh, so an approval (or a later change) works without logging in again
+	const notApproved = async (s) => (await db.get('SELECT role FROM users WHERE id = ?', [s.user.id]))?.role === 'not-approved';
+
 	const handlers = {
 		async create(s) {
+			if (await notApproved(s)) return err(s.conn, "You don't have access to start or join games, wait until your account is approved", 'not-approved');
 			const other = await otherWaitingRoom(s);
 			if (other) return err(s.conn, busyMessage(other), 'busy');
 			if (s.room) leaveRoom(s);
@@ -344,6 +348,7 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 
 		// By code (new player or returning) or by game id (returning member only).
 		async join(s, msg) {
+			if (await notApproved(s)) return err(s.conn, "You don't have access to start or join games, wait until your account is approved", 'not-approved');
 			const room = msg.code ? await roomByCode(msg.code) : await roomById(msg.gameId);
 			if (!room) return err(s.conn, msg.code ? 'No room with this code' : 'This online game is not available');
 			let m = room.members.get(s.user.id);
