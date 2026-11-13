@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 // The engine's own pieces stay in the page (hidden) and remain the source of truth: this only watches
 // player[].position and player[].jail.
 const STEP_MS = 120;
-const SIZE = 24;   // piece diameter in board pixels
+const SIZE = 22;   // piece diameter in board pixels
 const GAP = 26;    // distance between pieces that share a square
 const reduce = () => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -15,7 +15,7 @@ function targets() {
 	const out = [];
 	for (let i = 1; i <= w.pcount; i++) {
 		const p = w.player[i];
-		if (p) out.push({ name: p.name, color: p.color, sq: p.position, jail: !!p.jail });
+		if (p) out.push({ name: p.name, color: p.color, n: i, cur: w.turn === i, sq: p.position, jail: !!p.jail });
 	}
 	return out;
 }
@@ -56,8 +56,9 @@ export default function BoardTokens() {
 			for (const name of [...disp.current.keys()]) if (!names.has(name)) { disp.current.delete(name); changed = true; }
 			for (const t of want) {
 				const d = disp.current.get(t.name);
-				if (!d) { disp.current.set(t.name, { sq: t.sq, jail: t.jail, color: t.color, walking: false }); changed = true; continue; }
-				d.color = t.color;
+				if (!d) { disp.current.set(t.name, { sq: t.sq, jail: t.jail, color: t.color, n: t.n, cur: t.cur, walking: false }); changed = true; continue; }
+				if (d.color !== t.color || d.cur !== t.cur) changed = true;
+				d.color = t.color; d.n = t.n; d.cur = t.cur;
 				if (d.walking) continue;
 				if (t.jail !== d.jail) { d.jail = t.jail; d.sq = t.sq; changed = true; continue; }
 				if (t.sq !== d.sq) walk(t.name, t.sq);
@@ -96,8 +97,11 @@ export default function BoardTokens() {
 				const n = mates.length;
 				const cols = Math.min(n, 3);
 				const dx = (k % 3 - (cols - 1) / 2) * GAP;
-				const dy = (Math.floor(k / 3) - (Math.ceil(n / 3) - 1) / 2) * GAP + (d.jail ? 12 : 0);
-				return <div key={d.name} className="tk" title={d.name} aria-label={d.name} style={{ left: s.x + s.w / 2 - SIZE / 2 + dx, top: s.y + s.h / 2 - SIZE / 2 + dy, backgroundColor: d.color }} />;
+				const row = Math.floor(k / 3) - (Math.ceil(n / 3) - 1) / 2;
+				// top and bottom rows: the pieces sit low in the square (under the logo and name); sides and corners: in the middle
+				const low = !d.jail && d.sq % 10 !== 0 && ((d.sq > 0 && d.sq < 10) || (d.sq > 20 && d.sq < 30));
+				const y = low ? s.y + s.h - (d.sq < 10 ? 8 : 14) - SIZE + row * GAP : s.y + s.h / 2 - SIZE / 2 + row * GAP + (d.jail ? 12 : 0);
+				return <div key={d.name} className={`tk${d.cur ? ' tk-turn' : ''}`} aria-label={d.name} style={{ left: s.x + s.w / 2 - SIZE / 2 + dx, top: y, backgroundColor: d.color }}>{d.n}</div>;
 			})}
 		</div>
 	);

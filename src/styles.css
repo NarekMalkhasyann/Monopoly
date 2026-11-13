@@ -1464,8 +1464,8 @@ td.statscellname[title="Mortgaged"]::after {
 /* Player pieces: the engine's own are hidden, BoardTokens draws them and moves them square by square */
 #stage-inner { position: relative; }
 #token-layer { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 6; pointer-events: none; }
-.tk { position: absolute; width: 24px; height: 24px; border-radius: 50%; box-sizing: border-box; border: 1.5px solid var(--white); box-shadow: 0 2px 4px rgba(0, 0, 0, .5); pointer-events: auto; transition: left .11s linear, top .11s linear, transform .15s ease; }
-.tk:hover { transform: scale(1.25); z-index: 2; }
+.tk { position: absolute; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 800; color: #161616; box-shadow: 0 0 0 3px #161616, 0 6px 14px #000a; pointer-events: none; transition: left .11s linear, top .11s linear; }
+.tk.tk-turn { outline: 2px solid #acfa00; outline-offset: 4px; }
 
 @media (prefers-reduced-motion: reduce) { .tk { transition: none; } }
 
@@ -2153,4 +2153,38 @@ td.statscellname[title="Mortgaged"]::after {
 	#moneybar td.moneybarcell > div:nth-child(2) { font-size: 15px; }
 	.mb-chips i { width: 11px; height: 11px; }
 	#moneybar .mb-trade, .moneybararrowcell { display: none !important; }
+}
+
+/* ==========================================================================
+   Redesign, part 10: the centre panel fills the middle of the board, exactly as in the design
+   (578px square = the board's inner square minus 9px). Free space is shared between name, dice and log.
+   ========================================================================== */
+@media (min-width: 1130px) {
+	#control {
+		width: 578px;
+		height: 578px;
+		padding: 26px 28px;
+		border-radius: 20px;
+		background: linear-gradient(160deg, #2a2a2a, #222222);
+		box-shadow: inset 0 0 0 1px #ffffff10;
+	}
+	#control > table { height: 100%; }
+	#control > table > tbody { height: 100%; align-items: stretch; }
+	#control > table > tbody > tr:first-child > td:last-child { display: contents; }
+	#control #quickstats { order: 0; align-self: center; margin-bottom: auto; text-align: center; }
+	#control #quickstats #pmoney { display: none; }
+	#control #quickstats::before { font-size: 12px; letter-spacing: 0.24em; font-weight: 600; color: #ffffff80; margin-bottom: 4px; }
+	#control #quickstats #pname { font-size: 30px; font-weight: 800; }
+	#control #quickstats + div { order: 1; align-self: center; margin: auto 0; gap: 14px; }
+	#control .die, #control .die-no-img { width: 72px; height: 72px; margin: 0; border-radius: 16px; }
+	#control #buy { order: 2; margin-top: auto; }
+	#control > table > tbody > tr:last-child > td { order: 3; }
+	#control #menu { order: 4; }
+	#control #alert { height: auto; min-height: 84px; max-height: 110px; }
+	.board-center { background: transparent; }
+}
+
+/* phone: the player whose turn it is gets a full-width card (the two-column cards are too narrow for the TURN pill) */
+@media (max-width: 1129px) {
+	#moneybar > table > tbody > tr:has(.money-bar-arrow:not([style*="none"])) { grid-column: 1 / -1; }
 }
