@@ -1175,9 +1175,15 @@ function Game() {
 var game;
 
 
+// The colour names offered in the setup, shown in the game's palette (the same tones as the property groups).
+var PLAYER_COLORS = {yellow: "#facc15", blue: "#3b82f6", red: "#ef4444", lime: "#22c55e", green: "#16a34a", aqua: "#22d3ee", orange: "#fb923c", purple: "#a855f7", fuchsia: "#ec4899", teal: "#14b8a6", navy: "#1e40af", maroon: "#9f1239", olive: "#a3a32a", gray: "#9ca3af", silver: "#d1d5db", black: "#52525b"};
+function playerColor(name) {
+	return PLAYER_COLORS[String(name).toLowerCase()] || name;
+}
+
 function Player(name, color) {
 	this.name = name;
-	this.color = color;
+	this.color = playerColor(color);
 	this.position = 0;
 	this.money = 1500;
 	this.creditor = -1;
@@ -1546,6 +1552,7 @@ function updateOwned() {
 
 			currentCellOwner.style.display = "block";
 			currentCellOwner.style.backgroundColor = player[sq.owner].color;
+			currentCellOwner.style.boxShadow = "0 0 14px " + player[sq.owner].color + "66";
 			currentCellOwner.title = player[sq.owner].name;
 		}
 	}
@@ -2821,7 +2828,7 @@ function setup() {
 		p = player[playerArray[i - 1]];
 
 
-		p.color = document.getElementById("player" + i + "color").value.toLowerCase();
+		p.color = playerColor(document.getElementById("player" + i + "color").value);
 
 		if (document.getElementById("player" + i + "ai").value === "0") {
 			p.name = document.getElementById("player" + i + "name").value;
