@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useOnline } from '../online.js';
 
-// Under "View stats", the properties each player owns, mine first.
+// Under the player cards, the properties each player owns, mine first.
 // Hover a property to see its title-deed card (the engine's own showdeed / hidedeed).
 // The engine keeps the state in page-wide variables (player, square), so this looks at them twice a second
 // and redraws only when something changed.

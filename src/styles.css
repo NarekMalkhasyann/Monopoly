@@ -2237,11 +2237,6 @@ td.statscellname[title="Mortgaged"]::after {
 	#moneybar td.moneybarcell > div:nth-child(2) { grid-area: money; justify-self: start; font-size: 14px; font-weight: 800; letter-spacing: 0; }
 	#moneybar .mb-chips, #moneybar .mb-trade, .mb-turn { display: none !important; }
 	#moneybar tr:has(.money-bar-arrow:not([style*="none"])) td.moneybarcell > div:nth-child(2) { color: var(--green); }
-	/* the stats button is the last card of the row */
-	#moneybar #moneybarrowbutton { display: block; }
-	#moneybar #moneybarrowbutton td:first-child { display: none; }
-	#moneybar #moneybarrowbutton td { display: block; height: 100%; padding: 0; }
-	#moneybar #viewstats { height: 100%; min-width: 64px; padding: 0 12px; border-radius: 14px; font-size: 12px; }
 
 	/* ---- action dock ---- */
 	#control {
