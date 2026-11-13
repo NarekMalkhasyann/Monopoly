@@ -1,4 +1,4 @@
-// Side panel with every player's name and cash (up to 8) and the "View stats" button.
+// Side panel with every player's name and cash (up to 8).
 // The engine updates the numbers in place (p1money, p1moneyname, ...) and
 // shows / hides rows and the arrow that marks whose turn it is.
 
@@ -46,17 +46,6 @@ export default function MoneyBar() {
 								</td>
 							</tr>
 						))}
-						<tr id="moneybarrowbutton">
-							<td className="moneybararrowcell">{' '}</td>
-							<td style={{ border: 'none' }}>
-								<input
-									type="button"
-									id="viewstats"
-									value="View stats"
-									title="View a pop-up window that shows a list of each player's properties."
-								/>
-							</td>
-						</tr>
 					</tbody>
 				</table>
 			</div>

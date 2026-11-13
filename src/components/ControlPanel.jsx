@@ -76,8 +76,8 @@ export default function ControlPanel() {
 
 							<div id="manage">
 								<div className="manage-head">
-									<div className="manage-titles"><span className="manage-title">Manage properties</span><span className="manage-sub">Build, sell and mortgage. Houses go up evenly across a complete colour set.</span></div>
-									<div className="manage-cashbox"><span>YOUR CASH</span><b id="manage-cash">$0</b></div>
+									<div className="manage-titles"><span className="manage-title">Manage<span className="manage-more"> properties</span></span><span className="manage-sub">Build, sell and mortgage. Houses go up evenly across a complete colour set.</span></div>
+									<div className="manage-cashbox"><span>Your cash</span><b id="manage-cash">$0</b></div>
 									<button type="button" className="trade-close" aria-label="Close manage" onClick={() => document.getElementById('buy-menu-item').click()}>✕</button>
 								</div>
 								<div id="option">
@@ -87,6 +87,7 @@ export default function ControlPanel() {
 									<input type="button" value="Sell house" id="sellhousebutton" />
 								</div>
 								<div id="owned" />
+								<button type="button" className="manage-done" onClick={() => document.getElementById('buy-menu-item').click()}>Done</button>
 							</div>
 						</td>
 

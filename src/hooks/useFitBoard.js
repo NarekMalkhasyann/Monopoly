@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 // outside #stage, so they are not affected either.
 
 const WIDE = 1130; // same breakpoint as the desktop layout in styles.css
+const PHONE = 641; // below this the board is laid out at its own small size by CSS (board.css), no scaling
 const SIDEBAR_MIN = 340; // narrowest the player list may get
 const GAP = 28; // grid gap between board and list
 const BOARD_MARGIN = 15; // #board has margin: 15px in styles.css
@@ -29,6 +30,14 @@ export default function useFitBoard() {
 			if (!w) {
 				// Board is hidden (setup screen, trade window): take no space.
 				stage.style.height = '0px';
+				return;
+			}
+			if (window.innerWidth < PHONE) { // phone: the board fills the width by itself
+				stage.style.width = '';
+				stage.style.height = '';
+				inner.style.transform = '';
+				inner.style.marginLeft = '';
+				layout.style.setProperty('--fit', '1');
 				return;
 			}
 			const naturalW = w + BOARD_MARGIN * 2;

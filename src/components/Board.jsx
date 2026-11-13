@@ -1,6 +1,8 @@
 // The 40-square board: an 11 x 11 CSS grid. Squares are cells with ids cell0..cell39 (0 = GO,
 // numbered anticlockwise). The engine fills each cell with its name, colour bar and logo
 // at start-up, so here we only place the empty cells on the grid.
+import TurnCard from './TurnCard.jsx';
+
 // (#board is the element the engine shows and hides, #board-grid is the grid itself.)
 
 // [row, column] on the grid, 1-based.
@@ -15,6 +17,10 @@ function place(id) {
 	return [11, 11 - id]; // bottom, left to right
 }
 
+// Short labels used on phones, where the squares are too small for logos and names.
+const ABBR = ['GO', 'JE', 'CC', 'BJ', '$', 'ST', 'AP', '?', 'AK', 'MA', 'JAIL', 'BO', 'VI', 'TT', 'UC', 'ST', 'GC', 'CC', 'AN', 'PB',
+	'FREE', 'AR', '?', 'NO', 'PR', 'ST', 'AU', 'PO', 'ACT', 'YC', 'GO TO JAIL', 'SA', 'NZ', 'CC', 'AM', 'ST', '?', 'AD', '$', 'AC'];
+
 function kind(id) {
 	if (id % 10 === 0) return 'corner';
 	if (id < 10) return 'bottom';
@@ -27,14 +33,14 @@ export default function Board() {
 	const cells = [];
 	for (let id = 0; id < 40; id++) {
 		const [row, col] = place(id);
-		cells.push(<div key={id} className={`cell board-${kind(id)}`} id={`cell${id}`} style={{ gridRow: row, gridColumn: col }} />);
+		cells.push(<div key={id} className={`cell board-${kind(id)}`} id={`cell${id}`} data-abbr={ABBR[id]} style={{ gridRow: row, gridColumn: col }} />);
 	}
 
 	return (
 		<div id="board">
 			<div id="board-grid">
 				{cells}
-				<div className="board-center" />
+				<div className="board-center"><TurnCard /></div>
 				{/* the jail box sits over the top right of the "Just Visiting" corner */}
 				<div id="jail" />
 			</div>
