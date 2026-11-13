@@ -3092,6 +3092,17 @@ window.onload = function() {
 			var w = deed.offsetWidth || 280;
 			var h = deed.offsetHeight || 340;
 			var left = r.right + 12 + w <= window.innerWidth - 8 ? r.right + 12 : Math.max(8, r.left - 12 - w);
+			// too tall for a short window: shrink the card so all of it stays on screen
+			// (on phones the stylesheet centres and scales the card itself, so leave that alone)
+			var fit = 1;
+			deed.style.transform = "";
+			if (window.getComputedStyle(deed).transform === "none") {
+				fit = Math.min(1, (window.innerHeight - 16) / h);
+				deed.style.transformOrigin = "top left";
+				if (fit < 1) { deed.style.transform = "scale(" + fit + ")"; }
+			}
+			h = h * fit;
+			w = w * fit;
 			deed.style.left = left + "px";
 			deed.style.top = Math.max(8, Math.min(window.innerHeight - h - 8, r.top + r.height / 2 - h / 2)) + "px";
 		};
