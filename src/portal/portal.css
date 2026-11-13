@@ -504,3 +504,19 @@ body.online-game #setup { display: none !important; }
 	.gb-conn i { width: 8px; height: 8px; border-radius: 50%; background: #34d058; box-shadow: 0 0 8px #34d058; }
 	body.in-game { padding-top: 64px; }
 }
+
+/* ---------- redesign, part 13: on tablets and phones the game bar is a 52px header (back arrow, title, save state) ---------- */
+@media (max-width: 1129px) {
+	.game-bar {
+		top: 0; left: 0; right: 0; bottom: auto; height: 52px; box-sizing: border-box; flex-wrap: nowrap; justify-content: flex-start;
+		padding: 0 12px 0 14px; gap: 10px; border-radius: 0; background: #161616f2; border-bottom: 1px solid #ffffff12; backdrop-filter: blur(8px);
+	}
+	.game-bar .btn-ghost:first-child { margin: 0; width: 36px; height: 36px; padding: 0; font-size: 0; border-radius: 10px; flex-shrink: 0; }
+	.game-bar .btn-ghost:first-child::before { content: "\2039"; font-size: 26px; line-height: 1; font-weight: 400; display: block; margin-top: -3px; }
+	.gb-brand { display: grid; grid-template: "t" auto "s" auto; gap: 0; margin-right: auto; min-width: 0; line-height: 1.2; }
+	.gb-mark { display: none; }
+	.gb-brand b { font-size: 14px; font-weight: 700; }
+	.gb-sub { display: block; font-size: 11px; color: #ffffff99; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.game-bar .btn-ghost:not(:first-child), .game-bar .btn-danger { height: 32px; padding: 0 10px; font-size: 11px; flex-shrink: 0; }
+	.save-state { font-size: 12px; white-space: nowrap; }
+}

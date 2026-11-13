@@ -5,8 +5,9 @@ import { useEffect, useRef, useState } from 'react';
 // The engine's own pieces stay in the page (hidden) and remain the source of truth: this only watches
 // player[].position and player[].jail.
 const STEP_MS = 120;
-const SIZE = 22;   // piece diameter in board pixels
-const GAP = 26;    // distance between pieces that share a square
+const phone = () => typeof window !== 'undefined' && window.innerWidth < 641; // small board: smaller pieces, always in the middle
+const SIZE_BIG = 22;   // piece diameter in board pixels
+const GAP_BIG = 26;    // distance between pieces that share a square
 const reduce = () => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function targets() {
@@ -87,6 +88,9 @@ export default function BoardTokens() {
 	const groups = new Map();
 	view.tokens.forEach((d) => { const key = d.jail ? 'jail' : d.sq; groups.set(key, [...(groups.get(key) || []), d.name]); });
 
+	const small = phone();
+	const SIZE = small ? 12 : SIZE_BIG;
+	const GAP = small ? 11 : GAP_BIG;
 	return (
 		<div id="token-layer">
 			{view.tokens.map((d) => {
@@ -99,7 +103,7 @@ export default function BoardTokens() {
 				const dx = (k % 3 - (cols - 1) / 2) * GAP;
 				const row = Math.floor(k / 3) - (Math.ceil(n / 3) - 1) / 2;
 				// top and bottom rows: the pieces sit low in the square (under the logo and name); sides and corners: in the middle
-				const low = !d.jail && d.sq % 10 !== 0 && ((d.sq > 0 && d.sq < 10) || (d.sq > 20 && d.sq < 30));
+				const low = !small && !d.jail && d.sq % 10 !== 0 && ((d.sq > 0 && d.sq < 10) || (d.sq > 20 && d.sq < 30));
 				const y = low ? s.y + s.h - (d.sq < 10 ? 8 : 14) - SIZE + row * GAP : s.y + s.h / 2 - SIZE / 2 + row * GAP + (d.jail ? 12 : 0);
 				return <div key={d.name} className={`tk${d.cur ? ' tk-turn' : ''}`} aria-label={d.name} style={{ left: s.x + s.w / 2 - SIZE / 2 + dx, top: y, backgroundColor: d.color }}>{d.n}</div>;
 			})}

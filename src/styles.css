@@ -1907,7 +1907,7 @@ td.statscellname[title="Mortgaged"]::after {
 .manage-title { font-size: 20px; font-weight: 800; }
 .manage-sub { font-size: 12px; color: #ffffff99; }
 .manage-cashbox { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
-.manage-cashbox span { font-size: 11px; color: #ffffff80; letter-spacing: .1em; font-weight: 600; }
+.manage-cashbox span { text-transform: uppercase; font-size: 11px; color: #ffffff80; letter-spacing: .1em; font-weight: 600; }
 .manage-cashbox b { font-size: 22px; font-weight: 800; color: #acfa00; }
 #control #manage #owned { max-height: none; overflow: visible; padding: 18px 24px 22px; }
 #control #manage .mg-foot { display: block; }
@@ -2203,3 +2203,172 @@ td.statscellname[title="Mortgaged"]::after {
 #board #jail:not(:has(.cell-position)) { background: transparent; border-color: transparent !important; }
 #board #jail:not(:has(.cell-position)) > span { visibility: hidden; }
 #board #jail:has(.cell-position) { background: #1d1d1d; border-color: #ffffff26 !important; }
+
+/* ==========================================================================
+   Redesign, part 12: small screens (tablet and phone), as in the phone design
+   from top to bottom: players strip, board (with the turn card in the middle), action dock, my properties
+   ========================================================================== */
+.turn-card { display: none; }
+
+@media (max-width: 1129px) {
+	body.in-game { background: #161616 radial-gradient(500px 360px at 50% 30%, #232323, #161616) fixed; padding: 52px 0 0; }
+
+	/* the page is one column; the wrapper of the player list vanishes so its parts can sit at the top and the bottom */
+	#game-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0; max-width: 760px; margin: 0 auto; }
+	#moneybarwrap { display: contents; }
+	#moneybar { grid-area: 1 / 1; margin: 0; padding: 10px 12px 0; min-width: 0; }
+	#stage { grid-area: 2 / 1; }
+	#control { grid-area: 3 / 1; }
+	#myprops { grid-area: 4 / 1; }
+
+	/* ---- players: one row of small cards you can swipe ---- */
+	#moneybar > table, #moneybar > table > tbody { display: flex; width: auto; }
+	#moneybar > table { border-spacing: 0; }
+	#moneybar > table > tbody { gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px; margin: -2px; }
+	#moneybar > table > tbody > tr { flex: 0 0 auto; display: block; }
+	#moneybar .moneybararrowcell { display: none; }
+	#moneybar td.moneybarcell {
+		grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "av name" "av money";
+		align-items: center; column-gap: 8px; row-gap: 1px; padding: 8px 12px 8px 8px; min-width: 100px; border-radius: 14px; box-sizing: border-box;
+	}
+	#moneybar td.moneybarcell::before { border-width: 15px; }
+	.mb-letter { font-size: 13px; }
+	#moneybar td.moneybarcell > div:first-child { grid-area: name; font-size: 12px; font-weight: 700; flex-wrap: nowrap; gap: 5px; }
+	#moneybar td.moneybarcell > div:nth-child(2) { grid-area: money; justify-self: start; font-size: 14px; font-weight: 800; letter-spacing: 0; }
+	#moneybar .mb-chips, #moneybar .mb-trade, .mb-turn { display: none !important; }
+	#moneybar tr:has(.money-bar-arrow:not([style*="none"])) td.moneybarcell > div:nth-child(2) { color: var(--green); }
+	/* the stats button is the last card of the row */
+	#moneybar #moneybarrowbutton { display: block; }
+	#moneybar #moneybarrowbutton td:first-child { display: none; }
+	#moneybar #moneybarrowbutton td { display: block; height: 100%; padding: 0; }
+	#moneybar #viewstats { height: 100%; min-width: 64px; padding: 0 12px; border-radius: 14px; font-size: 12px; }
+
+	/* ---- action dock ---- */
+	#control {
+		width: auto; height: auto; margin: 12px 12px 0; padding: 14px; box-sizing: border-box;
+		border-radius: 18px; background: #222; box-shadow: inset 0 0 0 1px #ffffff0d; transform: none;
+	}
+	#control > table, #control > table > tbody { display: flex; flex-direction: column; gap: 10px; width: 100%; height: auto; }
+	#control > table > tbody > tr, #control > table > tbody > tr:first-child, #control > table > tbody > tr:first-child > td:first-child { display: contents; }
+	#control > table > tbody > tr:first-child > td:last-child { display: none; } /* name and dice: the turn card on the board shows them */
+	#control #buy { order: 1; margin: 0; }
+	#control > table > tbody > tr:last-child > td { order: 2; display: block; width: 100%; }
+	#control #menu { order: 3; margin: 2px 0 0; }
+	#control #alert { height: auto; min-height: 0; max-height: none; overflow: visible; font-size: 12px; color: #fff; }
+	#control #alert div:not(:last-child) { display: none; }
+	#control #landed { display: none !important; }
+	#control #nextbutton { height: 48px; flex: 1; font-size: 15px; border-radius: 13px; }
+	#control #buyproxy { height: 48px; border-radius: 13px; font-size: 15px; }
+	#control > table > tbody > tr:last-child > td > div { display: flex; gap: 8px; padding-top: 0 !important; align-items: center; }
+	#control > table > tbody > tr:last-child > td > div:has(#buyproxy:not([hidden])) #nextbutton { flex: none; width: 116px; font-size: 13px; }
+	#control #resignbutton { height: 48px; border-radius: 13px; }
+	#control .menu-item, #control .menu-item a { height: 44px; font-size: 13px; }
+	#menutable { border-spacing: 10px 0; margin: 0 -10px; width: calc(100% + 20px); }
+	#buy-menu-item { display: none; }
+
+	/* ---- my properties: one swipeable row ---- */
+	#myprops {
+		margin: 10px 12px 14px; padding: 0; max-height: none; background: none; box-shadow: none; border-radius: 0;
+		flex-direction: row; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none; z-index: 1;
+	}
+	#myprops .mp-group { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+	#myprops .mp-head { margin: 0; font-size: 12px; flex-shrink: 0; }
+	#myprops .mp-head i, #myprops .mp-head span { display: none; }
+	#myprops ul { flex-wrap: nowrap; gap: 8px; }
+	#myprops li { flex-shrink: 0; padding: 6px 10px; border-radius: 9px; font-size: 11.5px; }
+	#myprops .mp-chip { width: 9px; height: 9px; }
+
+	/* ---- the turn card in the middle of the board; sizes follow the board (cqw = % of the centre's width) ---- */
+	.board-center {
+		container-type: size; display: grid; place-items: center; border-radius: 12px;
+		background: linear-gradient(160deg, #2a2a2a, #222); box-shadow: inset 0 0 0 1px #ffffff10;
+	}
+	.turn-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3.6cqw; }
+	.tc-label { font-size: 3.4cqw; letter-spacing: 0.24em; color: #ffffff80; font-weight: 600; }
+	.tc-name { font-size: 7.4cqw; font-weight: 800; margin-top: -2.2cqw; max-width: 90cqw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.tc-dice { display: flex; gap: 3cqw; }
+	.tc-die { display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); width: 14.6cqw; height: 14.6cqw; box-sizing: border-box; padding: 3.2cqw; border-radius: 3.6cqw; background: #f4f4f4; }
+	.tc-die i { width: 2.7cqw; height: 2.7cqw; border-radius: 50%; background: #1d1d1d; place-self: center; }
+}
+
+@media (max-width: 1129px) {
+	#control { place-self: stretch; align-self: start; }
+	#control #alert { background: none; border: none; padding: 0; box-shadow: none; display: flex; flex-direction: column; gap: 6px; }
+	#control #alert div { display: flex; gap: 8px; align-items: baseline; }
+	#control #menu .menu-item a { gap: 8px; }
+}
+
+/* ===== Manage and Trade as bottom sheets on phones (as in the phone design) ===== */
+.manage-done { display: none; }
+@media (max-width: 640px) {
+	/* shared sheet look */
+	#control #manage[style*="display: block"] { display: flex; flex-direction: column; }
+	#control #manage {
+		top: 56px; left: 0; right: 0; bottom: 0; transform: none; width: auto; max-height: none;
+		border-radius: 24px 24px 0 0; overflow: hidden;
+		box-shadow: 0 -20px 60px #000c, 0 0 0 100vmax #000000bf, inset 0 1px 0 #ffffff1a;
+	}
+	#control #manage::before, #trade .trade-modal::before { content: ""; align-self: center; flex-shrink: 0; width: 40px; height: 4px; margin-top: 8px; border-radius: 2px; background: #ffffff33; }
+	.manage-head { display: grid; grid-template: "t x" auto "c x" auto / minmax(0, 1fr) auto; gap: 0 12px; padding: 10px 18px 12px; border-bottom: 0; }
+	.manage-titles { grid-area: t; }
+	.manage-title { font-size: 18px; }
+	.manage-more, .manage-sub { display: none; }
+	.manage-cashbox { grid-area: c; flex-direction: row; align-items: baseline; gap: 6px; }
+	.manage-cashbox span { font-size: 11.5px; text-transform: none; letter-spacing: 0; color: #ffffff8c; font-weight: 500; }
+	.manage-cashbox b { font-size: 11.5px; }
+	.manage-head .trade-close { grid-area: x; width: 38px; height: 38px; align-self: center; }
+	#control #manage #option { display: none; }
+	#control #manage #owned { flex: 1; min-height: 0; overflow-y: auto; padding: 0 14px 12px; display: flex; flex-direction: column; gap: 12px; }
+	#control #manage .mg-foot { margin: 0; }
+	.manage-done {
+		display: block; flex-shrink: 0; margin: 0; width: calc(100% - 28px); height: 50px; margin: 0 14px 18px; border: none; border-radius: 14px;
+		background: #acfa00; color: #1d1d1d; font: 800 15px Montserrat, sans-serif; cursor: pointer;
+	}
+}
+
+@media (max-width: 1129px) {
+	#moneybar { background: none; box-shadow: none; }
+	#control #alert div::before { content: ""; width: 8px; height: 8px; margin-top: 3px; border-radius: 50%; background: var(--dot, #acfa00); flex-shrink: 0; }
+	#control #alert div { align-items: flex-start; }
+}
+
+/* ----- Trade as a bottom sheet (phone design) ----- */
+@media (max-width: 640px) {
+	#trade[style*="display: block"] { display: grid; align-items: end; justify-items: stretch; align-content: end; justify-content: stretch; }
+	#trade .trade-modal { width: auto; height: calc(100dvh - 56px); border-radius: 24px 24px 0 0; box-shadow: 0 -20px 60px #000c, inset 0 1px 0 #ffffff1a; }
+	.trade-head { padding: 10px 18px 10px; border-bottom: 0; align-items: center; }
+	.trade-titles h3 { margin: 0; font-size: 18px; font-weight: 800; }
+	.trade-titles span { display: none; }
+	.trade-head .trade-close { width: 38px; height: 38px; }
+	#trade-chips { display: flex; align-items: center; gap: 8px; padding: 0 14px 12px; border-bottom: 0; flex-wrap: wrap; }
+	.trade-with { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #ffffff80; }
+	.trade-chip { height: 32px; padding: 0 12px; font-size: 12.5px; }
+	#trade table.trade-grid { padding: 0 14px 8px; row-gap: 8px; overflow-y: auto; grid-template-rows: none; align-content: start; }
+	.trade-grid > tbody > tr:nth-child(4) > td, .trade-grid > tbody > tr:nth-child(1) > td:nth-child(2) { margin-top: 6px; }
+	.trade-who { flex-direction: row; align-items: baseline; gap: 8px; }
+	.trade-title { font-size: 14px; }
+	.trade-avatar { width: 28px; height: 28px; font-size: 13px; align-self: center; }
+	.trade-who #trade-leftp-name::before, .trade-who #trade-rightp-name::before { font-size: 11px; color: #ffffff8c; font-weight: 400; }
+	.trade-grid > tbody > tr:nth-child(3) > td { overflow: visible; max-height: none; padding-right: 0; }
+	/* properties: wrapping chips, a ticked one gets a lime ring */
+	.trade-cell table, .trade-cell tbody { display: flex; flex-direction: row; flex-wrap: wrap; gap: 6px; width: 100%; }
+	.trade-cell tr { width: auto; max-width: 100%; height: 34px; padding: 0 12px; gap: 7px; border-radius: 10px; font-size: 12.5px; box-sizing: border-box; }
+	.trade-cell tr:has(input:checked) { background: #2e3a17 !important; box-shadow: inset 0 0 0 1.5px #acfa00; }
+	.trade-cell tr .propertycellnote { display: none; }
+	.trade-cell tr .propertycellname { flex: 0 1 auto; font-size: 12.5px; }
+	.trade-cell tr .propertycellcheckbox { display: none; }
+	.trade-nojail { margin-top: 0; width: auto; height: 40px; display: none; }
+	.trade-grid .trade-cash .trade-money { height: 40px; }
+	.trade-cashlabel { display: none; }
+	.trade-of { display: none; }
+	.trade-foot { flex-direction: row; flex-wrap: wrap; gap: 6px 8px; padding: 10px 14px 18px; background: transparent; }
+	.trade-footinfo { flex: 1 0 100%; order: 0; font-size: 12.5px; }
+	.trade-rules { display: none; }
+	.trade-actions { flex: 1 0 100%; flex-direction: row-reverse; gap: 8px; }
+	.trade-actions input[type="button"] { height: 50px; border-radius: 14px; font-size: 15px; flex: 1; padding: 0 12px; }
+	#canceltradebutton, #rejecttradebutton { flex: 0 0 100px !important; }
+}
+@media (max-width: 640px) {
+	.trade-with { font-size: 0; }
+	.trade-with::before { content: "WITH"; font-size: 11px; }
+}
