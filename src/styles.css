@@ -386,6 +386,7 @@ input[type="checkbox"] {
    Control Box (Center Gameplay Panel)
    ========================================================================== */
 #control {
+	position: relative; /* the End turn countdown is drawn inside it (TurnTimer.jsx) */
 	z-index: 9;
 	padding: 16px;
 	display: none;
