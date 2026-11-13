@@ -1561,7 +1561,7 @@ function updateOwned() {
 	var groups = [], groupOf = {};
 	for (var i = 0; i < 40; i++) {
 		sq = square[i];
-		if (sq.owner == turn) {
+		if (sq.groupNumber > 0 && sq.owner == turn) { // (squares that cannot be owned also have owner 0, which equals turn while no player is on turn)
 			var key = sq.groupNumber >= 3 ? sq.color : "g" + sq.groupNumber;
 			if (!(key in groupOf)) {
 				groupOf[key] = groups.length;
