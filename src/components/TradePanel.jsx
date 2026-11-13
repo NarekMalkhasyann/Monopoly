@@ -6,6 +6,10 @@ import { useEffect } from 'react';
 
 // Recipient chips and the summary line are built from what the engine puts in
 // the modal, so the engine and the online relay keep working unchanged.
+// Only touch the page when something really changed: every change wakes the observer below, which runs decorate() again.
+const setText = (el, text) => { if (el && el.textContent !== text) el.textContent = text; };
+const setAttr = (el, name, value) => { if (el && el.getAttribute(name) !== value) el.setAttribute(name, value); };
+
 function decorate() {
 	const win = window;
 	const modal = document.querySelector('.trade-modal');
@@ -14,8 +18,11 @@ function decorate() {
 	const chips = document.getElementById('trade-chips');
 	const select = holder && holder.querySelector('select');
 	if (chips) {
-		chips.innerHTML = '';
+		const sig = select ? Array.from(select.options).map((o) => `${o.value}|${o.textContent}|${o.style.color}|${o.selected ? 1 : 0}`).join(';') : '';
 		chips.style.display = select ? '' : 'none';
+		if (chips.dataset.sig !== sig) {
+			chips.dataset.sig = sig;
+			chips.innerHTML = '';
 		if (select) {
 			const label = document.createElement('span');
 			label.className = 'trade-with';
@@ -32,6 +39,7 @@ function decorate() {
 				b.onclick = () => { select.value = o.value; if (select.onchange) select.onchange.call(select); };
 				chips.appendChild(b);
 			});
+		}
 		}
 	}
 	const side = (prefix) => {
@@ -53,8 +61,8 @@ function decorate() {
 		}
 		const pl = (win.player || []).find((x) => x && x.name === nm);
 		const av = document.getElementById('trade-' + k + 'p-avatar');
-		if (av) { av.textContent = /^Player \d+$/.test(nm) ? nm.replace('Player ', '') : (nm || '?').trim().charAt(0).toUpperCase(); av.style.background = pl ? pl.color : '#888'; }
-		if (nameEl) nameEl.setAttribute('data-label', (nm || '') + (pl ? ' \u00b7 $' + pl.money : ''));
+		if (av) { setText(av, /^Player \d+$/.test(nm) ? nm.replace('Player ', '') : (nm || '?').trim().charAt(0).toUpperCase()); av.style.background = pl ? pl.color : '#888'; }
+		if (nameEl) setAttr(nameEl, 'data-label', (nm || '') + (pl ? ' \u00b7 $' + pl.money : ''));
 		const prop = document.getElementById('trade-' + k + 'p-property');
 		if (prop) {
 			const has = prop.querySelector('input[id$="checkbox40"], input[id$="checkbox41"]');
@@ -68,13 +76,13 @@ function decorate() {
 			}
 		}
 		const of = document.getElementById('trade-' + k + 'p-of');
-		if (of) of.textContent = pl ? 'of $' + pl.money : '';
+		setText(of, pl ? 'of $' + pl.money : '');
 	});
 	const incoming = !select;
 	const tl = document.getElementById('trade-leftp-title');
 	const tr = document.getElementById('trade-rightp-title');
-	if (tl) tl.textContent = incoming ? 'They give' : 'You give';
-	if (tr) tr.textContent = incoming ? 'You give' : 'You get';
+	setText(tl, incoming ? 'They give' : 'You give');
+	setText(tr, incoming ? 'You give' : 'You get');
 	const sum = document.getElementById('trade-summary');
 	if (sum) {
 		sum.innerHTML = '';
