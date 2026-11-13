@@ -520,3 +520,14 @@ body.online-game #setup { display: none !important; }
 	.game-bar .btn-ghost:not(:first-child), .game-bar .btn-danger { height: 32px; padding: 0 10px; font-size: 11px; flex-shrink: 0; }
 	.save-state { font-size: 12px; white-space: nowrap; }
 }
+
+/* ---------- accounts waiting for approval ---------- */
+.btn-locked { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.join-form .btn-ghost { display: inline-flex; align-items: center; gap: 6px; }
+.noaccess { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.noaccess .modal-title { font-size: 22px; }
+.noaccess-icon { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; color: var(--orange); background: #fecb001a; border: 1px solid #fecb0066; animation: noaccess-pop .35s ease-out; }
+@keyframes noaccess-pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.noaccess .btn-primary { margin-top: 4px; min-width: 140px; }
+.req-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.tab-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px; border-radius: 9px; background: var(--orange); color: var(--dark); font-size: 11px; font-weight: 700; }

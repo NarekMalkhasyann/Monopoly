@@ -4,8 +4,11 @@ import { createRoom, useOnline, clearKicked } from '../online.js';
 import { navigate } from '../router.jsx';
 import { fmtDate } from './format.js';
 import PlayerDots from './PlayerDots.jsx';
+import { NoAccess, Padlock } from './NoAccess.jsx';
 
-export default function Home({ user }) {
+export default function Home({ user, blocked = false }) {
+	const locked = user.role === 'not-approved';
+	const [noAccess, setNoAccess] = useState(blocked);
 	const [active, setActive] = useState(null);
 	const [counts, setCounts] = useState({ active: 0, finished: 0 });
 	const [error, setError] = useState('');
@@ -24,6 +27,7 @@ export default function Home({ user }) {
 	}, []);
 
 	const create = async () => {
+		if (locked) return setNoAccess(true);
 		setBusy(true);
 		setError('');
 		try {
@@ -37,6 +41,7 @@ export default function Home({ user }) {
 	const join = (e) => {
 		e.preventDefault();
 		const c = code.trim();
+		if (locked) return setNoAccess(true);
 		if (c) navigate(`/join/${encodeURIComponent(c.toUpperCase())}`);
 	};
 
@@ -55,12 +60,12 @@ export default function Home({ user }) {
 				<div className="card">
 					<h3>On this device</h3>
 					<p className="muted">2 to 8 players share one screen. Mix humans and computer players.</p>
-					<button className="btn-primary" onClick={() => navigate('/play/local')}>New local game</button>
+					<button className={`btn-primary${locked ? ' btn-locked' : ''}`} onClick={() => (locked ? setNoAccess(true) : navigate('/play/local'))}>{locked && <Padlock />}New local game</button>
 				</div>
 				<div className="card">
 					<h3>Online</h3>
 					<p className="muted">Each player joins from their own device with a room code.</p>
-					<button className="btn-primary" disabled={busy} onClick={create}>{busy ? 'Creating…' : 'Create room'}</button>
+					<button className={`btn-primary${locked ? ' btn-locked' : ''}`} disabled={busy} onClick={create}>{locked && <Padlock />}{busy ? 'Creating…' : 'Create room'}</button>
 					<form className="join-form" onSubmit={join}>
 						<input
 							className="code-input"
@@ -74,7 +79,7 @@ export default function Home({ user }) {
 							spellCheck={false}
 							onChange={(e) => setCode(e.target.value)}
 						/>
-						<button className="btn-ghost" type="submit" disabled={!code.trim()}>Join</button>
+						<button className="btn-ghost" type="submit" disabled={!code.trim()}>{locked && <Padlock />}Join</button>
 					</form>
 				</div>
 			</section>
@@ -94,6 +99,7 @@ export default function Home({ user }) {
 				))}
 			</div>
 			{counts.active > 3 && <button className="btn-ghost" onClick={() => navigate('/history')}>See all games →</button>}
+			{noAccess && <NoAccess onClose={() => { setNoAccess(false); if (blocked) navigate('/play'); }} />}
 		</>
 	);
 }
