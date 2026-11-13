@@ -2188,3 +2188,17 @@ td.statscellname[title="Mortgaged"]::after {
 @media (max-width: 1129px) {
 	#moneybar > table > tbody > tr:has(.money-bar-arrow:not([style*="none"])) { grid-column: 1 / -1; }
 }
+
+/* ==========================================================================
+   Redesign, part 11: desktop screen finishing touches, as in the design
+   ========================================================================== */
+@media (min-width: 1130px) {
+	body.in-game { background: #161616 radial-gradient(1200px 700px at 30% 40%, #232323, #161616) fixed; }
+	#moneybar td.moneybarcell { background: #222222; }
+	/* the log already says where you landed */
+	#control #landed { display: none !important; }
+}
+/* the jail box is only drawn while somebody is in it */
+#board #jail:not(:has(.cell-position)) { background: transparent; border-color: transparent !important; }
+#board #jail:not(:has(.cell-position)) > span { visibility: hidden; }
+#board #jail:has(.cell-position) { background: #1d1d1d; border-color: #ffffff26 !important; }
