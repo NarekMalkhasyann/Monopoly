@@ -108,6 +108,13 @@ function allowed(id, who) {
 	return false;
 }
 
+// Why a trade cannot be drafted or offered right now (empty = it can).
+function tradeBusy() {
+	if (isVisible(document.getElementById('popupwrap'))) return 'Close the pop-up first.';
+	if (isVisible(document.getElementById('auctionbid'))) return 'An auction is running.';
+	return '';
+}
+
 function whoseTurnText(id) {
 	if (AUCTION_BUTTONS.has(id)) return `It is ${win.player[win.game.getCurrentBidder()].name}'s turn to bid.`;
 	if (TRADE_BUTTONS.has(id)) return `This trade is waiting for ${text('trade-leftp-name')}.`;
@@ -183,13 +190,22 @@ function onClickCapture(e) {
 		toast(`It is ${win.player[win.turn].name}'s turn.`);
 		return;
 	}
-	// Opening the trade window is private to the player whose turn it is.
+	// Any player may draft a trade at any time (the draft is private until it is offered), but not in the middle of
+	// a pop-up or an auction, and not while another offer is open.
 	if (id === 'trade-menu-item') {
-		if (win.turn !== myIndex || tradeShared) {
+		const why = tradeShared ? 'Finish the open trade first.' : tradeBusy();
+		if (why) {
 			e.preventDefault();
 			e.stopImmediatePropagation();
-			toast(win.turn !== myIndex ? `It is ${win.player[win.turn].name}'s turn.` : 'Finish the open trade first.');
-		}
+			toast(why);
+		} else win.onlineTradeSelf = myIndex; // the engine starts the draft for me, not for the player whose turn it is
+		return;
+	}
+	// While an offer is open for the two players it is about, nobody else presses game buttons (the offer covers the board).
+	if (tradeShared && RELAYED.has(id) && !TRADE_BUTTONS.has(id) && id !== 'popupclose' && id !== 'popupyes' && id !== 'popupno') {
+		e.preventDefault();
+		e.stopImmediatePropagation();
+		toast('A trade offer is open. Wait until it is answered.');
 		return;
 	}
 	// Cancelling your own draft (nothing shared yet) is local.
@@ -276,8 +292,15 @@ function tick() {
 	waitingSince = 0; idleSince = 0;
 	if (m.seat === mySeat) inflightSince = 0; // my click reached the screen: the next one may be sent
 	if (info.desync && info.desyncKind === 'stuck') setInfo({ desync: false, desyncKind: '', desyncWhy: '' });
+	// An offer made while a pop-up, an auction or another offer is on screen is dropped. Every browser sees the same
+	// screen at this point of the click order, so every browser drops it.
+	if (id === 'proposetradebutton' && (tradeShared || tradeBusy())) {
+		queue.shift(); noteMove();
+		if (m.seat === mySeat) { inflightSince = 0; toast(tradeShared ? 'Another trade offer is already open.' : 'Not possible right now. Try again in a moment.'); }
+		return;
+	}
 	queue.shift(); noteMove();
-	if (m.a.turn && win.turn !== m.a.turn) markDesync(`"${id}" was sent during turn ${m.a.turn} but this browser is on turn ${win.turn}`, 'mismatch');
+	if (m.a.turn && win.turn !== m.a.turn && !TRADE_BUTTONS.has(id)) markDesync(`"${id}" was sent during turn ${m.a.turn} but this browser is on turn ${win.turn}`, 'mismatch');
 	bypass = true;
 	try {
 		if (id === 'proposetradebutton') { win.game.applyTrade(m.a.v); tradeShared = true; }
