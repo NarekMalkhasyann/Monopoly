@@ -534,3 +534,4 @@ body.online-game #setup { display: none !important; }
 
 /* online: Manage works on the properties of the player whose turn it is, so it looks off for everybody else (Trade is open to everybody) */
 body.online-wait #manage-menu-item { opacity: .45; cursor: not-allowed; }
+body.trade-bystander #trade { display: none !important; } /* an offer between two other players */

@@ -208,6 +208,8 @@ function onClickCapture(e) {
 		toast('A trade offer is open. Wait until it is answered.');
 		return;
 	}
+	// The "X has proposed a trade with you" pop-up exists only on the recipient's screen, so closing it is local too.
+	if ((id === 'popupclose') && tradeShared && /proposed a trade/.test(text('popuptext'))) return;
 	// Cancelling your own draft (nothing shared yet) is local.
 	if (id === 'canceltradebutton' && !tradeShared) return;
 	if (!RELAYED.has(id)) return;
@@ -303,7 +305,14 @@ function tick() {
 	if (m.a.turn && win.turn !== m.a.turn && !TRADE_BUTTONS.has(id)) markDesync(`"${id}" was sent during turn ${m.a.turn} but this browser is on turn ${win.turn}`, 'mismatch');
 	bypass = true;
 	try {
-		if (id === 'proposetradebutton') { win.game.applyTrade(m.a.v); tradeShared = true; }
+		if (id === 'proposetradebutton') {
+			// The pop-up "X has proposed a trade with you" is only for the player the offer is made to.
+			const forMe = m.a.v.r === myIndex;
+			const orig = win.popup;
+			win.popup = (html, ...rest) => (!forMe && /has proposed a trade/.test(html) ? undefined : orig(html, ...rest));
+			try { win.game.applyTrade(m.a.v); } finally { win.popup = orig; }
+			tradeShared = true;
+		}
 		else if (id === 'forfeit') {
 			// Only if that player is still in the game and it is their turn (two people may press at once).
 			const room = getOnline().room;
@@ -350,6 +359,9 @@ function refreshInfo() {
 	const over = win.pcount <= 1;
 	const myTurn = !over && win.turn === myIndex;
 	document.body.classList.toggle('online-wait', !myTurn && !over);
+	// An open offer is only on the screens of the two players it is about.
+	const involved = tradeShared && (byName(text('trade-leftp-name')) === myIndex || byName(text('trade-rightp-name')) === myIndex);
+	document.body.classList.toggle('trade-bystander', tradeShared && !involved);
 	// the turn moved on while Manage was open: it would now list the next player's properties, so go back to the main view
 	const manage = document.getElementById('manage');
 	if (!myTurn && manage && isVisible(manage)) { const back = document.getElementById('buy-menu-item'); if (back) back.click(); }
