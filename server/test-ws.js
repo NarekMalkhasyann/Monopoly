@@ -294,6 +294,43 @@ a.send({ t: 'join', code: ja.room.code }); assert.match((await a.next('error', (
 	h.close(); g.close(); k.close();
 }
 
+// ---- three players: a trade does not depend on whose turn it is (PR 74) ----
+{
+	const names = ['Ula', 'Vik', 'Wes'];
+	const toks = []; for (const n of names) toks.push(await register(n));
+	const socks = [];
+	for (const t of toks) { const x = await open(t); await x.next('hello'); socks.push(x); }
+	const [su, sv, sw] = socks;
+	su.send({ t: 'create' }); const jr = await su.next('joined');
+	sv.send({ t: 'join', code: jr.room.code }); await sv.next('joined');
+	sw.send({ t: 'join', code: jr.room.code }); await sw.next('joined');
+	su.send({ t: 'start' });
+	for (const x of socks) await x.next('started');
+
+	// it is seat 1's turn (turn 1). Seat 3 (not on turn) offers seat 2 a trade, seat 2 accepts: both are shared with everybody, in the same order
+	const offer = { i: 3, r: 2, m: 100, p: Array.from({ length: 40 }, (_, k) => (k === 6 ? 1 : 0)), cc: 0, ch: 0 };
+	sw.send({ t: 'act', a: { id: 'proposetradebutton', turn: 1, v: offer } });
+	sv.send({ t: 'act', a: { id: 'accepttradebutton', turn: 1 } });
+	const seen = [];
+	for (const x of socks) {
+		const first = await x.next('act', (m) => m.a.id === 'proposetradebutton');
+		const second = await x.next('act', (m) => m.a.id === 'accepttradebutton');
+		assert.deepEqual(first.a.v, offer);
+		assert.equal(first.seat, 3); assert.equal(second.seat, 2); // who pressed is the seat that sent it, not the player on turn
+		assert.ok(second.seq > first.seq);
+		seen.push([first.seq, second.seq]);
+	}
+	assert.deepEqual(seen[1], seen[0]); assert.deepEqual(seen[2], seen[0]); // identical numbering for all three
+	// the turn player is not blocked meanwhile
+	su.send({ t: 'act', a: { id: 'nextbutton', turn: 1 } });
+	for (const x of socks) await x.next('act', (m) => m.a.id === 'nextbutton');
+	// a player who is not approved cannot sit at this table
+	const tP = (await call('POST', '/api/auth/register', { name: 'Pat', email: 'pat@x.am', password: PW })).body.token;
+	const sp = await open(tP); await sp.next('hello');
+	sp.send({ t: 'join', code: jr.room.code }); assert.equal((await sp.next('error')).code, 'not-approved');
+	for (const x of [...socks, sp]) x.close();
+}
+
 // the SPA fallback is only active when a build exists, API 404s stay JSON
 assert.equal((await call('GET', '/api/nope')).status, 404);
 
