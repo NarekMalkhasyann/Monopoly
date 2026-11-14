@@ -66,7 +66,7 @@ function Game() {
 		if (highestbid > 0) {
 			p.pay(highestbid, 0);
 			sq.owner = highestbidder;
-			addAlert(p.name + " bought " + sq.name + " for $" + highestbid + ".");
+			addAlert(p.name + " bought " + sq.name + " for $" + highestbid + ".", "buy");
 		}
 
 		for (var i = 1; i <= pcount; i++) {
@@ -768,6 +768,7 @@ function Game() {
 	};
 
 	this.applyTrade = function(s) {
+		pendingTradeNames = [player[s.i].name, player[s.r].name];
 		this.trade(new Trade(player[s.i], player[s.r], s.m, s.p, s.cc, s.ch));
 	};
 
@@ -792,11 +793,15 @@ function Game() {
 		if (!credit || !sq.mortgage || sq.owner !== credit.index || price > credit.money) return;
 		credit.pay(price, 0);
 		sq.mortgage = false;
-		addAlert(credit.name + " unmortgaged " + sq.name + " for $" + price + ".");
+		addAlert(credit.name + " unmortgaged " + sq.name + " for $" + price + ".", "mortgage");
 		$("#bankunmortgage" + i).closest("tr").hide();
 	};
 
 	this.cancelTrade = function() {
+		if (pendingTradeNames) {
+			addAlert(pendingTradeNames[1] + " declined the trade offered by " + pendingTradeNames[0] + ".", "trade");
+			pendingTradeNames = null;
+		}
 		$("#trade").hide();
 		$("#buy-menu-item").click(); // back to the first tab
 
@@ -866,6 +871,17 @@ function Game() {
 		if (showAlerts && !confirm(initiator.name + ", are you sure you want to make this exchange with " + recipient.name + "?")) {
 			return false;
 		}
+
+		// One line on the board for the whole deal (the single "received ..." lines stay in the history only).
+		var gives = function(sign, who, other) {
+			var items = [];
+			for (var k = 0; k < 40; k++) if (tradeObj.getProperty(k) === sign) items.push(square[k].name);
+			if (tradeObj.getCommunityChestJailCard() === sign || tradeObj.getChanceJailCard() === sign) items.push("a Get Out of Jail Free card");
+			if (sign * tradeObj.getMoney() > 0) items.push("$" + Math.abs(tradeObj.getMoney()));
+			return who.name + " gave " + (items.join(", ") || "nothing");
+		};
+		pendingTradeNames = null;
+		addAlert(initiator.name + " and " + recipient.name + " agreed on a trade. " + gives(1, initiator) + "; " + gives(-1, recipient) + ".", "trade");
 
 		// Exchange properties
 		for (var i = 0; i < 40; i++) {
@@ -988,7 +1004,8 @@ function Game() {
 			$("#accepttradebutton").show();
 			$("#rejecttradebutton").show();
 
-			addAlert(initiator.name + " initiated a trade with " + recipient.name + ".");
+			addAlert(initiator.name + " initiated a trade with " + recipient.name + ".", "trade");
+			pendingTradeNames = [initiator.name, recipient.name];
 			popup("<p>" + initiator.name + " has proposed a trade with you, " + recipient.name + ". You may accept, reject, or modify the offer.</p>");
 		} else {
 			var tradeResponse = recipient.AI.acceptTrade(tradeObj);
@@ -1119,7 +1136,7 @@ function Game() {
 			return;
 		}
 
-		addAlert(p.name + " is bankrupt.");
+		addAlert(p.name + " is bankrupt.", "bankrupt");
 
 		if (p.creditor !== 0) {
 			pcredit.money += p.money;
@@ -1166,7 +1183,7 @@ function Game() {
 		if (pcount === 2 || bankruptcyUnmortgageFee === 0 || p.creditor === 0) {
 			game.eliminatePlayer();
 		} else {
-			addAlert(pcredit.name + " paid $" + bankruptcyUnmortgageFee + " interest on the mortgaged properties received from " + p.name + ".");
+			addAlert(pcredit.name + " paid $" + bankruptcyUnmortgageFee + " interest on the mortgaged properties received from " + p.name + ".", "bankrupt");
 			popup("<p>" + pcredit.name + ", you must pay $" + bankruptcyUnmortgageFee + " interest on the mortgaged properties you received from " + p.name + ".</p>", function() {player[pcredit.index].pay(bankruptcyUnmortgageFee, 0); game.bankruptcyUnmortgage();});
 		}
 	};
@@ -1293,13 +1310,24 @@ Array.prototype.randomize = function(length) {
 	// }
 // }
 
-function addAlert(alertText) {
+// The game history keeps every line. The board shows only the ones that were given a kind:
+// "rent", "buy", "build", "jail", "trade", "money", "mortgage", "bankrupt" (rolls, turns and landing stay hidden).
+var pendingTradeNames = null; // [offered by, offered to] while a trade offer waits for an answer
+
+function addAlert(alertText, kind) {
 	// Hook: the app keeps a readable log of the game (see src/session.js).
 	if (typeof window.onGameEvent === "function") window.onGameEvent(alertText);
 
+	if (!player[turn].human) {
+		player[turn].AI.alertList += "<div>" + alertText + "</div>";
+	}
+	if (!kind) return;
+
 	$alert = $("#alert");
 
-	var $line = $(document.createElement("div")).text(alertText).appendTo($alert);
+	var $line = $(document.createElement("div")).addClass("ev ev-" + kind).text(alertText).appendTo($alert);
+	// only the latest few events stay on the board
+	while ($alert.children().length > 3) $alert.children().first().remove();
 	// Coloured dot in front of the line: the colour of the player the line is about.
 	for (var pi = 1; pi <= pcount; pi++) {
 		if (player[pi] && alertText.indexOf(player[pi].name) === 0) { $line.css("--dot", player[pi].color); break; }
@@ -1308,9 +1336,6 @@ function addAlert(alertText) {
 	// Animate scrolling down alert element.
 	$alert.stop().animate({"scrollTop": $alert.prop("scrollHeight")}, 1000);
 
-	if (!player[turn].human) {
-		player[turn].AI.alertList += "<div>" + alertText + "</div>";
-	}
 }
 
 function popup(HTML, action, option) {
@@ -1924,7 +1949,7 @@ function addamount(amount, cause) {
 
 	p.money += amount;
 
-	addAlert(p.name + " received $" + amount + " from " + cause + ".");
+	addAlert(p.name + " received $" + amount + " from " + cause + ".", "money");
 }
 
 function subtractamount(amount, cause) {
@@ -1932,12 +1957,12 @@ function subtractamount(amount, cause) {
 
 	p.pay(amount, 0);
 
-	addAlert(p.name + " lost $" + amount + " from " + cause + ".");
+	addAlert(p.name + " lost $" + amount + " from " + cause + ".", "money");
 }
 
 function gotojail() {
 	var p = player[turn];
-	addAlert(p.name + " was sent directly to jail.");
+	addAlert(p.name + " was sent directly to jail.", "jail");
 	document.getElementById("landed").innerHTML = "You are in jail.";
 
 	p.jail = true;
@@ -1981,7 +2006,7 @@ function payeachplayer(amount, cause) {
 		}
 	}
 
-	addAlert(p.name + " lost $" + total + " from " + cause + ".");
+	addAlert(p.name + " lost $" + total + " from " + cause + ".", "money");
 }
 
 function collectfromeachplayer(amount, cause) {
@@ -2003,7 +2028,7 @@ function collectfromeachplayer(amount, cause) {
 		}
 	}
 
-	addAlert(p.name + " received $" + total + " from " + cause + ".");
+	addAlert(p.name + " received $" + total + " from " + cause + ".", "money");
 }
 
 function advance(destination, pass) {
@@ -2015,7 +2040,7 @@ function advance(destination, pass) {
 		} else {
 			p.position = pass;
 			p.money += 200;
-			addAlert(p.name + " collected a $200 salary for passing GO.");
+			addAlert(p.name + " collected a $200 salary for passing GO.", "money");
 		}
 	}
 	if (p.position < destination) {
@@ -2023,7 +2048,7 @@ function advance(destination, pass) {
 	} else {
 		p.position = destination;
 		p.money += 200;
-		addAlert(p.name + " collected a $200 salary for passing GO.");
+		addAlert(p.name + " collected a $200 salary for passing GO.", "money");
 	}
 
 	land();
@@ -2039,7 +2064,7 @@ function advanceToNearestUtility() {
 	} else if (p.position >= 28) {
 		p.position = 12;
 		p.money += 200;
-		addAlert(p.name + " collected a $200 salary for passing GO.");
+		addAlert(p.name + " collected a $200 salary for passing GO.", "money");
 	}
 
 	land(true);
@@ -2057,7 +2082,7 @@ function advanceToNearestRailroad() {
 	} else if (p.position >= 35) {
 		p.position = 5;
 		p.money += 200;
-		addAlert(p.name + " collected a $200 salary for passing GO.");
+		addAlert(p.name + " collected a $200 salary for passing GO.", "money");
 	}
 
 	land(true);
@@ -2082,9 +2107,9 @@ function streetrepairs(houseprice, hotelprice) {
 
 		// If function was called by Community Chest.
 		if (houseprice === 40) {
-			addAlert(p.name + " lost $" + cost + " to Community Chest.");
+			addAlert(p.name + " lost $" + cost + " to Community Chest.", "money");
 		} else {
-			addAlert(p.name + " lost $" + cost + " to Chance.");
+			addAlert(p.name + " lost $" + cost + " to Chance.", "money");
 		}
 	}
 
@@ -2104,7 +2129,7 @@ function payfifty() {
 	p.position = 10;
 	p.pay(50, 0);
 
-	addAlert(p.name + " paid the $50 fine to get out of jail.");
+	addAlert(p.name + " paid the $50 fine to get out of jail.", "jail");
 	updateMoney();
 	updatePosition();
 }
@@ -2147,7 +2172,7 @@ function useJailCard() {
 		}
 	}
 
-	addAlert(p.name + " used a \"Get Out of Jail Free\" card.");
+	addAlert(p.name + " used a \"Get Out of Jail Free\" card.", "jail");
 	updateOwned();
 	updatePosition();
 }
@@ -2180,7 +2205,7 @@ function buyHouse(index) {
 
 			} else {
 				sq.house++;
-				addAlert(p.name + " placed a house on " + sq.name + ".");
+				addAlert(p.name + " placed a house on " + sq.name + ".", "build");
 			}
 
 		} else {
@@ -2190,7 +2215,7 @@ function buyHouse(index) {
 			} else {
 				sq.house = 5;
 				sq.hotel = 1;
-				addAlert(p.name + " placed a hotel on " + sq.name + ".");
+				addAlert(p.name + " placed a hotel on " + sq.name + ".", "build");
 			}
 		}
 
@@ -2208,10 +2233,10 @@ function sellHouse(index) {
 	if (sq.hotel === 1) {
 		sq.hotel = 0;
 		sq.house = 4;
-		addAlert(p.name + " sold the hotel on " + sq.name + ".");
+		addAlert(p.name + " sold the hotel on " + sq.name + ".", "build");
 	} else {
 		sq.house--;
-		addAlert(p.name + " sold a house on " + sq.name + ".");
+		addAlert(p.name + " sold a house on " + sq.name + ".", "build");
 	}
 
 	p.money += sq.houseprice * 0.5;
@@ -2392,7 +2417,7 @@ function buy() {
 
 		property.owner = turn;
 		updateMoney();
-		addAlert(p.name + " bought " + property.name + " for " + property.pricetext + ".");
+		addAlert(p.name + " bought " + property.name + " for " + property.pricetext + ".", "buy");
 
 		updateOwned();
 
@@ -2420,7 +2445,7 @@ function mortgage(index) {
 	document.getElementById("mortgagebutton").value = "Unmortgage for $" + unmortgagePrice;
 	document.getElementById("mortgagebutton").title = "Unmortgage " + sq.name + " for $" + unmortgagePrice + ".";
 
-	addAlert(p.name + " mortgaged " + sq.name + " for $" + mortgagePrice + ".");
+	addAlert(p.name + " mortgaged " + sq.name + " for $" + mortgagePrice + ".", "mortgage");
 	updateOwned();
 	updateMoney();
 
@@ -2442,7 +2467,7 @@ function unmortgage(index) {
 	document.getElementById("mortgagebutton").value = "Mortgage for $" + mortgagePrice;
 	document.getElementById("mortgagebutton").title = "Mortgage " + sq.name + " for $" + mortgagePrice + ".";
 
-	addAlert(p.name + " unmortgaged " + sq.name + " for $" + unmortgagePrice + ".");
+	addAlert(p.name + " unmortgaged " + sq.name + " for $" + unmortgagePrice + ".", "mortgage");
 	updateOwned();
 	return true;
 }
@@ -2538,7 +2563,7 @@ function land(increasedRent) {
 			}
 		}
 
-		addAlert(p.name + " paid $" + rent + " rent to " + player[s.owner].name + ".");
+		addAlert(p.name + " paid $" + rent + " rent to " + player[s.owner].name + ".", "rent");
 		p.pay(rent, s.owner);
 		player[s.owner].money += rent;
 
@@ -2656,7 +2681,7 @@ function applyRoll() {
 		} else if (doublecount === 3) {
 			p.jail = true;
 			doublecount = 0;
-			addAlert(p.name + " rolled doubles three times in a row.");
+			addAlert(p.name + " rolled doubles three times in a row.", "jail");
 			updateMoney();
 
 
@@ -2692,7 +2717,7 @@ function applyRoll() {
 			p.position = 10 + die1 + die2;
 			doublecount = 0;
 
-			addAlert(p.name + " rolled doubles to get out of jail.");
+			addAlert(p.name + " rolled doubles to get out of jail.", "jail");
 
 			land();
 		} else {
@@ -2731,7 +2756,7 @@ function applyRoll() {
 		if (p.position >= 40) {
 			p.position -= 40;
 			p.money += 200;
-			addAlert(p.name + " collected a $200 salary for passing GO.");
+			addAlert(p.name + " collected a $200 salary for passing GO.", "money");
 		}
 
 		land();
@@ -2786,12 +2811,12 @@ function play() {
 		document.getElementById("nextbutton").title = "Roll the dice. If you throw doubles, you will get out of jail.";
 
 		if (p.jailroll === 0)
-			addAlert("This is " + p.name + "'s first turn in jail.");
+			addAlert("This is " + p.name + "'s first turn in jail.", "jail");
 		else if (p.jailroll === 1)
-			addAlert("This is " + p.name + "'s second turn in jail.");
+			addAlert("This is " + p.name + "'s second turn in jail.", "jail");
 		else if (p.jailroll === 2) {
 			document.getElementById("landed").innerHTML += "<div>NOTE: If you do not throw doubles after this roll, you <i>must</i> pay the $50 fine.</div>";
-			addAlert("This is " + p.name + "'s third turn in jail.");
+			addAlert("This is " + p.name + "'s third turn in jail.", "jail");
 		}
 
 		if (!p.human && p.AI.postBail()) {
