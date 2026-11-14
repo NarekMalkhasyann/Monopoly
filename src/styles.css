@@ -2058,6 +2058,18 @@ td.statscellname[title="Mortgaged"]::after {
 	#control #alert div { display: flex; gap: 8px; align-items: baseline; }
 	#control #alert div::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dot, #acfa00); flex-shrink: 0; transform: translateY(-1px); }
 	#control #alert div:last-child { color: #fff; }
+	/* board events: a small card per event, with an icon for its kind */
+	#control #alert { gap: 7px; font-size: 12.5px; }
+	#control #alert div.ev { --ev: #acfa00; display: grid; grid-template-columns: 22px 1fr; gap: 9px; align-items: center; padding: 8px 11px; border-radius: 11px; background: #ffffff0d; box-shadow: inset 3px 0 0 var(--ev); color: #ffffffd9; line-height: 1.3; animation: ev-in .35s ease-out; }
+	#control #alert div.ev::before { content: var(--icon); width: auto; height: auto; margin: 0; border-radius: 0; background: none; display: grid; place-items: center; font-size: 16px; transform: none; }
+	#control #alert div.ev:last-child { color: #fff; background: #ffffff17; }
+	#control #alert { height: 156px; }
+	#control #alert div.ev-rent { --ev: #ff5c5c; --icon: "💸"; }
+	#control #alert div.ev-buy { --ev: #acfa00; --icon: "🏷️"; }
+	#control #alert div.ev-build { --ev: #4ea1ff; --icon: "🏠"; }
+	#control #alert div.ev-jail { --ev: #ffb020; --icon: "🔒"; }
+	#control #alert div.ev-trade { --ev: #c084fc; --icon: "🤝"; }
+	@keyframes ev-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 	#control #landed { background: none; border: none; padding: 0; margin: 6px 0 0; font-size: 12px; color: #ffffffa6; }
 	#control > table > tbody > tr:last-child > td > div:has(#buyproxy:not([hidden])) #nextbutton { flex: none; width: 150px; }
 	#control > table > tbody > tr:last-child > td > div { align-items: center; }
@@ -2181,7 +2193,7 @@ td.statscellname[title="Mortgaged"]::after {
 	#control #buy { order: 2; margin-top: auto; }
 	#control > table > tbody > tr:last-child > td { order: 3; }
 	#control #menu { order: 4; }
-	#control #alert { height: auto; min-height: 84px; max-height: 110px; }
+	#control #alert { height: auto; min-height: 84px; max-height: 160px; }
 	.board-center { background: transparent; }
 }
 
@@ -2251,6 +2263,14 @@ td.statscellname[title="Mortgaged"]::after {
 	#control #menu { order: 3; margin: 2px 0 0; }
 	#control #alert { height: auto; min-height: 0; max-height: none; overflow: visible; font-size: 12px; color: #fff; }
 	#control #alert div:not(:last-child) { display: none; }
+	#control #alert div.ev:not(:last-child) { display: none; }
+	#control #alert div.ev { --ev: #acfa00; display: grid; grid-template-columns: 22px 1fr; gap: 9px; align-items: center; padding: 9px 12px; border-radius: 12px; background: #ffffff17; box-shadow: inset 3px 0 0 var(--ev); line-height: 1.3; animation: ev-in .35s ease-out; }
+	#control #alert div.ev::before { content: var(--icon); width: auto; height: auto; margin: 0; border-radius: 0; background: none; display: grid; place-items: center; font-size: 16px; transform: none; }
+	#control #alert div.ev-rent { --ev: #ff5c5c; --icon: "💸"; }
+	#control #alert div.ev-buy { --ev: #acfa00; --icon: "🏷️"; }
+	#control #alert div.ev-build { --ev: #4ea1ff; --icon: "🏠"; }
+	#control #alert div.ev-jail { --ev: #ffb020; --icon: "🔒"; }
+	#control #alert div.ev-trade { --ev: #c084fc; --icon: "🤝"; }
 	#control #landed { display: none !important; }
 	#control #nextbutton { height: 48px; flex: 1; font-size: 15px; border-radius: 13px; }
 	#control #buyproxy { height: 48px; border-radius: 13px; font-size: 15px; }
