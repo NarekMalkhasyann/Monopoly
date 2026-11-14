@@ -531,3 +531,7 @@ body.online-game #setup { display: none !important; }
 .noaccess .btn-primary { margin-top: 4px; min-width: 140px; }
 .req-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .tab-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px; border-radius: 9px; background: var(--orange); color: var(--dark); font-size: 11px; font-weight: 700; }
+
+/* online: Manage works on the properties of the player whose turn it is, so it looks off for everybody else (Trade is open to everybody) */
+body.online-wait #manage-menu-item { opacity: .45; cursor: not-allowed; }
+body.trade-bystander #trade { display: none !important; } /* an offer between two other players */

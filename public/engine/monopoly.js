@@ -746,8 +746,9 @@ function Game() {
 			writeTrade(tradeObj);
 			this.proposeTrade();
 		} else {
-			var initiator = player[turn];
-			var recipient = turn === 1 ? player[2] : player[1];
+			// Online play: any player may start a trade, not only the one whose turn it is (window.onlineTradeSelf = my number).
+			var initiator = (window.onlineTradeSelf && player[window.onlineTradeSelf]) || player[turn];
+			var recipient = initiator.index === 1 ? player[2] : player[1];
 
 			currentInitiator = initiator;
 			currentRecipient = recipient;
