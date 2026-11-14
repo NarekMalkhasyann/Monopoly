@@ -25,7 +25,7 @@ Online Website of my game https://actmonopoly.vercel.app/
 - **Accounts & History**:
   - Register / sign in, play on this device, resume unfinished games, browse past games with ranking and game log.
 - **Turn timers**:
-  - A player who does nothing for **30 seconds** after *End turn* appears has the turn ended automatically. In an auction each bidder has **15 seconds** before *Pass* is pressed for them. The countdown is a dark green clockwise sweep that fills the button itself; it pauses while a pop-up, the stats window or a trade is open and ignores computer players.
+  - A player who does nothing for **30 seconds** after *End turn* appears has the turn ended automatically. In an auction each bidder has **15 seconds** before *Pass* is pressed for them. The countdown is a dark green clockwise sweep that fills the button itself; it pauses while a pop-up, a pop-up or a trade is open and ignores computer players.
 - **Online play**:
   - Friends play together on their own devices with a room code; see *Online Play* below. The box that shows whose turn it is has a green circle when that player is connected.
 - **Admin panel**:
@@ -87,12 +87,12 @@ they can be shared, and Trade shown as a pop-up instead of replacing the board.
 | Screen width | Layout |
 | :--- | :--- |
 | 1130px and wider | Full-size board, control panel over the board centre, player list on the right |
-| Below 1130px (tablet, phone) | The board shrinks to fit the width; the control panel (Roll Dice, tabs) and the player list stack below it at normal size; the player list becomes a horizontal strip with an arrow over the current player |
-| Below 560px (phone) | Setup form fields wrap; pop-ups, stats and trade window fit the screen |
+| Below 1130px (tablet, phone) | The board shrinks to fit the width; the control panel (Roll Dice, tabs) and the player list stack below it at normal size; the player list becomes a horizontal strip with an arrow over the current player; *My properties* is a card with wrapping chips |
+| Below 641px (phone) | Square board with logos on the cards (short labels where a card has none); Manage and Trade open as bottom sheets; setup form fields wrap |
 
 Touch screens get larger buttons and form fields. The shrinking is done by
 `src/hooks/useFitBoard.js`; the rest is CSS media queries at the end of
-`src/styles.css`. On a phone the board labels are small, so pinch to zoom in.
+`src/styles.css`. On a phone the cards show only the logo; tap a card to see its title deed.
 
 ---
 
@@ -127,6 +127,7 @@ Players sign in (register / login), and every local game is saved to their accou
 - **Sign in / Create account** – email + password. Passwords are hashed with scrypt, the session is a signed JWT kept in `localStorage`.
 - **Replay** – *History → Details → Replay* steps through a saved game line by line (play / pause, speed up to 8×, slider, jump to a turn) with a running count of purchases and rent paid. Address: `/history/:id/replay`.
 - **History filters** – buttons for mode (all / this device / online) and status (all / in progress / finished / abandoned). The **Advanced** button opens a panel with detailed filters: player name, winner, room code, number of players, with computer players or humans only, turns from–to, my result (won / lost, online games), dates (from–to) and the sort order (activity, date or number of turns). The button shows how many advanced filters are on; *Clear filters* resets everything.
+- **Approval** – a new account has the role `not-approved` until an administrator approves it (accounts made from `ADMIN_EMAILS` are admins at once; accounts that existed before this feature stay players). It can open *Play* and *History*, but cannot start a local game, create or join an online room: the server answers `403`, and the buttons show a padlock and a message ("You don't have access to start or join games, wait until your account is approved"). Once approved, it works without logging in again.
 - **Play** – start a new game on this device (2–8 players, humans and AI) or resume an unfinished one.
 - **History** – every game with its mode, players, winner, turns and date; filter it (see above); open *Details* for the final ranking and the full game log; delete a game.
 - **Saving** – the engine calls small hooks (`onTurnStart`, `onGameEvent`, `onPlayerEliminated`, `onGameEnd`). At the start of every turn the browser uploads a checkpoint (players, properties, card decks) plus the new log lines (`src/session.js`). Resume copies the checkpoint back into the engine and continues.
@@ -191,7 +192,7 @@ Each player opens the game on their own device. **Home → Create room** gives a
 | `/join/:code` | Join an online room by its code, then continues at `/play/:id` |
 | `/history`, `/history/:id` | All games; details of one game |
 | `/history/:id/replay` | Step through a saved game line by line |
-| `/admin`, `/admin/users`, `/admin/users/:id`, `/admin/games` | Admin panel (administrators only) |
+| `/admin`, `/admin/requests`, `/admin/users`, `/admin/users/:id`, `/admin/games` | Admin panel (administrators only) |
 | anything else | Page not found |
 
 The router is a small module (`src/router.jsx`, History API, no library). After `npm run build`, `npm start` serves the site from `dist/` and answers every non-API path with `index.html`, so these addresses also work when typed in or reloaded.
@@ -264,7 +265,8 @@ To switch between the **Classic Edition** and the **New York City Edition**, edi
 Open **Admin** in the sidebar (only administrators see it; the server checks the role on every request). It shows:
 
 - **Overview:** totals (users, games, in progress, finished, turns, open connections) and the last 14 days of games and sign-ups.
-- **Users:** every account with search, role filter and sorting; a user page shows their games, lets you make them admin / player or delete the account.
+- **New users req.:** accounts waiting for approval (the tab shows how many). *Approve* makes the account a player; *Reject* deletes it (the person can register again).
+- **Users:** every account with search, role filter (admins / players / not approved) and sorting; a user page shows their games, lets you make them admin / player or delete the account.
 - **Games:** every game of every player with the same filters as History (including *Advanced*) plus a search for the creator's name or e-mail; open any game (details, replay), end a running online game, or delete a finished one.
 
 To become an administrator, set the environment variable `ADMIN_EMAILS` (e.g. `ADMIN_EMAILS=me@example.am`) on the backend, restart it and log in again. Admins can then promote others in the panel. You cannot change or delete your own account there.

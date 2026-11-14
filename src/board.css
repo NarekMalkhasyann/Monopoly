@@ -143,6 +143,9 @@
 	pointer-events: none;
 }
 .cell-name.has-logo { display: block; }
+/* a card with a logo shows only the logo; the name stays for cards without one (corners, chance, taxes) */
+.cell-logo + .cell-name, .cell-name.has-logo { display: none; }
+.cell-logo { max-height: 34px; }
 
 /* invisible helper the engine uses to know where a token is (the visible tokens are drawn by BoardTokens) */
 .cell-position-holder { grid-area: 1 / 1 / -1 / -1; z-index: 4; position: relative; }
@@ -165,7 +168,10 @@
 	.cell:has(.cell-color-bar)::before { color: #f2f2f2; }
 	.board-corner::before { font-size: 7px; }
 	.cell > .cell-anchor { grid-area: 1 / 1; }
-	.cell-logo, .cell-name { display: none !important; }
+	.cell-name { display: none !important; }
+	/* cards with a logo show it (small, centred) instead of the short label */
+	.cell:has(.cell-logo)::before { display: none; }
+	.cell .cell-logo { grid-area: 1 / 1 / -1 / -1; place-self: center; max-width: calc(100% - 4px); max-height: 20px; padding: 2px 3px; border-radius: 4px; margin: 0; }
 
 	.board-top .cell-color-bar, .board-bottom .cell-color-bar { height: 4px; }
 	.board-left .cell-color-bar, .board-right .cell-color-bar { width: 4px; }
