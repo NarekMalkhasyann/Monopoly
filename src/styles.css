@@ -2177,7 +2177,7 @@ td.statscellname[title="Mortgaged"]::after {
    ========================================================================== */
 @media (min-width: 1130px) {
 	#control {
-		width: 578px;
+		width: 743px; /* the middle of the rectangular board (board.css): 9 squares of 81px and 8 gaps of 4px, less a margin */
 		height: 578px;
 		padding: 26px 28px;
 		border-radius: 20px;
