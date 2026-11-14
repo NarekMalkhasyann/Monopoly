@@ -793,7 +793,7 @@ function Game() {
 		if (!credit || !sq.mortgage || sq.owner !== credit.index || price > credit.money) return;
 		credit.pay(price, 0);
 		sq.mortgage = false;
-		addAlert(credit.name + " unmortgaged " + sq.name + " for $" + price + ".");
+		addAlert(credit.name + " unmortgaged " + sq.name + " for $" + price + ".", "mortgage");
 		$("#bankunmortgage" + i).closest("tr").hide();
 	};
 
@@ -1004,7 +1004,7 @@ function Game() {
 			$("#accepttradebutton").show();
 			$("#rejecttradebutton").show();
 
-			addAlert(initiator.name + " initiated a trade with " + recipient.name + ".");
+			addAlert(initiator.name + " initiated a trade with " + recipient.name + ".", "trade");
 			pendingTradeNames = [initiator.name, recipient.name];
 			popup("<p>" + initiator.name + " has proposed a trade with you, " + recipient.name + ". You may accept, reject, or modify the offer.</p>");
 		} else {
@@ -1136,7 +1136,7 @@ function Game() {
 			return;
 		}
 
-		addAlert(p.name + " is bankrupt.");
+		addAlert(p.name + " is bankrupt.", "bankrupt");
 
 		if (p.creditor !== 0) {
 			pcredit.money += p.money;
@@ -1183,7 +1183,7 @@ function Game() {
 		if (pcount === 2 || bankruptcyUnmortgageFee === 0 || p.creditor === 0) {
 			game.eliminatePlayer();
 		} else {
-			addAlert(pcredit.name + " paid $" + bankruptcyUnmortgageFee + " interest on the mortgaged properties received from " + p.name + ".");
+			addAlert(pcredit.name + " paid $" + bankruptcyUnmortgageFee + " interest on the mortgaged properties received from " + p.name + ".", "bankrupt");
 			popup("<p>" + pcredit.name + ", you must pay $" + bankruptcyUnmortgageFee + " interest on the mortgaged properties you received from " + p.name + ".</p>", function() {player[pcredit.index].pay(bankruptcyUnmortgageFee, 0); game.bankruptcyUnmortgage();});
 		}
 	};
@@ -1311,7 +1311,7 @@ Array.prototype.randomize = function(length) {
 // }
 
 // The game history keeps every line. The board shows only the ones that were given a kind:
-// "rent", "buy", "build", "jail", "trade" (everything else - rolls, turns, landing, cards, taxes... - stays hidden).
+// "rent", "buy", "build", "jail", "trade", "money", "mortgage", "bankrupt" (rolls, turns and landing stay hidden).
 var pendingTradeNames = null; // [offered by, offered to] while a trade offer waits for an answer
 
 function addAlert(alertText, kind) {
@@ -1949,7 +1949,7 @@ function addamount(amount, cause) {
 
 	p.money += amount;
 
-	addAlert(p.name + " received $" + amount + " from " + cause + ".");
+	addAlert(p.name + " received $" + amount + " from " + cause + ".", "money");
 }
 
 function subtractamount(amount, cause) {
@@ -1957,7 +1957,7 @@ function subtractamount(amount, cause) {
 
 	p.pay(amount, 0);
 
-	addAlert(p.name + " lost $" + amount + " from " + cause + ".");
+	addAlert(p.name + " lost $" + amount + " from " + cause + ".", "money");
 }
 
 function gotojail() {
@@ -2006,7 +2006,7 @@ function payeachplayer(amount, cause) {
 		}
 	}
 
-	addAlert(p.name + " lost $" + total + " from " + cause + ".");
+	addAlert(p.name + " lost $" + total + " from " + cause + ".", "money");
 }
 
 function collectfromeachplayer(amount, cause) {
@@ -2028,7 +2028,7 @@ function collectfromeachplayer(amount, cause) {
 		}
 	}
 
-	addAlert(p.name + " received $" + total + " from " + cause + ".");
+	addAlert(p.name + " received $" + total + " from " + cause + ".", "money");
 }
 
 function advance(destination, pass) {
@@ -2040,7 +2040,7 @@ function advance(destination, pass) {
 		} else {
 			p.position = pass;
 			p.money += 200;
-			addAlert(p.name + " collected a $200 salary for passing GO.");
+			addAlert(p.name + " collected a $200 salary for passing GO.", "money");
 		}
 	}
 	if (p.position < destination) {
@@ -2048,7 +2048,7 @@ function advance(destination, pass) {
 	} else {
 		p.position = destination;
 		p.money += 200;
-		addAlert(p.name + " collected a $200 salary for passing GO.");
+		addAlert(p.name + " collected a $200 salary for passing GO.", "money");
 	}
 
 	land();
@@ -2064,7 +2064,7 @@ function advanceToNearestUtility() {
 	} else if (p.position >= 28) {
 		p.position = 12;
 		p.money += 200;
-		addAlert(p.name + " collected a $200 salary for passing GO.");
+		addAlert(p.name + " collected a $200 salary for passing GO.", "money");
 	}
 
 	land(true);
@@ -2082,7 +2082,7 @@ function advanceToNearestRailroad() {
 	} else if (p.position >= 35) {
 		p.position = 5;
 		p.money += 200;
-		addAlert(p.name + " collected a $200 salary for passing GO.");
+		addAlert(p.name + " collected a $200 salary for passing GO.", "money");
 	}
 
 	land(true);
@@ -2107,9 +2107,9 @@ function streetrepairs(houseprice, hotelprice) {
 
 		// If function was called by Community Chest.
 		if (houseprice === 40) {
-			addAlert(p.name + " lost $" + cost + " to Community Chest.");
+			addAlert(p.name + " lost $" + cost + " to Community Chest.", "money");
 		} else {
-			addAlert(p.name + " lost $" + cost + " to Chance.");
+			addAlert(p.name + " lost $" + cost + " to Chance.", "money");
 		}
 	}
 
@@ -2233,10 +2233,10 @@ function sellHouse(index) {
 	if (sq.hotel === 1) {
 		sq.hotel = 0;
 		sq.house = 4;
-		addAlert(p.name + " sold the hotel on " + sq.name + ".");
+		addAlert(p.name + " sold the hotel on " + sq.name + ".", "build");
 	} else {
 		sq.house--;
-		addAlert(p.name + " sold a house on " + sq.name + ".");
+		addAlert(p.name + " sold a house on " + sq.name + ".", "build");
 	}
 
 	p.money += sq.houseprice * 0.5;
@@ -2445,7 +2445,7 @@ function mortgage(index) {
 	document.getElementById("mortgagebutton").value = "Unmortgage for $" + unmortgagePrice;
 	document.getElementById("mortgagebutton").title = "Unmortgage " + sq.name + " for $" + unmortgagePrice + ".";
 
-	addAlert(p.name + " mortgaged " + sq.name + " for $" + mortgagePrice + ".");
+	addAlert(p.name + " mortgaged " + sq.name + " for $" + mortgagePrice + ".", "mortgage");
 	updateOwned();
 	updateMoney();
 
@@ -2467,7 +2467,7 @@ function unmortgage(index) {
 	document.getElementById("mortgagebutton").value = "Mortgage for $" + mortgagePrice;
 	document.getElementById("mortgagebutton").title = "Mortgage " + sq.name + " for $" + mortgagePrice + ".";
 
-	addAlert(p.name + " unmortgaged " + sq.name + " for $" + unmortgagePrice + ".");
+	addAlert(p.name + " unmortgaged " + sq.name + " for $" + unmortgagePrice + ".", "mortgage");
 	updateOwned();
 	return true;
 }
@@ -2756,7 +2756,7 @@ function applyRoll() {
 		if (p.position >= 40) {
 			p.position -= 40;
 			p.money += 200;
-			addAlert(p.name + " collected a $200 salary for passing GO.");
+			addAlert(p.name + " collected a $200 salary for passing GO.", "money");
 		}
 
 		land();

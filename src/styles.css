@@ -2069,6 +2069,9 @@ td.statscellname[title="Mortgaged"]::after {
 	#control #alert div.ev-build { --ev: #4ea1ff; --icon: "🏠"; }
 	#control #alert div.ev-jail { --ev: #ffb020; --icon: "🔒"; }
 	#control #alert div.ev-trade { --ev: #c084fc; --icon: "🤝"; }
+	#control #alert div.ev-money { --ev: #34d399; --icon: "💰"; }
+	#control #alert div.ev-mortgage { --ev: #94a3b8; --icon: "🏦"; }
+	#control #alert div.ev-bankrupt { --ev: #ff3b3b; --icon: "💥"; }
 	@keyframes ev-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 	#control #landed { background: none; border: none; padding: 0; margin: 6px 0 0; font-size: 12px; color: #ffffffa6; }
 	#control > table > tbody > tr:last-child > td > div:has(#buyproxy:not([hidden])) #nextbutton { flex: none; width: 150px; }
@@ -2271,6 +2274,9 @@ td.statscellname[title="Mortgaged"]::after {
 	#control #alert div.ev-build { --ev: #4ea1ff; --icon: "🏠"; }
 	#control #alert div.ev-jail { --ev: #ffb020; --icon: "🔒"; }
 	#control #alert div.ev-trade { --ev: #c084fc; --icon: "🤝"; }
+	#control #alert div.ev-money { --ev: #34d399; --icon: "💰"; }
+	#control #alert div.ev-mortgage { --ev: #94a3b8; --icon: "🏦"; }
+	#control #alert div.ev-bankrupt { --ev: #ff3b3b; --icon: "💥"; }
 	#control #landed { display: none !important; }
 	#control #nextbutton { height: 48px; flex: 1; font-size: 15px; border-radius: 13px; }
 	#control #buyproxy { height: 48px; border-radius: 13px; font-size: 15px; }
