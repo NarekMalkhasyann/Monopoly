@@ -1806,7 +1806,7 @@ td.statscellname[title="Mortgaged"]::after {
 	pointer-events: none; /* the card never steals the hover from the chip under it */
 	width: 280px;
 	box-sizing: border-box;
-	z-index: 25;
+	z-index: 70; /* above the page header (30) and the game bar (60), so the top of the card is never covered */
 	overflow: hidden;
 	border: none;
 	border-radius: 20px;
