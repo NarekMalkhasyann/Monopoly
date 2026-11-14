@@ -2261,16 +2261,17 @@ td.statscellname[title="Mortgaged"]::after {
 	#menutable { border-spacing: 10px 0; margin: 0 -10px; width: calc(100% + 20px); }
 	#buy-menu-item { display: none; }
 
-	/* ---- my properties: one swipeable row ---- */
+	/* ---- my properties: a card under the controls, groups stacked, chips wrapping onto as many lines as needed ---- */
 	#myprops {
-		margin: 10px 12px 14px; padding: 0; max-height: none; background: none; box-shadow: none; border-radius: 0;
-		flex-direction: row; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none; z-index: 1;
+		margin: 10px 12px 18px; padding: 14px 14px 12px; max-height: none; background: #222; box-shadow: inset 0 0 0 1px #ffffff0d; border-radius: 16px;
+		display: flex; flex-direction: column; align-items: stretch; gap: 14px; overflow: visible; z-index: 1;
 	}
-	#myprops .mp-group { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
-	#myprops .mp-head { margin: 0; font-size: 12px; flex-shrink: 0; }
-	#myprops .mp-head i, #myprops .mp-head span { display: none; }
-	#myprops ul { flex-wrap: nowrap; gap: 8px; }
-	#myprops li { flex-shrink: 0; padding: 6px 10px; border-radius: 9px; font-size: 11.5px; }
+	#myprops .mp-group { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+	#myprops .mp-head { margin: 0; font-size: 13px; gap: 8px; }
+	#myprops .mp-head i { display: inline-block; width: 9px; height: 9px; }
+	#myprops .mp-head span { display: inline; font-size: 12px; }
+	#myprops ul { display: flex; flex-direction: row; flex-wrap: wrap; gap: 7px; margin: 0; padding: 0; }
+	#myprops li { flex: 0 1 auto; max-width: 100%; padding: 6px 10px; border-radius: 9px; font-size: 11.5px; }
 	#myprops .mp-chip { width: 9px; height: 9px; }
 
 	/* ---- the turn card in the middle of the board; sizes follow the board (cqw = % of the centre's width) ---- */
