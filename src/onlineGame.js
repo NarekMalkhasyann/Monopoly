@@ -176,6 +176,13 @@ function onClickCapture(e) {
 	let square = null;
 	if (id.startsWith('bankunmortgage')) { square = Number(id.slice(14)); id = 'bankunmortgage'; }
 
+	// Manage lists the properties of the player whose turn it is, so only that player may open it.
+	if (id === 'manage-menu-item' && win.turn !== myIndex) {
+		e.preventDefault();
+		e.stopImmediatePropagation();
+		toast(`It is ${win.player[win.turn].name}'s turn.`);
+		return;
+	}
 	// Opening the trade window is private to the player whose turn it is.
 	if (id === 'trade-menu-item') {
 		if (win.turn !== myIndex || tradeShared) {
@@ -320,6 +327,9 @@ function refreshInfo() {
 	const over = win.pcount <= 1;
 	const myTurn = !over && win.turn === myIndex;
 	document.body.classList.toggle('online-wait', !myTurn && !over);
+	// the turn moved on while Manage was open: it would now list the next player's properties, so go back to the main view
+	const manage = document.getElementById('manage');
+	if (!myTurn && manage && isVisible(manage)) { const back = document.getElementById('buy-menu-item'); if (back) back.click(); }
 	// Something is waiting for me: my turn, my bid, or a trade offer made to me.
 	let waitingFor = win.turn;
 	if (document.getElementById('currentbidder') && isVisible(document.getElementById('currentbidder'))) waitingFor = win.game.getCurrentBidder();
