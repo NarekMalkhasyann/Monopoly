@@ -55,8 +55,11 @@ export default function Shell({ user, screen, onLogout = signOut, children }) {
 		<div className="layout">
 			<header className="top-nav">
 				<button className="brand" onClick={() => go('home')} aria-label={`${APP_NAME}, home`}>
-					<span className="brand-mark" aria-hidden="true">A</span>
-					<span className="brand-name">{APP_NAME}</span>
+					<span className="brand-mark" aria-hidden="true">
+						<span className="bm-face bm-a">A</span>
+						<span className="bm-face bm-dice">{[[5, 5], [19, 5], [12, 12], [5, 19], [19, 19]].map(([x, y]) => <i key={x + '-' + y} style={{ left: x, top: y }} />)}</span>
+					</span>
+					<span className="brand-name" aria-hidden="true">{[...APP_NAME].map((c, i) => <span className="ch" style={{ '--i': i }} key={i}>{c}</span>)}</span>
 				</button>
 				<nav className="top-links" aria-label="Main" ref={navRef}>
 					{links}

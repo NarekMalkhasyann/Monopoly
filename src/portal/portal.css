@@ -100,7 +100,21 @@
 	font: 600 16px Montserrat, sans-serif; padding: 0;
 }
 .brand { display: inline-flex; align-items: center; gap: 10px; background: transparent; border: none; color: var(--white); font: 700 18px Montserrat, sans-serif; padding: 0; cursor: pointer; white-space: nowrap; }
-.brand-mark { width: 30px; height: 30px; border-radius: var(--radius); background: var(--green); color: var(--dark); display: grid; place-items: center; font-size: 16px; }
+/* Logo: on hover the "A" tile flips like a die (five pips) and the letters hop one after another. */
+.brand, .brand:hover, .brand:focus-visible { background: transparent; }
+.brand-mark { position: relative; width: 30px; height: 30px; border-radius: var(--radius); background: var(--green); color: var(--dark); font-size: 16px; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.3, 1.5, .5, 1), box-shadow .4s; }
+.bm-face { position: absolute; inset: 0; display: grid; place-items: center; backface-visibility: hidden; border-radius: inherit; }
+.bm-dice { transform: rotateY(180deg); }
+.bm-dice i { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--dark); }
+.brand-name { display: inline-flex; }
+.brand-name .ch { display: inline-block; white-space: pre; transition: transform .4s cubic-bezier(.3, 1.8, .5, 1), color .3s; transition-delay: calc(var(--i) * 22ms); }
+@media (hover: hover) {
+	.brand:hover .brand-mark, .brand:focus-visible .brand-mark { transform: perspective(120px) rotateY(180deg) rotate(-8deg) scale(1.12); box-shadow: 0 0 0 4px #acfa0026, 0 6px 18px #acfa004d; }
+	.brand:hover .brand-name .ch, .brand:focus-visible .brand-name .ch { transform: translateY(-5px); color: var(--green); }
+	.brand:hover .brand-name .ch:nth-child(odd), .brand:focus-visible .brand-name .ch:nth-child(odd) { transform: translateY(-3px); }
+}
+.brand:active .brand-mark { transform: perspective(120px) rotateY(360deg) scale(.94); }
+@media (prefers-reduced-motion: reduce) { .brand-mark, .brand-name .ch { transition: none; } }
 .top-links { position: relative; display: flex; align-items: stretch; gap: 4px; height: 100%; flex: 1; min-width: 0; }
 .top-nav .nav-link { display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; font: 500 14px Montserrat, sans-serif; color: var(--gray); transition: color .25s; }
 .top-nav .nav-link span, .top-nav .nav-link svg { opacity: 1; }
