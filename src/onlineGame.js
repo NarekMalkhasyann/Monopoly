@@ -110,8 +110,9 @@ function allowed(id, who) {
 
 // Why a trade cannot be drafted or offered right now (empty = it can).
 function tradeBusy() {
-	if (isVisible(document.getElementById('popupwrap'))) return 'Close the pop-up first.';
-	if (isVisible(document.getElementById('auctionbid'))) return 'An auction is running.';
+	const shown = (id) => { const el = document.getElementById(id); return !!el && isVisible(el); };
+	if (shown('popupwrap')) return 'Close the pop-up first.';
+	if (shown('auctionbid')) return 'An auction is running.';
 	return '';
 }
 
@@ -262,6 +263,7 @@ function tick() {
 	let ready;
 	if (direct) ready = !(win.jQuery && win.jQuery(':animated').length);
 	else if (manage) ready = !!el && !el.disabled && el.style.display !== 'none';
+	else if (TRADE_BUTTONS.has(id)) ready = !!el && !el.disabled && el.style.display !== 'none'; // the offer window is hidden by CSS for players it is not about, but their game still answers it
 	else if (id === 'buybutton') ready = !!el && !el.disabled; // the real Buy button is hidden on purpose (the panel shows its own); it is only there while a purchase is possible
 	else ready = !!el && !el.disabled && isVisible(el);
 	const nowMs = Date.now();
@@ -343,7 +345,7 @@ function tick() {
 			if (id === 'auctionbid') el.parentElement.parentElement.querySelector('#bid').value = String(m.a.v);
 			el.click();
 			if (id === 'accepttradebutton' || id === 'rejecttradebutton' || id === 'canceltradebutton') {
-				tradeShared = isVisible(document.getElementById('trade'));
+				tradeShared = document.getElementById('trade').style.display !== 'none'; // (not isVisible: the window is hidden by CSS for bystanders)
 			}
 		}
 	} finally { bypass = false; }
