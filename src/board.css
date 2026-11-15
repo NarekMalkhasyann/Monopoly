@@ -26,6 +26,12 @@
 	padding: 10px;
 }
 
+/* Wide screens (the desktop layout): a rectangular board, about 1.26 : 1. The top and bottom rows get wider
+   squares (81px instead of 62.7px) and wider corners; the side columns and all row heights stay as they are. */
+@media (min-width: 1130px) {
+	#board-grid { grid-template-columns: 114px repeat(9, 81px) 114px; }
+}
+
 /* ---- squares ---- */
 .cell {
 	display: grid;

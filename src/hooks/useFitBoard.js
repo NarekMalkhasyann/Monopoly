@@ -13,6 +13,7 @@ const WIDE = 1130; // same breakpoint as the desktop layout in styles.css
 const PHONE = 641; // below this the board is laid out at its own small size by CSS (board.css), no scaling
 const SIDEBAR_MIN = 340; // narrowest the player list may get
 const GAP = 28; // grid gap between board and list
+const MAX_SCALE = 1.3; // on big screens the board may grow a little beyond its natural size
 const BOARD_MARGIN = 15; // #board has margin: 15px in styles.css
 
 export default function useFitBoard() {
@@ -47,9 +48,9 @@ export default function useFitBoard() {
 			if (wide) {
 				// Board and player list sit side by side (CSS grid): the board takes what is left after
 				// the list's minimum width, and is also shrunk until its whole height is on screen.
-				const room = layout.clientWidth - SIDEBAR_MIN - GAP;
+				const room = layout.clientWidth - SIDEBAR_MIN - GAP - 56; // 56 = the layout's left + right padding
 				const top = stage.getBoundingClientRect().top + window.scrollY;
-				scale = Math.min(1, room / naturalW, (window.innerHeight - top - 12) / naturalH);
+				scale = Math.min(MAX_SCALE, room / naturalW, (window.innerHeight - top - 12) / naturalH);
 				scale = Math.max(0.55, scale);
 				stage.style.width = `${Math.ceil(naturalW * scale)}px`;
 			} else {
@@ -59,11 +60,13 @@ export default function useFitBoard() {
 			// The centre panel is laid over the board by the grid; it shrinks with it.
 			layout.style.setProperty('--fit', wide ? String(scale) : '1');
 
-			inner.style.transform = scale < 1 ? `scale(${scale})` : '';
+			inner.style.transform = scale !== 1 ? `scale(${scale})` : '';
 			// Centre a shrunken board; leave the full-size board where it always was.
 			inner.style.marginLeft = scale < 1 && !wide ? `${(stage.clientWidth - naturalW * scale) / 2}px` : '';
 			// A transform does not change layout size, so set the height ourselves.
 			stage.style.height = `${Math.ceil(naturalH * scale)}px`;
+			// The player column never grows taller than the board (its property list scrolls instead).
+			layout.style.setProperty('--board-h', `${Math.ceil(naturalH * scale)}px`);
 		};
 
 		const observer = new ResizeObserver(fit);
