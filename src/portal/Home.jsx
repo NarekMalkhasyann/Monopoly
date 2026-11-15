@@ -65,7 +65,7 @@ export default function Home({ user, blocked = false }) {
 				<div className="card">
 					<h3>Online</h3>
 					<p className="muted">Each player joins from their own device with a room code.</p>
-					<button className={`btn-primary${locked ? ' btn-locked' : ''}`} disabled={busy} onClick={create}>{locked && <Padlock />}{busy ? 'Creating…' : 'Create room'}</button>
+					<button className={`btn-primary${locked ? ' btn-locked' : ''}`} disabled={busy} onClick={create}>{locked && <Padlock />}{busy ? 'Creating…' : 'Create/Join room'}</button>
 					<form className="join-form" onSubmit={join}>
 						<input
 							className="code-input"
