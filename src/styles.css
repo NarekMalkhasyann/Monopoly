@@ -714,6 +714,70 @@ input[type="checkbox"] {
 	border-radius: var(--radius-sm);
 }
 
+/* ---- Pop-up look: the same card as Manage / Trade, a coloured badge for the kind of message, and clear buttons ---- */
+#popup {
+	--pu: #a8f400;
+	width: 360px !important;
+	min-width: 0;
+	max-width: calc(100vw - 24px);
+	padding: 24px 24px 20px;
+	border: none;
+	border-radius: 20px;
+	background: #222;
+	box-shadow: inset 0 0 0 1px #ffffff14, var(--shadow-modal);
+	text-align: center;
+}
+#popup::before {
+	content: attr(data-icon) "\00a0\00a0" attr(data-title);
+	display: inline-block;
+	margin-bottom: 14px;
+	padding: 6px 14px;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--pu) 16%, transparent);
+	color: var(--pu);
+	font-size: 12px;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+#popup[data-kind="chance"] { --pu: #ff9f1c; }
+#popup[data-kind="chest"] { --pu: #4aa8ff; }
+#popup[data-kind="trade"] { --pu: #a8f400; }
+#popup[data-kind="money"] { --pu: #2ecc8f; }
+#popup[data-kind="bad"] { --pu: #ff5c5c; }
+#popup[data-kind="win"] { --pu: #ffd23f; }
+#popup[data-kind="ask"] { --pu: #c18bff; }
+#popup[data-kind="info"] { --pu: #9aa4b2; }
+/* auto-dismiss: a thin bar counts the 5 seconds down, then the pop-up and its backdrop fade out */
+#popup { position: relative; overflow: hidden; }
+#popup[data-auto="1"]::after {
+	content: ""; position: absolute; left: 0; bottom: 0; height: 3px; width: 100%;
+	background: var(--pu); opacity: 0.7; transform-origin: left; animation: pu-count 5s linear 0.4s forwards;
+}
+@keyframes pu-count { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+#popupwrap, #popupbackground { transition: opacity 0.45s ease; }
+#popupwrap #popup { transition: transform 0.45s ease; }
+#popupwrap.pu-gone, #popupbackground.pu-gone { opacity: 0 !important; pointer-events: none !important; }
+#popupwrap.pu-gone #popup { transform: translateY(-10px) scale(0.97); }
+@media (prefers-reduced-motion: reduce) {
+	#popupwrap, #popupbackground, #popupwrap #popup { transition: none; }
+	#popup[data-auto="1"]::after { animation: none; }
+}
+#popuptext p { margin: 0; font-size: 15px; line-height: 1.55; }
+/* cards: the badge already says Chance / Community Chest, so the old picture and title go and the text gets room */
+#popup[data-kind="chance"] #popuptext > img, #popup[data-kind="chest"] #popuptext > img,
+#popup[data-kind="chance"] #popuptext > div:first-of-type, #popup[data-kind="chest"] #popuptext > div:first-of-type { display: none; }
+#popup[data-kind="chance"] #popuptext > div:not(:has(> input)), #popup[data-kind="chest"] #popuptext > div:not(:has(> input)) {
+	text-align: center !important; font-size: 17px; font-weight: 600; line-height: 1.5; margin-top: 0;
+}
+/* buttons: full-width row, main action lime, the other one outlined */
+#popuptext > div:has(> #popupclose), #popuptext > div:has(> #popupyes) { display: flex; gap: 10px; margin-top: 20px; }
+#popupclose, #popupyes, #popupno { flex: 1; margin: 0; padding: 13px 16px; font-size: 14px; border-radius: 12px; }
+#popup input[type="button"]:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (max-width: 1129px) {
+	#popup { width: min(360px, 100%) !important; padding: 22px 18px 18px; }
+}
+
 #popupwrap {
 	position: absolute;
 	top: 240px;
