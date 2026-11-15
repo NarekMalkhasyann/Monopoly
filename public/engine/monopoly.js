@@ -1392,6 +1392,7 @@ function popup(HTML, action, option) {
 		$("#popupclose").focus();
 
 		$("#popupclose").on("click", function() {
+			clearTimeout(window.popupAutoTimer);
 			$("#popupwrap").hide();
 			$("#popupbackground").fadeOut(400);
 		}).on("click", action);
@@ -1400,16 +1401,25 @@ function popup(HTML, action, option) {
 
 	// Plain messages (no action, no question) fade away by themselves after 5 seconds. The pop-up is only made
 	// invisible (pu-gone), it stays "open", so the online relay still sees the same state on every screen.
+	// Chance / Community Chest cards press OK for the player after 5 seconds (the card then does what it says,
+	// exactly as if OK was clicked). Online, only the player whose turn it is presses it; the others get it through the relay.
 	clearTimeout(window.popupAutoTimer);
 	$("#popupwrap, #popupbackground").removeClass("pu-gone");
-	var auto = !action && option !== "yes/no" && option !== "blank";
+	var isCard = (puKind[0] === "chance" || puKind[0] === "chest") && typeof action === "function" && option !== "yes/no" && option !== "blank";
+	var cardAuto = isCard && (!window.onlineMayAutoClick || window.onlineMayAutoClick());
+	var auto = (!action && option !== "yes/no" && option !== "blank") || cardAuto;
 	puEl.setAttribute("data-auto", "");
 	void puEl.offsetWidth; // so the countdown bar starts over for every new message
 	puEl.setAttribute("data-auto", auto ? "1" : "");
 	if (auto) {
 		// counted from the moment it is shown, whatever the animations do
 		window.popupAutoTimer = setTimeout(function() {
-			$("#popupwrap, #popupbackground").addClass("pu-gone");
+			if (cardAuto) {
+				var ok = document.getElementById("popupclose");
+				if (ok && $("#popupwrap").is(":visible")) ok.click();
+			} else {
+				$("#popupwrap, #popupbackground").addClass("pu-gone");
+			}
 		}, 5400);
 	}
 	// Show using animation.

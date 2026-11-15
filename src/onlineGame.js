@@ -428,6 +428,8 @@ export function startOnlineGame(room, you) {
 	for (let i = 1; i <= win.pcount; i++) if (win.player[i].name === me.name) myIndex = i;
 	setInfo({ me: me.name });
 
+	// The engine asks before it presses OK on a Chance / Community Chest card by itself: only the player whose turn it is does, and never while moves are being replayed.
+	win.onlineMayAutoClick = () => win.turn === myIndex && queue.length === 0 && !loadingOn;
 	document.addEventListener('click', onClickCapture, true);
 	document.addEventListener('keydown', onKeyCapture, true);
 	timer = setInterval(() => { tick(); refreshInfo(); }, 40);

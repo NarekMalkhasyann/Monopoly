@@ -135,10 +135,10 @@ export default function TradePanel() {
 					</tr>
 					<tr>
 						<td className="trade-cell trade-cash">
-							<span className="trade-cashlabel">Cash</span><span className="trade-money"><b>$</b><input id="trade-leftp-money" defaultValue="0" title="Enter amount to exchange with the other player." /></span><span className="trade-of" id="trade-leftp-of" />
+							<span className="trade-cashlabel">Cash</span><span className="trade-money"><b>$</b><input id="trade-leftp-money" defaultValue="0" inputMode="numeric" onFocus={(e) => e.target.select()} title="Enter amount to exchange with the other player." /></span><span className="trade-of" id="trade-leftp-of" />
 						</td>
 						<td className="trade-cell trade-cash">
-							<span className="trade-cashlabel">Cash</span><span className="trade-money"><b>$</b><input id="trade-rightp-money" defaultValue="0" title="Enter amount to exchange with the other player." /></span><span className="trade-of" id="trade-rightp-of" />
+							<span className="trade-cashlabel">Cash</span><span className="trade-money"><b>$</b><input id="trade-rightp-money" defaultValue="0" inputMode="numeric" onFocus={(e) => e.target.select()} title="Enter amount to exchange with the other player." /></span><span className="trade-of" id="trade-rightp-of" />
 						</td>
 					</tr>
 					<tr>
