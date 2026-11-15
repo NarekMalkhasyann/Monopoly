@@ -2482,3 +2482,33 @@ td.statscellname[title="Mortgaged"]::after {
 	.trade-with { font-size: 0; }
 	.trade-with::before { content: "WITH"; font-size: 11px; }
 }
+
+/* ===== Trade: header never hidden, property lists never overlap the cash field, cash field fully tappable ===== */
+/* the app header (about 52px) sits above the overlay on tablets and small laptops; start the window below it */
+@media (min-width: 641px) {
+	#trade { padding-top: 56px; box-sizing: border-box; }
+	#trade .trade-modal { height: min(690px, calc(100dvh - 68px)); }
+}
+/* tablets and phones: the sections are stacked in a plain column (a grid squeezed the property list to one row on narrow screens
+   and it ran over the cash field). Each section keeps its natural height, the window scrolls. */
+@media (max-width: 760px) {
+	#trade table.trade-grid { display: flex; flex-direction: column; align-content: normal; gap: 10px; }
+	.trade-grid > tbody > tr > td { flex: 0 0 auto; grid-row: auto; grid-column: auto; }
+	.trade-grid > tbody > tr:nth-child(1) > td:nth-child(1) { order: 1; }
+	.trade-grid > tbody > tr:nth-child(3) > td:nth-child(1) { order: 2; }
+	.trade-grid > tbody > tr:nth-child(2) > td:nth-child(1) { order: 3; }
+	.trade-grid > tbody > tr:nth-child(1) > td:nth-child(2) { order: 4; margin-top: 6px; }
+	.trade-grid > tbody > tr:nth-child(3) > td:nth-child(2) { order: 5; }
+	.trade-grid > tbody > tr:nth-child(2) > td:nth-child(2) { order: 6; }
+}
+@media (max-width: 640px) {
+	.trade-grid > tbody > tr:nth-child(3) > td { display: block; height: auto; }
+	.trade-grid > tbody > tr:nth-child(3) > td table { display: flex; flex-flow: row wrap; gap: 6px; width: 100%; }
+}
+/* the whole cash box is the input: tap anywhere on it (the $ stays visible on the left) */
+.trade-money { position: relative; padding: 0 !important; }
+.trade-money b { position: absolute; left: 14px; pointer-events: none; z-index: 1; }
+#trade .trade-money input { position: static; display: block; box-sizing: border-box; width: 100% !important; min-width: 120px; height: 100% !important; padding: 0 14px 0 30px; cursor: text; text-align: left; }
+#trade .trade-money input::selection { background: #acfa0055; color: #fff; }
+.trade-grid .trade-cash .trade-money { min-height: 44px; }
+.trade-money:focus-within { box-shadow: inset 0 0 0 1.5px #acfa00; }
