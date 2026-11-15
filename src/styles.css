@@ -1004,6 +1004,21 @@ a.statscellcolor {
 	#moneybarwrap { grid-area: 1 / 2; padding-top: 15px; box-sizing: border-box; display: flex; flex-direction: column; max-height: var(--board-h, none); }
 	#moneybarwrap #moneybar { flex: 0 0 auto; }
 	#moneybarwrap #myprops { flex: 1 1 auto; min-height: 90px; max-height: none; overflow-y: auto; }
+	/* Hint that the list scrolls: a soft fade at whichever edge still has hidden content (the covers are
+	   attached to the content, so they hide the fade once you reach that end), and a visible scrollbar. */
+	#moneybarwrap #myprops {
+		background:
+			linear-gradient(#222 30%, #22222200) top / 100% 36px no-repeat local,
+			linear-gradient(#22222200, #222 70%) bottom / 100% 36px no-repeat local,
+			linear-gradient(#ffffff1f, #ffffff00) top / 100% 22px no-repeat scroll,
+			linear-gradient(#ffffff00, #ffffff1f) bottom / 100% 22px no-repeat scroll,
+			#222;
+		scrollbar-width: thin;
+		scrollbar-color: #ffffff59 transparent;
+	}
+	#moneybarwrap #myprops::-webkit-scrollbar { width: 8px; }
+	#moneybarwrap #myprops::-webkit-scrollbar-thumb { background: #ffffff59; border-radius: 8px; }
+	#moneybarwrap #myprops::-webkit-scrollbar-thumb:hover { background: #ffffff8c; }
 }
 @media (max-width: 1129px) {
 	#control { grid-area: 2 / 1; justify-self: center; }
