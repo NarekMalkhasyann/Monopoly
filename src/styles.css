@@ -748,6 +748,21 @@ input[type="checkbox"] {
 #popup[data-kind="win"] { --pu: #ffd23f; }
 #popup[data-kind="ask"] { --pu: #c18bff; }
 #popup[data-kind="info"] { --pu: #9aa4b2; }
+/* auto-dismiss: a thin bar counts the 5 seconds down, then the pop-up and its backdrop fade out */
+#popup { position: relative; overflow: hidden; }
+#popup[data-auto="1"]::after {
+	content: ""; position: absolute; left: 0; bottom: 0; height: 3px; width: 100%;
+	background: var(--pu); opacity: 0.7; transform-origin: left; animation: pu-count 5s linear 0.4s forwards;
+}
+@keyframes pu-count { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+#popupwrap, #popupbackground { transition: opacity 0.45s ease; }
+#popupwrap #popup { transition: transform 0.45s ease; }
+#popupwrap.pu-gone, #popupbackground.pu-gone { opacity: 0 !important; pointer-events: none !important; }
+#popupwrap.pu-gone #popup { transform: translateY(-10px) scale(0.97); }
+@media (prefers-reduced-motion: reduce) {
+	#popupwrap, #popupbackground, #popupwrap #popup { transition: none; }
+	#popup[data-auto="1"]::after { animation: none; }
+}
 #popuptext p { margin: 0; font-size: 15px; line-height: 1.55; }
 /* cards: the badge already says Chance / Community Chest, so the old picture and title go and the text gets room */
 #popup[data-kind="chance"] #popuptext > img, #popup[data-kind="chest"] #popuptext > img,

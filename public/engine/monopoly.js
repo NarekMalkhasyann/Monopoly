@@ -1398,9 +1398,21 @@ function popup(HTML, action, option) {
 
 	}
 
+	// Plain messages (no action, no question) fade away by themselves after 5 seconds. The pop-up is only made
+	// invisible (pu-gone), it stays "open", so the online relay still sees the same state on every screen.
+	clearTimeout(window.popupAutoTimer);
+	$("#popupwrap, #popupbackground").removeClass("pu-gone");
+	var auto = !action && option !== "yes/no" && option !== "blank";
+	puEl.setAttribute("data-auto", auto ? "1" : "");
+	puEl.onmouseenter = function() { clearTimeout(window.popupAutoTimer); puEl.setAttribute("data-auto", ""); }; // hovering = still reading
 	// Show using animation.
 	$("#popupbackground").fadeIn(400, function() {
 		$("#popupwrap").show();
+		if (auto) {
+			window.popupAutoTimer = setTimeout(function() {
+				$("#popupwrap, #popupbackground").addClass("pu-gone");
+			}, 5000);
+		}
 	});
 
 }
@@ -1409,7 +1421,7 @@ function popup(HTML, action, option) {
 // Keyboard for pop-ups: Enter = OK, Esc = No (never Enter on Yes/No, so nothing is confirmed by accident).
 document.addEventListener("keydown", function(e) {
 	var wrap = document.getElementById("popupwrap");
-	if (!wrap || getComputedStyle(wrap).display === "none") return;
+	if (!wrap || getComputedStyle(wrap).display === "none" || wrap.classList.contains("pu-gone")) return;
 	var tag = e.target && e.target.tagName;
 	if (tag === "INPUT" && e.target.type !== "button" || tag === "TEXTAREA" || tag === "SELECT") return;
 	var btn = null;

@@ -111,7 +111,7 @@ function allowed(id, who) {
 // Why a trade cannot be drafted or offered right now (empty = it can).
 function tradeBusy() {
 	const shown = (id) => { const el = document.getElementById(id); return !!el && isVisible(el); };
-	if (shown('popupwrap')) return 'Close the pop-up first.';
+	if (shown('popupwrap') && !document.getElementById('popupwrap').classList.contains('pu-gone')) return 'Close the pop-up first.';
 	if (shown('auctionbid')) return 'An auction is running.';
 	return '';
 }
