@@ -1403,16 +1403,18 @@ function popup(HTML, action, option) {
 	clearTimeout(window.popupAutoTimer);
 	$("#popupwrap, #popupbackground").removeClass("pu-gone");
 	var auto = !action && option !== "yes/no" && option !== "blank";
+	puEl.setAttribute("data-auto", "");
+	void puEl.offsetWidth; // so the countdown bar starts over for every new message
 	puEl.setAttribute("data-auto", auto ? "1" : "");
-	puEl.onmouseenter = function() { clearTimeout(window.popupAutoTimer); puEl.setAttribute("data-auto", ""); }; // hovering = still reading
+	if (auto) {
+		// counted from the moment it is shown, whatever the animations do
+		window.popupAutoTimer = setTimeout(function() {
+			$("#popupwrap, #popupbackground").addClass("pu-gone");
+		}, 5400);
+	}
 	// Show using animation.
 	$("#popupbackground").fadeIn(400, function() {
 		$("#popupwrap").show();
-		if (auto) {
-			window.popupAutoTimer = setTimeout(function() {
-				$("#popupwrap, #popupbackground").addClass("pu-gone");
-			}, 5000);
-		}
 	});
 
 }
