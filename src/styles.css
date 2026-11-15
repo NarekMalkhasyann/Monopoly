@@ -755,12 +755,17 @@ input[type="checkbox"] {
 	background: var(--pu); opacity: 0.7; transform-origin: left; animation: pu-count 5s linear 0.4s forwards;
 }
 @keyframes pu-count { from { transform: scaleX(1); } to { transform: scaleX(0); } }
-#popupwrap, #popupbackground { transition: opacity 0.45s ease; }
-#popupwrap #popup { transition: transform 0.45s ease; }
-#popupwrap.pu-gone, #popupbackground.pu-gone { opacity: 0 !important; pointer-events: none !important; }
-#popupwrap.pu-gone #popup { transform: translateY(-10px) scale(0.97); }
+/* Entrance and exit use keyframes (not transitions): the backdrop is also animated by jQuery, and a transition on top of it makes it stutter. */
+@keyframes pu-in { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes pu-out-box { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-8px) scale(0.98); } }
+@keyframes pu-out-bg { from { opacity: 1; } to { opacity: 0; } }
+#popupwrap #popup { animation: pu-in 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both; will-change: transform, opacity; }
+#popupwrap.pu-gone #popup { animation: pu-out-box 0.5s ease forwards; }
+#popupbackground.pu-gone { animation: pu-out-bg 0.5s ease forwards; }
+#popupwrap.pu-gone, #popupbackground.pu-gone { pointer-events: none !important; }
 @media (prefers-reduced-motion: reduce) {
-	#popupwrap, #popupbackground, #popupwrap #popup { transition: none; }
+	#popupwrap #popup, #popupwrap.pu-gone #popup, #popupbackground.pu-gone { animation: none; }
+	#popupwrap.pu-gone, #popupbackground.pu-gone { opacity: 0; }
 	#popup[data-auto="1"]::after { animation: none; }
 }
 #popuptext p { margin: 0; font-size: 15px; line-height: 1.55; }
@@ -776,6 +781,8 @@ input[type="checkbox"] {
 #popup input[type="button"]:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 @media (max-width: 1129px) {
 	#popup { width: min(360px, 100%) !important; padding: 22px 18px 18px; }
+	/* centred in the visible area on phones and tablets */
+	#popupwrap { top: 50% !important; transform: translateY(-50%); }
 }
 
 #popupwrap {
