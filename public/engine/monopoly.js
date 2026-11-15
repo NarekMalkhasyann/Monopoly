@@ -15,6 +15,7 @@ function Game() {
 	var highestbid;
 	var currentbidder = 1;
 	var auctionproperty;
+	var auctionCount = 0; // how many auctions were started (online: every browser counts the same, see window.liveAuction)
 
 	this.rollDice = function() {
 		die1 = Math.floor(gameRandom() * 6) + 1;
@@ -67,6 +68,8 @@ function Game() {
 			p.pay(highestbid, 0);
 			sq.owner = highestbidder;
 			addAlert(p.name + " bought " + sq.name + " for $" + highestbid + ".", "buy");
+		} else if (window.liveAuction) {
+			addAlert(sq.name + " was not sold.", "info");
 		}
 
 		for (var i = 1; i <= pcount; i++) {
@@ -101,6 +104,15 @@ function Game() {
 		auctionproperty = index;
 		highestbidder = 0;
 		highestbid = 0;
+
+		// Online play: a live auction. Anyone bids at any time, the server keeps the clock (src/liveAuction.js);
+		// the engine only announces the start and later applies the bids and the end it is told about.
+		if (window.liveAuction) {
+			auctionCount++;
+			window.liveAuction.open({ index: index, n: auctionCount, turn: turn });
+			return true;
+		}
+
 		currentbidder = turn + 1;
 
 		if (currentbidder > pcount) {
@@ -250,6 +262,28 @@ function Game() {
 	this.auctionExit = function() {
 		player[currentbidder].bidding = false;
 		this.auctionPass();
+	};
+
+	// Used by the live auction (online): a bid / the end, as decided by the server. The winner pays only if they still can
+	// (everybody computes the same, so the property stays with the bank in every browser otherwise).
+	this.liveAuctionBid = function(bidder, amount) {
+		highestbidder = bidder;
+		highestbid = amount;
+	};
+
+	this.liveAuctionEnd = function(winner, amount) {
+		if (winner > 0 && player[winner] && amount > 0 && player[winner].money >= amount) {
+			highestbidder = winner;
+			highestbid = amount;
+		} else {
+			highestbidder = 0;
+			highestbid = 0;
+		}
+		finalizeAuction();
+	};
+
+	this.getAuctionProperty = function() {
+		return auctionproperty;
 	};
 
 	// Used by online play (src/onlineGame.js): whose turn it is to bid.

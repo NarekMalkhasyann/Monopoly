@@ -25,6 +25,8 @@ export function useOnline() {
 	return useSyncExternalStore((fn) => { listeners.add(fn); return () => listeners.delete(fn); }, getOnline);
 }
 export const onAction = (fn) => { actionListeners.add(fn); return () => actionListeners.delete(fn); };
+const auctionListeners = new Set();
+export const onAuctionMessage = (fn) => { auctionListeners.add(fn); return () => auctionListeners.delete(fn); };
 export const clearError = () => set({ error: '' });
 
 function handle(msg) {
@@ -34,6 +36,8 @@ function handle(msg) {
 			set({ room: msg.room, you: msg.you, error: '', left: false, logged: msg.logged || 0 });
 			if (pending) { pending.resolve(msg.room); pending = null; }
 			for (const a of msg.actions || []) deliver(a);
+			// joined in the middle of a live auction: tell the game how much time is left (applied after the backlog)
+			if (msg.auction) actionListeners.forEach((fn) => fn({ seq: 0, seat: 0, a: { id: 'aucsync', turn: 0, n: msg.auction.n, v: msg.auction.high, rem: msg.auction.remMs } }));
 			break;
 		case 'room':
 		case 'started':
@@ -53,6 +57,7 @@ function handle(msg) {
 			roomsListeners.forEach((fn) => fn());
 			break;
 		case 'error':
+			if (msg.code === 'auction-low') { auctionListeners.forEach((fn) => fn(msg.message)); break; } // "Someone bid higher": shown on the auction itself
 			set({ error: msg.message });
 			if (pending) { const e = new Error(msg.message); e.code = msg.code || ''; pending.reject(e); pending = null; }
 			break;
