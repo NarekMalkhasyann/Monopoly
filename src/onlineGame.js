@@ -512,6 +512,7 @@ export const playerIndexOfSeat = (room, seat) => {
 	return p ? byName(p.name) : 0;
 };
 
+export const myPlayerIndex = () => myIndex;
 export const isOnlineGameRunning = () => started;
 // Still catching up on clicks (rejoin, or a click is on its way): the turn timer waits.
 export const isReplaying = () => queue.length > 0;

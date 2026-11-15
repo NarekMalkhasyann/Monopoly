@@ -7,6 +7,7 @@ import MoneyBar from './components/MoneyBar.jsx';
 import Setup from './components/Setup.jsx';
 import ControlPanel from './components/ControlPanel.jsx';
 import TradePanel from './components/TradePanel.jsx';
+import LiveAuction from './components/LiveAuction.jsx';
 import Dice3D from './components/Dice3D.jsx';
 import TurnTimer from './components/TurnTimer.jsx';
 import useFitBoard from './hooks/useFitBoard.js';
@@ -121,6 +122,7 @@ export default function App() {
 				</div>
 				<Setup />
 				<TradePanel />
+				<LiveAuction />
 				<Dice3D active={showGame} />
 				{showGame && <TurnTimer />}
 				{showGame && <GameBar />}

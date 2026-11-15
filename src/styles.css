@@ -2512,3 +2512,68 @@ td.statscellname[title="Mortgaged"]::after {
 #trade .trade-money input::selection { background: #acfa0055; color: #fff; }
 .trade-grid .trade-cash .trade-money { min-height: 44px; }
 .trade-money:focus-within { box-shadow: inset 0 0 0 1.5px #acfa00; }
+
+/* ===== Live auction (online games): anyone bids at any time, the last top bid wins after 5 seconds ===== */
+#live-auction { position: fixed; inset: 0; z-index: 17; display: grid; place-items: center; padding: 16px; background: #000000cc; backdrop-filter: blur(4px); color: var(--white); overflow-y: auto; font-family: 'Montserrat', sans-serif; }
+.la-card { width: min(880px, 100%); background: #1f1f1f; border-radius: 24px; padding: 22px 24px 20px; box-shadow: inset 0 0 0 1px #ffffff14, 0 40px 100px rgba(0, 0, 0, 0.8); }
+.la-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.la-head h3 { margin: 0; font-size: 22px; font-weight: 800; }
+.la-head h3 span { color: var(--green); }
+.la-count { font-size: 12px; font-weight: 700; color: #ffffff99; background: #ffffff0f; padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
+.la-body { display: grid; grid-template-columns: 1fr 290px; gap: 22px; align-items: start; }
+.la-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.la-high { background: #262626; border-radius: 16px; padding: 14px 16px; box-shadow: inset 0 0 0 1px #ffffff0d; }
+.la-high small, .la-bidlabel { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; color: #ffffff80; }
+.la-high-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; }
+.la-high-row b { font-size: 38px; font-weight: 800; color: var(--green); line-height: 1; }
+.la-high-row.la-none b { font-size: 22px; color: #ffffff80; }
+.la-high-row span { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.la-avatar { width: 26px; height: 26px; border-radius: 50%; flex: none; display: inline-grid; place-items: center; font-style: normal; font-size: 12px; font-weight: 800; color: #161616; }
+.la-bar { height: 10px; border-radius: 999px; background: #ffffff14; overflow: hidden; }
+.la-bar i { display: block; height: 100%; border-radius: inherit; background: var(--green); transition: width 0.12s linear; }
+.la-idle .la-bar i { background: #ffffff55; }
+.la-urgent .la-bar i { background: #ff5b5b; }
+.la-timer-text { display: flex; align-items: center; justify-content: space-between; margin-top: 7px; font-size: 13px; font-weight: 700; color: #ffffffcc; }
+.la-urgent .la-timer-text { color: #ff8a8a; }
+.la-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.la-buttons button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 11px 6px; border: none; border-radius: 14px; background: var(--green); color: #161616; font-family: inherit; cursor: pointer; transition: transform 0.08s, filter 0.15s; }
+.la-buttons button small { font-size: 12px; font-weight: 700; opacity: 0.7; }
+.la-buttons button b { font-size: 20px; font-weight: 800; }
+.la-buttons button:hover:not(:disabled) { filter: brightness(1.08); }
+.la-buttons button:active:not(:disabled) { transform: scale(0.97); }
+.la-buttons button:disabled { background: #ffffff14; color: #ffffff55; cursor: not-allowed; }
+.la-hint { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: #ffffff80; }
+.la-hint b { color: #fff; white-space: nowrap; }
+.la-hint.la-warn span { color: #ff8a8a; font-weight: 700; }
+.la-history { display: flex; flex-direction: column; gap: 6px; max-height: 170px; overflow-y: auto; }
+.la-hrow { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 10px; background: #ffffff0a; font-size: 14px; }
+.la-hrow span { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.la-hrow b { color: var(--green); }
+.la-empty { font-size: 12px; color: #ffffff59; padding: 4px 2px; }
+.la-deed { background: #262626; border-radius: 16px; overflow: hidden; box-shadow: inset 0 0 0 1px #ffffff14; }
+.la-deed-head { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 14px 12px 12px; color: #161616; text-align: center; }
+.la-deed-logo { display: flex; padding: 4px 9px; border-radius: 9px; background: #f3f3f3; max-width: 190px; }
+.la-deed-logo img { display: block; max-height: 30px; max-width: 100%; object-fit: contain; }
+.la-deed-kind { font-size: 10px; font-weight: 700; letter-spacing: 0.22em; opacity: 0.7; }
+.la-deed-name { font-size: 19px; font-weight: 800; line-height: 1.15; }
+.la-deed-cat { font-size: 11px; font-weight: 600; opacity: 0.7; }
+.la-deed-price { padding: 10px 16px 4px; font-size: 12px; color: #ffffff99; text-align: right; }
+.la-deed-price b { color: #fff; }
+.la-deed-rows { padding: 2px 10px; display: flex; flex-direction: column; gap: 2px; }
+.la-deed-rows div { display: flex; justify-content: space-between; padding: 5px 8px; border-radius: 8px; font-size: 12px; color: #ffffffb3; }
+.la-deed-rows b { color: #fff; }
+.la-deed-foot { margin: 6px 16px 0; padding: 9px 0 13px; border-top: 1px solid #ffffff14; display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: #ffffffb3; }
+@media (max-width: 700px) {
+	#live-auction { padding: 10px; align-items: end; }
+	.la-card { padding: 16px 14px 14px; border-radius: 20px; }
+	.la-body { grid-template-columns: 1fr; gap: 12px; }
+	.la-deed { order: -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; }
+	.la-deed-head { flex-direction: row; justify-content: flex-start; text-align: left; gap: 10px; padding: 10px 12px; grid-column: 1 / 3; }
+	.la-deed-kind, .la-deed-cat, .la-deed-rows, .la-deed-foot { display: none; }
+	.la-deed-name { font-size: 16px; }
+	.la-deed-price { padding: 0 14px; font-size: 11px; }
+	.la-deed-price b { font-size: 15px; display: block; }
+	.la-high-row b { font-size: 30px; }
+	.la-history { max-height: 96px; order: 4; }
+	.la-bidlabel { order: 5; } .la-buttons { order: 6; } .la-hint { order: 7; }
+}
