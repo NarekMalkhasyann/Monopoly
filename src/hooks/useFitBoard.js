@@ -65,6 +65,8 @@ export default function useFitBoard() {
 			inner.style.marginLeft = scale < 1 && !wide ? `${(stage.clientWidth - naturalW * scale) / 2}px` : '';
 			// A transform does not change layout size, so set the height ourselves.
 			stage.style.height = `${Math.ceil(naturalH * scale)}px`;
+			// The player column never grows taller than the board (its property list scrolls instead).
+			layout.style.setProperty('--board-h', `${Math.ceil(naturalH * scale)}px`);
 		};
 
 		const observer = new ResizeObserver(fit);
