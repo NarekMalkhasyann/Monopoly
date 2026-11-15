@@ -8,6 +8,7 @@ process.env.FORFEIT_AFTER_MS = '400';
 process.env.ABANDON_AFTER_MS = '700';
 process.env.SWEEP_EVERY_MS = '200';
 process.env.ADMIN_EMAILS = 'root@x.am';
+process.env.AUCTION_FIRST_MS = '700'; process.env.AUCTION_BID_MS = '350'; process.env.AUCTION_GRACE_MS = '100';
 const db = await openDb(process.env.TEST_DATABASE_URL || ':memory:');
 const server = createApp(db, { secret: 'test-secret' });
 await new Promise((r) => server.listen(0, r));
@@ -329,6 +330,60 @@ a.send({ t: 'join', code: ja.room.code }); assert.match((await a.next('error', (
 	const sp = await open(tP); await sp.next('hello');
 	sp.send({ t: 'join', code: jr.room.code }); assert.equal((await sp.next('error')).code, 'not-approved');
 	for (const x of [...socks, sp]) x.close();
+}
+
+
+// live auction: anyone bids at any time, the server keeps the clock
+{
+	const names = ['Ava', 'Bob', 'Cat']; const toks = []; for (const n of names) toks.push(await register(n));
+	const socks = [];
+	for (const t of toks) { const x = await open(t); await x.next('hello'); socks.push(x); }
+	const [su, sv, sw] = socks;
+	su.send({ t: 'create' }); const jr = await su.next('joined');
+	sv.send({ t: 'join', code: jr.room.code }); await sv.next('joined');
+	sw.send({ t: 'join', code: jr.room.code }); await sw.next('joined');
+	su.send({ t: 'start' });
+	for (const x of socks) await x.next('started');
+	const ev = (x, id, n) => x.next('act', (m) => m.a.id === id && m.a.n === n);
+	const all = async (id, n) => Promise.all(socks.map((x) => ev(x, id, n)));
+
+	// a wrong number is ignored; the right one opens it for everybody, once (the second report is ignored)
+	sv.send({ t: 'auction-open', n: 5, turn: 1 });
+	sv.send({ t: 'auction-open', n: 1, turn: 1 }); sw.send({ t: 'auction-open', n: 1, turn: 1 });
+	const opened = await all('aucopen', 1);
+	assert.equal(opened[0].seat, 2); assert.equal(opened[0].a.rem, 700); assert.equal(opened[0].a.turn, 1);
+	// bids: any player, absolute amount; too low / stale number are refused
+	sw.send({ t: 'auction-bid', n: 1, amount: 50 });
+	const b50 = await all('aucbid', 1); assert.equal(b50[0].a.v, 50); assert.equal(b50[0].seat, 3);
+	sv.send({ t: 'auction-bid', n: 1, amount: 50 });
+	assert.equal((await sv.next('error')).code, 'auction-low');
+	sv.send({ t: 'auction-bid', n: 9, amount: 500 }); // stale auction number: ignored
+	sv.send({ t: 'auction-bid', n: 1, amount: 60 });
+	const b60 = await su.next('act', (m) => m.a.id === 'aucbid' && m.a.v === 60); assert.equal(b60.seat, 2);
+	// a new bid restarts the clock: the sale comes ~350 ms after the last bid, with the last bidder as winner
+	const t0 = Date.now();
+	const ended = await all('aucend', 1);
+	assert.equal(ended[0].a.v, 60); assert.equal(ended[0].a.w, 2); assert.equal(ended[0].seat, 2);
+	assert.ok(Date.now() - t0 >= 300, 'the end waits for the whole 5 s (here 350 ms)');
+	assert.deepEqual(ended.map((m) => m.seq), [ended[0].seq, ended[0].seq, ended[0].seq]);
+	// after the end bids are ignored
+	su.send({ t: 'auction-bid', n: 1, amount: 900 });
+	// second auction, nobody bids: the property stays with the bank
+	sv.send({ t: 'auction-open', n: 2, turn: 1 });
+	await all('aucopen', 2);
+	const unsold = await all('aucend', 2);
+	assert.equal(unsold[0].a.v, 0); assert.equal(unsold[0].a.w, -1);
+	// a joiner in the middle of an auction gets a snapshot; the backlog holds every auction event in order
+	sw.send({ t: 'auction-open', n: 3, turn: 1 }); await all('aucopen', 3);
+	su.send({ t: 'auction-bid', n: 3, amount: 25 }); await all('aucbid', 3);
+	const sx = await open(toks[1]); await sx.next('hello');
+	sx.send({ t: 'join', gameId: jr.room.id, after: 0 });
+	const jx = await sx.next('joined');
+	assert.equal(jx.auction.n, 3); assert.equal(jx.auction.high, 25); assert.equal(jx.auction.seat, 1); assert.ok(jx.auction.remMs > 0 && jx.auction.remMs <= 350);
+	assert.deepEqual(jx.actions.map((m) => m.a.id), ['aucopen', 'aucbid', 'aucbid', 'aucend', 'aucopen', 'aucend', 'aucopen', 'aucbid']);
+	await all('aucend', 3);
+	sx.close();
+	for (const x of socks) x.close();
 }
 
 // the SPA fallback is only active when a build exists, API 404s stay JSON

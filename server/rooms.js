@@ -47,6 +47,13 @@ const FORFEIT_AFTER_MS = () => num(process.env.FORFEIT_AFTER_MS, 60_000);
 // A running game that nobody has had open for this long is marked "abandoned".
 const ABANDON_AFTER_MS = () => num(process.env.ABANDON_AFTER_MS, 30 * 60_000);
 const SWEEP_EVERY_MS = () => num(process.env.SWEEP_EVERY_MS, 30_000);
+// Live auction (online): anyone may bid at any time. The first bid must come within AUCTION_FIRST_MS or the property
+// stays with the bank; every new bid restarts AUCTION_BID_MS; the server accepts a bid up to AUCTION_GRACE_MS after
+// the clock the players see has run out, so a slow connection does not lose a bid that was sent in time.
+const AUCTION_FIRST_MS = () => num(process.env.AUCTION_FIRST_MS, 20_000);
+const AUCTION_BID_MS = () => num(process.env.AUCTION_BID_MS, 5_000);
+const AUCTION_GRACE_MS = () => (process.env.AUCTION_GRACE_MS === '0' ? 0 : num(process.env.AUCTION_GRACE_MS, 300));
+const AUCTION_MAX_BID = 1_000_000;
 
 export function createRooms(db) {
 	// SQL is portable between SQLite and PostgreSQL (see db.js).
@@ -88,6 +95,45 @@ export function createRooms(db) {
 		job.then(() => { if (pending.get(room.id) === job) pending.delete(room.id); });
 		return job;
 	};
+
+	// ---- live auction ---------------------------------------------------------
+	// The server is the only clock of an auction. Opening, every accepted bid and the end are numbered like clicks
+	// (ids "aucopen", "aucbid", "aucend") and stored with them, so every browser, and a player who rejoins, sees the
+	// same auction in the same order. The browsers decide nothing about time.
+	function auctionEvent(room, seat, a) {
+		const action = { seat, a };
+		const seq = ++room.seq;
+		written(room, async () => { await q.insertAction(room.id, seq, a.turn || 0, 'click', JSON.stringify(action)); await q.bump(room.id); });
+		broadcast(room, { t: 'act', seq, ...action });
+	}
+	function auctionSchedule(room, ms) {
+		const au = room.auction;
+		clearTimeout(au.timer);
+		au.deadline = Date.now() + ms;
+		au.timer = setTimeout(() => auctionEnd(room), ms + AUCTION_GRACE_MS());
+		au.timer.unref();
+	}
+	function auctionEnd(room) {
+		const au = room.auction;
+		if (!au) return;
+		clearTimeout(au.timer);
+		room.auction = null;
+		if (room.status !== 'active') return;
+		auctionEvent(room, au.seat < 0 ? 0 : au.seat, { id: 'aucend', n: au.n, turn: au.turn, v: au.high, w: au.seat });
+	}
+	const auctionStop = (room) => { if (room.auction) { clearTimeout(room.auction.timer); room.auction = null; } };
+	// What a browser that (re)joins in the middle of an auction needs to start its own clock.
+	const auctionSnapshot = (room) => (room.auction ? { n: room.auction.n, high: room.auction.high, seat: room.auction.seat, remMs: Math.max(0, room.auction.deadline - Date.now()) } : null);
+	// After a server restart the clock of a running auction is gone: close it with no sale (the property stays with the bank).
+	async function auctionRecover(room) {
+		const row = await db.get("SELECT text FROM game_actions WHERE game_id = ? AND type = 'click' AND (text LIKE '%\"id\":\"aucopen\"%' OR text LIKE '%\"id\":\"aucbid\"%' OR text LIKE '%\"id\":\"aucend\"%') ORDER BY seq DESC LIMIT 1", [room.id]);
+		if (!row) return;
+		let o; try { o = JSON.parse(row.text); } catch { return; }
+		room.auctionN = Number(o.a && o.a.n) || 0;
+		if (o.a && o.a.id !== 'aucend' && room.status === 'active') {
+			auctionEvent(room, 0, { id: 'aucend', n: room.auctionN, turn: Number(o.a.turn) || 0, v: 0, w: -1 });
+		}
+	}
 
 	/** @type {Map<number, any>} */
 	const rooms = new Map();
@@ -150,12 +196,14 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 				id: row.id, code: row.room_code, hostId: row.owner_id, status: row.status, seed: row.seed,
 				isPrivate: !!row.is_private, pwHash: row.room_password || null,
 				seq: await q.lastSeq(row.id), turnCount: row.turn_count || 0, writes: Promise.resolve(),
+				auction: null, auctionN: 0, // the running live auction (see above) and how many were opened
 				banned: new Set(), // users the host removed: they cannot come back to this room
 				members: new Map(), // userId -> { seat, name, color, sessions:Set }
 			};
 			for (const m of await q.members(row.id)) {
 				room.members.set(m.user_id, { userId: m.user_id, seat: m.seat, name: m.name, color: m.color, sessions: new Set(), offlineSince: Date.now() });
 			}
+			if (row.status === 'active') await auctionRecover(room);
 			rooms.set(row.id, room);
 			return room;
 		})();
@@ -291,6 +339,7 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 			msg.actions = (await q.clicksAfter(room.id, Number(after) || 0)).map((r) => ({ seq: r.seq, ...JSON.parse(r.text) }));
 			// how many log lines the server already has: the host's browser, replaying the game, must not send those again
 			msg.logged = cleanLog(await q.logLines(room.id)).length;
+			msg.auction = auctionSnapshot(room);
 		}
 		return msg;
 	}
@@ -457,6 +506,35 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 			broadcast(room, { t: 'act', seq, ...action });
 		},
 
+		// Live auction. Every browser's engine reaches the start of the same auction at the same point of the click order and
+		// reports it with its running number; the first report counts, the others (same number) are ignored.
+		'auction-open'(s, msg) {
+			const room = s.room;
+			if (!room || room.status !== 'active' || !room.members.has(s.user.id)) return;
+			const n = Number(msg.n);
+			if (room.auction || !Number.isInteger(n) || n !== room.auctionN + 1) return;
+			room.auctionN = n;
+			room.auction = { n, turn: Number(msg.turn) || 0, high: 0, seat: -1, deadline: 0, timer: null };
+			auctionSchedule(room, AUCTION_FIRST_MS());
+			auctionEvent(room, room.members.get(s.user.id).seat, { id: 'aucopen', n, turn: room.auction.turn, rem: AUCTION_FIRST_MS() });
+		},
+
+		'auction-bid'(s, msg) {
+			const room = s.room;
+			const au = room && room.auction;
+			if (!au || room.status !== 'active') return;
+			const member = room.members.get(s.user.id);
+			if (!member || Number(msg.n) !== au.n) return;
+			const amount = Number(msg.amount);
+			if (!Number.isInteger(amount) || amount < 1 || amount > AUCTION_MAX_BID) return err(s.conn, 'That is not a valid bid');
+			if (amount <= au.high) return err(s.conn, `Someone bid $${au.high}. Bid more.`, 'auction-low');
+			if (Date.now() > au.deadline + AUCTION_GRACE_MS()) return; // the clock ran out; the end is on its way
+			au.high = amount;
+			au.seat = member.seat;
+			auctionSchedule(room, AUCTION_BID_MS());
+			auctionEvent(room, member.seat, { id: 'aucbid', n: au.n, turn: au.turn, v: amount, rem: AUCTION_BID_MS() });
+		},
+
 		// Remove a player who has been away for a while (their turn would block everybody).
 		forfeit(s, msg) {
 			const room = s.room;
@@ -513,6 +591,7 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 				await q.finish(winner, turns, room.id);
 				for (const r of results) await q.finalPlayer(Math.round(Number(r.money) || 0), Number(r.rank) || null, room.id, Number(r.seat));
 			});
+			auctionStop(room);
 			broadcast(room, { t: 'ended', room: publicRoom(room) });
 			rooms.delete(room.id);
 		},
@@ -520,6 +599,7 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 
 	function abandonRoom(room) {
 		room.status = 'abandoned';
+		auctionStop(room);
 		written(room, () => q.abandon(room.id));
 		broadcast(room, { t: 'ended', room: publicRoom(room) });
 		rooms.delete(room.id);
