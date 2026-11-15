@@ -999,7 +999,7 @@ a.statscellcolor {
 #control { grid-area: 1 / 1; }
 #moneybarwrap { grid-area: 2 / 1; }
 @media (min-width: 1130px) {
-	#game-layout { grid-template-columns: auto minmax(340px, 1fr); column-gap: 28px; padding-right: 28px; }
+	#game-layout { grid-template-columns: auto minmax(340px, 480px); justify-content: center; column-gap: 28px; padding: 0 28px; }
 	#control { place-self: center; transform: scale(var(--fit, 1)); }
 	#moneybarwrap { grid-area: 1 / 2; padding-top: 15px; }
 }
