@@ -1338,8 +1338,29 @@ function addAlert(alertText, kind) {
 
 }
 
+// Pop-up header: the kind of message decides the little badge (icon + title) and its colour (CSS: #popup[data-kind]).
+// Purely visual: it is worked out from the text itself, so every screen shows the same thing.
+function popupKind(HTML, yesNo) {
+	var t = String(HTML).toLowerCase();
+	if (t.indexOf("chance_icon") !== -1) return ["chance", "?", "Chance"];
+	if (t.indexOf("community_chest_icon") !== -1) return ["chest", "\u2605", "Community Chest"];
+	if (/^\s*<div[^>]*>\s*auction/.test(t)) return ["money", "$", "Auction"];
+	if (t.indexOf("won the game") !== -1) return ["win", "\u2605", "Winner"];
+	if (t.indexOf("bankrupt") !== -1) return ["bad", "\u2715", "Bankruptcy"];
+	if (yesNo) return ["ask", "?", "Please confirm"];
+	if (t.indexOf("jail") !== -1) return ["bad", "!", "Jail"];
+	if (t.indexOf("trade") !== -1 || t.indexOf("offer") !== -1) return ["trade", "\u21C4", "Trade"];
+	if (t.indexOf("$") !== -1) return ["money", "$", "Payment"];
+	return ["info", "i", "Notice"];
+}
+
 function popup(HTML, action, option) {
 	document.getElementById("popuptext").innerHTML = HTML;
+	var puKind = popupKind(HTML, String(option || action).toLowerCase() === "yes/no");
+	var puEl = document.getElementById("popup");
+	puEl.setAttribute("data-kind", puKind[0]);
+	puEl.setAttribute("data-icon", puKind[1]);
+	puEl.setAttribute("data-title", puKind[2]);
 	document.getElementById("popup").style.width = "300px";
 	document.getElementById("popup").style.top = "0px";
 	document.getElementById("popup").style.left = "0px";
@@ -1384,6 +1405,18 @@ function popup(HTML, action, option) {
 
 }
 
+
+// Keyboard for pop-ups: Enter = OK, Esc = No (never Enter on Yes/No, so nothing is confirmed by accident).
+document.addEventListener("keydown", function(e) {
+	var wrap = document.getElementById("popupwrap");
+	if (!wrap || getComputedStyle(wrap).display === "none") return;
+	var tag = e.target && e.target.tagName;
+	if (tag === "INPUT" && e.target.type !== "button" || tag === "TEXTAREA" || tag === "SELECT") return;
+	var btn = null;
+	if (e.key === "Enter") btn = document.getElementById("popupclose");
+	else if (e.key === "Escape") btn = document.getElementById("popupno");
+	if (btn && document.activeElement !== btn) { e.preventDefault(); btn.click(); }
+});
 
 function updatePosition() {
 	// Reset borders
