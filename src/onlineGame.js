@@ -292,7 +292,9 @@ function tick() {
 		// the start must wait until this browser's engine has reached the same auction (it opens after the dice / pop-ups)
 		const la = live.getLiveAuction();
 		if (id === 'aucsync') ready = true;
-		else ready = la.open && la.n === m.a.n && !(id === 'aucopen' && win.jQuery && win.jQuery(':animated').length);
+		// (matched by order, not by number: the server's count is the one that counts, so the browsers' own counts need not agree)
+		else if (id === 'aucopen') ready = la.open && la.deadlineAt === 0 && !(win.jQuery && win.jQuery(':animated').length);
+		else ready = la.open && la.deadlineAt > 0;
 	}
 	else if (direct) ready = !(win.jQuery && win.jQuery(':animated').length);
 	else if (manage) ready = !!el && !el.disabled && el.style.display !== 'none';
@@ -396,7 +398,7 @@ function bidderOf(seat) {
 function applyAuctionEvent(m) {
 	const { id, v, rem, n } = m.a;
 	const la = live.getLiveAuction();
-	if (id === 'aucopen') live.serverOpened(rem);
+	if (id === 'aucopen') live.serverOpened(rem, n);
 	else if (id === 'aucsync') { if (la.open && la.n === n) live.serverSnapshot({ remMs: rem }); }
 	else if (id === 'aucbid') {
 		const who = bidderOf(m.seat);
@@ -488,7 +490,7 @@ export function startOnlineGame(room, you) {
 		logged: getOnline().logged || 0, // lines the server has already: replaying the game must not upload them again
 	});
 
-	win.liveAuction = { open: (info) => live.engineOpened(info, queue.length > 1) }; // (replaying a long backlog: the server already knows these auctions)
+	win.liveAuction = { open: (info) => live.engineOpened(info) }; // (a browser replaying old history reports too; the server ignores auctions it already knows)
 	win.setup();
 
 	const me = players.find((p) => p.userId === you.userId);

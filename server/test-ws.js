@@ -347,8 +347,8 @@ a.send({ t: 'join', code: ja.room.code }); assert.match((await a.next('error', (
 	const ev = (x, id, n) => x.next('act', (m) => m.a.id === id && m.a.n === n);
 	const all = async (id, n) => Promise.all(socks.map((x) => ev(x, id, n)));
 
-	// a wrong number is ignored; the right one opens it for everybody, once (the second report is ignored)
-	sv.send({ t: 'auction-open', n: 5, turn: 1 });
+	// an old number is ignored; the right one opens it for everybody, once (the second report is ignored)
+	sv.send({ t: 'auction-open', n: 0, turn: 1 });
 	sv.send({ t: 'auction-open', n: 1, turn: 1 }); sw.send({ t: 'auction-open', n: 1, turn: 1 });
 	const opened = await all('aucopen', 1);
 	assert.equal(opened[0].seat, 2); assert.equal(opened[0].a.rem, 700); assert.equal(opened[0].a.turn, 1);
@@ -382,6 +382,8 @@ a.send({ t: 'join', code: ja.room.code }); assert.match((await a.next('error', (
 	assert.equal(jx.auction.n, 3); assert.equal(jx.auction.high, 25); assert.equal(jx.auction.seat, 1); assert.ok(jx.auction.remMs > 0 && jx.auction.remMs <= 350);
 	assert.deepEqual(jx.actions.map((m) => m.a.id), ['aucopen', 'aucbid', 'aucbid', 'aucend', 'aucopen', 'aucend', 'aucopen', 'aucbid']);
 	await all('aucend', 3);
+	// a browser whose own count runs ahead of the server's still opens the auction (the number only has to grow)
+	sv.send({ t: 'auction-open', n: 7, turn: 1 }); await all('aucopen', 7); await all('aucend', 7);
 	sx.close();
 	for (const x of socks) x.close();
 }
