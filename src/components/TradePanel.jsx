@@ -3,6 +3,7 @@
 // #trade (the dimmed overlay); .trade-modal is the panel itself.
 
 import { useEffect } from 'react';
+import { myPlayerIndex } from '../onlineGame.js';
 
 // Recipient chips and the summary line are built from what the engine puts in
 // the modal, so the engine and the online relay keep working unchanged.
@@ -78,16 +79,27 @@ function decorate() {
 		const of = document.getElementById('trade-' + k + 'p-of');
 		setText(of, pl ? 'of $' + pl.money : '');
 	});
-	const incoming = !select;
+	// Who gives what is told by the player's name, not by the side: an offer that is shown to its recipient has the
+	// recipient on the left, the one who is reading it can be on either side.
+	const nameOf = (k) => { const el = document.getElementById('trade-' + k + 'p-name'); return el ? (el.querySelector('select') ? el.querySelector('select').options[el.querySelector('select').selectedIndex]?.textContent : el.textContent) : ''; };
+	const meP = win.player && myPlayerIndex() > 0 ? win.player[myPlayerIndex()] : null;
+	let meSide = 'left'; // a draft is always written from my side (left); local games too
+	if (!select && !meP) meSide = 'right'; // local game: unchanged
+	if (!select && meP) meSide = nameOf('left') === meP.name ? 'left' : nameOf('right') === meP.name ? 'right' : null;
+	const otherSide = meSide === 'left' ? 'right' : 'left';
 	const tl = document.getElementById('trade-leftp-title');
 	const tr = document.getElementById('trade-rightp-title');
-	setText(tl, incoming ? 'They give' : 'You give');
-	setText(tr, incoming ? 'You give' : 'You get');
+	const youGive = 'You give';
+	if (meSide) {
+		setText(document.getElementById('trade-' + meSide + 'p-title'), youGive);
+		setText(document.getElementById('trade-' + otherSide + 'p-title'), select ? 'You get' : 'They give');
+	} else { setText(tl, `${nameOf('left')} gives`); setText(tr, `${nameOf('right')} gives`); }
 	const sum = document.getElementById('trade-summary');
 	if (sum) {
 		sum.innerHTML = '';
-		const l = side('left'), r = side('right');
-		const rows = incoming ? [['You get', l], ['You give', r]] : [['You give', l], ['You get', r]];
+		const rows = meSide
+			? [[youGive, side(meSide)], ['You get', side(otherSide)]]
+			: [[`${nameOf('left')} gives`, side('left')], [`${nameOf('right')} gives`, side('right')]];
 		rows.forEach(([k, v]) => {
 			const d = document.createElement('div');
 			const b = document.createElement('b');
