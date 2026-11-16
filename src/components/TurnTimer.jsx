@@ -38,7 +38,7 @@ const TURN = {
 		const btn = document.getElementById('nextbutton');
 		const who = w.player && w.pcount > 1 ? w.player[w.turn] : null;
 		const armed = !!(btn && who && who.human && /end turn/i.test(btn.value) && !btn.disabled && visible(btn));
-		const paused = ['popupwrap', 'popupbackground', 'statswrap', 'trade', 'auctionbid'].some((id) => visible(document.getElementById(id))) || isReplaying();
+		const paused = ['popupwrap', 'popupbackground', 'statswrap', 'trade', 'auctionbid', 'live-auction'].some((id) => visible(document.getElementById(id))) || isReplaying();
 		return { btn, armed, paused, name: who ? who.name : '', key: 'turn' };
 	},
 };

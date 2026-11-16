@@ -2512,3 +2512,131 @@ td.statscellname[title="Mortgaged"]::after {
 #trade .trade-money input::selection { background: #acfa0055; color: #fff; }
 .trade-grid .trade-cash .trade-money { min-height: 44px; }
 .trade-money:focus-within { box-shadow: inset 0 0 0 1.5px #acfa00; }
+
+/* ===== Live auction (online games): anyone bids at any time, the last top bid wins after 5 seconds ===== */
+#live-auction { position: fixed; inset: 0; z-index: 17; display: grid; place-items: center; padding: 16px; background: #000000cc; backdrop-filter: blur(4px); color: var(--white); overflow-y: auto; font-family: 'Montserrat', sans-serif; }
+.la-card { width: min(880px, 100%); background: #1f1f1f; border-radius: 24px; padding: 22px 24px 20px; box-shadow: inset 0 0 0 1px #ffffff14, 0 40px 100px rgba(0, 0, 0, 0.8); }
+.la-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.la-gavel { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 14px; background: #3a4a17; color: var(--green); }
+.la-title { flex: 1; min-width: 0; }
+.la-title h3 { margin: 0; font-size: 26px; font-weight: 800; line-height: 1.1; }
+.la-title p { margin: 3px 0 0; font-size: 14px; color: #ffffff99; }
+.la-count { font-size: 12px; font-weight: 700; color: #ffffff99; background: #ffffff0f; padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
+.la-body { display: grid; grid-template-columns: 1fr 290px; gap: 22px; align-items: start; }
+.la-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.la-high { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border-radius: 20px; background: linear-gradient(110deg, #2c3a17 0%, #262626 70%); box-shadow: inset 0 0 0 1.5px #5a8a12; }
+.la-high.la-none { background: #262626; box-shadow: inset 0 0 0 1px #ffffff14; }
+.la-high-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.la-high-mid small { font-size: 13px; font-weight: 800; letter-spacing: 0.1em; color: var(--green); }
+.la-high-mid b { font-size: 46px; font-weight: 800; color: #fff; line-height: 1.05; }
+.la-high.la-none .la-high-mid b { font-size: 26px; color: #ffffffb3; margin: 4px 0; }
+.la-high-mid span { font-size: 15px; color: #ffffff99; }
+.la-high-mid strong { color: #fff; }
+.la-bank { text-align: right; font-size: 14px; color: #ffffff99; display: flex; flex-direction: column; }
+.la-bank b { font-size: 18px; color: #fff; }
+.la-bidlabel { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; color: #ffffff80; }
+.la-avatar-big { width: 74px !important; height: 74px !important; font-size: 32px !important; }
+.la-avatar { width: 26px; height: 26px; border-radius: 50%; flex: none; display: inline-grid; place-items: center; font-style: normal; font-size: 12px; font-weight: 800; color: #161616; }
+.la-bar { height: 10px; border-radius: 999px; background: #ffffff14; overflow: hidden; }
+.la-bar i { display: block; height: 100%; border-radius: inherit; background: var(--green); transition: width 0.12s linear; }
+.la-idle .la-bar i { background: #ffffff55; }
+.la-urgent .la-bar i { background: #ff5b5b; }
+.la-timer-text { display: flex; align-items: center; justify-content: space-between; margin-top: 7px; font-size: 13px; font-weight: 700; color: #ffffffcc; }
+.la-urgent .la-timer-text { color: #ff8a8a; }
+.la-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.la-buttons button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 11px 6px; border: none; border-radius: 14px; background: var(--green); color: #161616; font-family: inherit; cursor: pointer; transition: transform 0.08s, filter 0.15s; }
+.la-buttons button small { font-size: 12px; font-weight: 700; opacity: 0.7; }
+.la-buttons button b { font-size: 20px; font-weight: 800; }
+.la-buttons button:hover:not(:disabled) { filter: brightness(1.08); }
+.la-buttons button:active:not(:disabled) { transform: scale(0.97); }
+.la-buttons button:disabled { background: #ffffff14; color: #ffffff55; cursor: not-allowed; }
+.la-hint { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: #ffffff80; }
+.la-hint b { color: #fff; white-space: nowrap; }
+.la-hint.la-warn span { color: #ff8a8a; font-weight: 700; }
+.la-history-wrap { position: relative; max-height: 250px; overflow: hidden; }
+.la-history-wrap::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 70px; pointer-events: none; background: linear-gradient(to bottom, #1f1f1f00, #1f1f1fe6); backdrop-filter: blur(3px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 70%); mask-image: linear-gradient(to bottom, transparent, #000 70%); }
+.la-history { display: flex; flex-direction: column; gap: 6px; padding-bottom: 30px; }
+.la-hrow { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 10px; background: #ffffff0a; font-size: 14px; }
+.la-hrow span { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.la-hrow b { color: var(--green); }
+.la-empty { font-size: 12px; color: #ffffff59; padding: 4px 2px; }
+.la-deed { background: #262626; border-radius: 16px; overflow: hidden; box-shadow: inset 0 0 0 1px #ffffff14; }
+.la-deed-head { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 14px 12px 12px; color: #161616; text-align: center; }
+.la-deed-logo { display: flex; padding: 4px 9px; border-radius: 9px; background: #f3f3f3; max-width: 190px; }
+.la-deed-logo img { display: block; max-height: 30px; max-width: 100%; object-fit: contain; }
+.la-deed-kind { font-size: 10px; font-weight: 700; letter-spacing: 0.22em; opacity: 0.7; }
+.la-deed-name { font-size: 19px; font-weight: 800; line-height: 1.15; }
+.la-deed-cat { font-size: 11px; font-weight: 600; opacity: 0.7; }
+.la-deed-price { padding: 10px 16px 4px; font-size: 12px; color: #ffffff99; text-align: right; }
+.la-deed-price b { color: #fff; }
+.la-deed-rows { padding: 2px 10px; display: flex; flex-direction: column; gap: 2px; }
+.la-deed-rows div { display: flex; justify-content: space-between; padding: 5px 8px; border-radius: 8px; font-size: 12px; color: #ffffffb3; }
+.la-deed-rows b { color: #fff; }
+.la-deed-foot { margin: 6px 16px 0; padding: 9px 0 13px; border-top: 1px solid #ffffff14; display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: #ffffffb3; }
+@media (max-width: 700px) {
+	#live-auction { padding: 10px; align-items: end; }
+	.la-card { padding: 16px 14px 14px; border-radius: 20px; }
+	.la-body { grid-template-columns: 1fr; gap: 12px; }
+	.la-deed { order: -1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; }
+	.la-deed-head { flex-direction: row; justify-content: flex-start; text-align: left; gap: 10px; padding: 10px 12px; grid-column: 1 / 3; }
+	.la-deed-kind, .la-deed-cat, .la-deed-rows, .la-deed-foot { display: none; }
+	.la-deed-name { font-size: 16px; }
+	.la-deed-price { padding: 0 14px; font-size: 11px; }
+	.la-deed-price b { font-size: 15px; display: block; }
+	.la-high { padding: 12px 14px; gap: 12px; }
+	.la-high-mid b { font-size: 34px; }
+	.la-avatar-big { width: 56px !important; height: 56px !important; font-size: 24px !important; }
+	.la-gavel { width: 42px; height: 42px; }
+	.la-title h3 { font-size: 21px; }
+	.la-title p { font-size: 12px; }
+	.la-history-wrap { max-height: 130px; order: 4; }
+	.la-bidlabel { order: 5; } .la-buttons { order: 6; } .la-hint { order: 7; }
+}
+
+/* live auction: small motion on every new bid (the card is re-created per bid, the new history row slides in) */
+@keyframes la-flash { 0% { box-shadow: inset 0 0 0 1.5px #5a8a12, 0 0 0 0 #acfa0066; } 40% { box-shadow: inset 0 0 0 2px var(--green), 0 0 24px 2px #acfa0055; } 100% { box-shadow: inset 0 0 0 1.5px #5a8a12, 0 0 0 0 #acfa0000; } }
+@keyframes la-pop { 0% { transform: scale(0.6); opacity: 0.2; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes la-rise { 0% { transform: translateY(8px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes la-slide { 0% { transform: translateY(-14px); opacity: 0; max-height: 0; } 100% { transform: none; max-height: 48px; } }
+.la-high:not(.la-none) { animation: la-flash 0.7s ease-out; }
+.la-high:not(.la-none) .la-avatar-big { animation: la-pop 0.4s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.la-high:not(.la-none) .la-high-mid b { animation: la-rise 0.3s ease-out; }
+.la-hrow { animation: la-slide 0.35s ease-out; }
+.la-buttons button b { transition: transform 0.15s; }
+@media (prefers-reduced-motion: reduce) { .la-high, .la-high * , .la-hrow { animation: none !important; } }
+
+/* live auction on short screens (small phones, phones held sideways): everything must fit without scrolling */
+#live-auction { display: flex; }
+.la-card { margin: auto; }
+@media (max-width: 700px) { #live-auction { padding: 8px; } .la-card { margin: auto 0 0; } }
+@media (max-width: 700px) and (max-height: 700px) {
+	.la-card { padding: 12px 12px 10px; }
+	.la-head { margin-bottom: 8px; }
+	.la-title p, .la-count { display: none; }
+	.la-body, .la-main { gap: 8px; }
+	.la-high-mid b { font-size: 28px; }
+	.la-high-mid span { font-size: 13px; }
+	.la-avatar-big { width: 46px !important; height: 46px !important; font-size: 20px !important; }
+	.la-bank { font-size: 11px; } .la-bank b { font-size: 15px; }
+	.la-history-wrap { max-height: 66px; }
+	.la-history { padding-bottom: 22px; }
+	.la-hrow { padding: 4px 8px; font-size: 13px; }
+	.la-buttons button { padding: 7px 4px; } .la-buttons button b { font-size: 17px; }
+	.la-bidlabel { display: none; }
+}
+@media (max-height: 520px) {
+	#live-auction { padding: 58px 6px 6px; } /* below the game bar */
+	.la-card { padding: 10px 14px; width: min(760px, 100%); margin: auto; }
+	.la-head { margin-bottom: 6px; }
+	.la-gavel { width: 34px; height: 34px; } .la-gavel svg { width: 20px; height: 20px; }
+	.la-title h3 { font-size: 18px; } .la-title p { display: none; }
+	.la-body { grid-template-columns: 1fr 210px; gap: 12px; }
+	.la-deed { order: 0; display: block; }
+	.la-deed-head { padding: 8px; } .la-deed-name { font-size: 15px; } .la-deed-kind, .la-deed-cat, .la-deed-logo { display: none; }
+	.la-deed-rows, .la-deed-foot { display: none; } .la-deed-price { padding: 6px 12px; }
+	.la-high { padding: 8px 12px; } .la-high-mid b { font-size: 26px; }
+	.la-avatar-big { width: 42px !important; height: 42px !important; font-size: 18px !important; }
+	.la-history-wrap { display: none; }
+	.la-bidlabel { display: none; }
+	.la-buttons button { padding: 6px 4px; } .la-buttons button b { font-size: 16px; }
+}

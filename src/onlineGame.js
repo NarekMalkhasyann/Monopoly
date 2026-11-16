@@ -12,6 +12,7 @@
 // that the server hands out, so the same clicks give the same game everywhere.
 import { onAction, send, getOnline } from './online.js';
 import { trackOnline } from './session.js';
+import * as live from './liveAuction.js';
 
 // Buttons whose clicks are shared (keep in sync with RELAYED in server/rooms.js).
 const RELAYED = new Set(['nextbutton', 'popupclose', 'popupyes', 'popupno',
@@ -112,7 +113,7 @@ function allowed(id, who) {
 function tradeBusy() {
 	const shown = (id) => { const el = document.getElementById(id); return !!el && isVisible(el); };
 	if (shown('popupwrap') && !document.getElementById('popupwrap').classList.contains('pu-gone')) return 'Close the pop-up first.';
-	if (shown('auctionbid')) return 'An auction is running.';
+	if (shown('auctionbid') || live.getLiveAuction().open) return 'An auction is running.';
 	return '';
 }
 
@@ -248,6 +249,7 @@ function tick() {
 
 	const id = m.a.id;
 	const direct = id === 'proposetradebutton' || id === 'forfeit' || id === 'autopass' || id === 'autoend' || id === 'bankunmortgage';
+	const aucEvent = id === 'aucopen' || id === 'aucbid' || id === 'aucend' || id === 'aucsync';
 	const manage = MANAGE.has(id);
 
 	// Before pressing a house / mortgage button, tick the same property as the sender did.
@@ -261,7 +263,13 @@ function tick() {
 
 	const el = document.getElementById(id);
 	let ready;
-	if (direct) ready = !(win.jQuery && win.jQuery(':animated').length);
+	if (aucEvent) {
+		// the start must wait until this browser's engine has reached the same auction (it opens after the dice / pop-ups)
+		const la = live.getLiveAuction();
+		if (id === 'aucsync') ready = true;
+		else ready = la.open && la.n === m.a.n && !(id === 'aucopen' && win.jQuery && win.jQuery(':animated').length);
+	}
+	else if (direct) ready = !(win.jQuery && win.jQuery(':animated').length);
 	else if (manage) ready = !!el && !el.disabled && el.style.display !== 'none';
 	else if (TRADE_BUTTONS.has(id)) ready = !!el && !el.disabled && el.style.display !== 'none'; // the offer window is hidden by CSS for players it is not about, but their game still answers it
 	else if (id === 'buybutton') ready = !!el && !el.disabled; // the real Buy button is hidden on purpose (the panel shows its own); it is only there while a purchase is possible
@@ -307,7 +315,8 @@ function tick() {
 	if (m.a.turn && win.turn !== m.a.turn && !TRADE_BUTTONS.has(id)) markDesync(`"${id}" was sent during turn ${m.a.turn} but this browser is on turn ${win.turn}`, 'mismatch');
 	bypass = true;
 	try {
-		if (id === 'proposetradebutton') {
+		if (aucEvent) applyAuctionEvent(m);
+		else if (id === 'proposetradebutton') {
 			// The pop-up "X has proposed a trade with you" is only for the player the offer is made to.
 			const forMe = m.a.v.r === myIndex;
 			const orig = win.popup;
@@ -351,6 +360,28 @@ function tick() {
 	} finally { bypass = false; }
 }
 
+// ---- live auction (the server numbers and times it, see server/rooms.js) -----------------
+function bidderOf(seat) {
+	const room = getOnline().room;
+	const idx = room ? playerIndexOfSeat(room, seat) : 0;
+	return idx ? { idx, seat, name: win.player[idx].name, color: win.player[idx].color } : null;
+}
+function applyAuctionEvent(m) {
+	const { id, v, rem, n } = m.a;
+	const la = live.getLiveAuction();
+	if (id === 'aucopen') live.serverOpened(rem);
+	else if (id === 'aucsync') { if (la.open && la.n === n) live.serverSnapshot({ remMs: rem }); }
+	else if (id === 'aucbid') {
+		const who = bidderOf(m.seat);
+		if (who) { win.game.liveAuctionBid(who.idx, v); live.serverBid({ bidder: who, amount: v, remMs: rem }); }
+	}
+	else if (id === 'aucend') {
+		const who = m.a.w > 0 ? bidderOf(m.a.w) : null;
+		live.close(); // first: finishing may start the next auction straight away
+		win.game.liveAuctionEnd(who ? who.idx : 0, v);
+	}
+}
+
 function restoreFast() {
 	if (win.jQuery) win.jQuery.fx.off = false;
 	if (savedDice) { if (!win.animateDice) win.animateDice = savedDice; savedDice = null; }
@@ -369,7 +400,8 @@ function refreshInfo() {
 	if (!myTurn && manage && isVisible(manage)) { const back = document.getElementById('buy-menu-item'); if (back) back.click(); }
 	// Something is waiting for me: my turn, my bid, or a trade offer made to me.
 	let waitingFor = win.turn;
-	if (document.getElementById('currentbidder') && isVisible(document.getElementById('currentbidder'))) waitingFor = win.game.getCurrentBidder();
+	if (live.getLiveAuction().open) waitingFor = 0; // a live auction waits for nobody in particular
+	else if (document.getElementById('currentbidder') && isVisible(document.getElementById('currentbidder'))) waitingFor = win.game.getCurrentBidder();
 	else if (tradeShared) waitingFor = byName(text('trade-leftp-name'));
 	setInfo({ over, myTurn, turnName: over ? '' : win.player[win.turn].name, waitingMe: !over && waitingFor === myIndex, waitingName: win.player[waitingFor] ? win.player[waitingFor].name : '',
 		turnIndex: win.turn, players: win.pcount });
@@ -421,6 +453,7 @@ export function startOnlineGame(room, you) {
 		logged: getOnline().logged || 0, // lines the server has already: replaying the game must not upload them again
 	});
 
+	win.liveAuction = { open: (info) => live.engineOpened(info, queue.length > 1) }; // (replaying a long backlog: the server already knows these auctions)
 	win.setup();
 
 	const me = players.find((p) => p.userId === you.userId);
@@ -469,6 +502,7 @@ export function stopOnlineGame() {
 	loadingOn = false; finishLoading(0);
 	document.removeEventListener('click', onClickCapture, true);
 	document.removeEventListener('keydown', onKeyCapture, true);
+	win.liveAuction = undefined; live.close();
 }
 
 // A player removed because they stayed away: the engine takes everything they own back to the bank.
@@ -478,6 +512,7 @@ export const playerIndexOfSeat = (room, seat) => {
 	return p ? byName(p.name) : 0;
 };
 
+export const myPlayerIndex = () => myIndex;
 export const isOnlineGameRunning = () => started;
 // Still catching up on clicks (rejoin, or a click is on its way): the turn timer waits.
 export const isReplaying = () => queue.length > 0;
