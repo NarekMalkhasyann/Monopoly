@@ -192,6 +192,17 @@ function onClickCapture(e) {
 	// The game is over (one player left): the winner's "OK" only closes the pop-up on this screen. There is no
 	// turn any more (after the last opponent was removed it is "the bank's turn"), so nothing is shared.
 	if (win.pcount <= 1) return;
+	// The ✕ of an open offer: for the player who answers it means Reject (shared with everybody, like the button),
+	// for anybody else it only closes the window on their own screen. (A local close would leave the offer open for the others.)
+	const closeBtn = e.target.closest('.trade-close');
+	if (closeBtn && closeBtn.closest('#trade') && tradeShared) {
+		e.preventDefault();
+		e.stopImmediatePropagation();
+		if (myIndex === byName(text('trade-leftp-name'))) {
+			if (allowed('rejecttradebutton', myIndex)) { const extra = prepare('rejecttradebutton'); if (extra) share('rejecttradebutton', extra); }
+		} else tradeViewOpen = false;
+		return;
+	}
 	const holder = e.target.closest('[id]');
 	let id = holder && holder.id;
 	if (!id) return;
