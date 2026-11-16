@@ -83,7 +83,7 @@ function open() {
 		socket.onmessage = (e) => {
 			let msg;
 			try { msg = JSON.parse(e.data); } catch { return; }
-			if (msg.t === 'hello') { set({ conn: 'open' }); opening = null; resolve(); return; }
+			if (msg.t === 'hello') { set({ conn: 'open' }); opening = null; resolve(); checkVersion(); return; }
 			handle(msg);
 		};
 		socket.onclose = () => {
@@ -134,3 +134,24 @@ export const joinById = (gameId) => request({ t: 'join', gameId: Number(gameId),
 export const leaveRoom = () => send({ t: 'leave' });
 export const startRoom = () => send({ t: 'start' });
 export const chooseColor = (color) => send({ t: 'color', color });
+
+// A tab that stays open across an update keeps running the old code next to a newer server (and a newer game engine
+// after a reload). Compare this page's own bundle with what the site serves now and say so, once.
+let versionShown = false;
+async function checkVersion() {
+	if (versionShown) return;
+	try {
+		const mine = [...document.querySelectorAll('script[src*="/assets/"]')].map((x) => new URL(x.src).pathname);
+		if (!mine.length) return; // dev server: no hashed bundle
+		const res = await fetch('/api/version', { cache: 'no-store' });
+		const { assets } = await res.json();
+		if (!assets.length || mine.every((m) => assets.includes(m))) return;
+		versionShown = true;
+		const bar = document.createElement('div');
+		bar.id = 'new-version';
+		bar.setAttribute('role', 'alert');
+		bar.innerHTML = '<span>A new version of the game is available.</span><button type="button">Refresh</button>';
+		bar.querySelector('button').onclick = () => location.reload();
+		document.body.appendChild(bar);
+	} catch { /* offline: nothing to say */ }
+}

@@ -2,6 +2,7 @@
 import { cleanLog } from './log.js';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { hashPassword, verifyPassword, signToken, verifyToken } from './auth.js';
@@ -301,6 +302,12 @@ export function createApp(db, { secret, staticDir } = {}) {
 			const me = await authUser(req);
 			return [200, { rooms: await rooms.listOpen(me.id) }];
 		}
+		// Which bundle files the site is serving now: a tab that was opened before an update compares its own with these.
+		if (method === 'GET' && path === '/api/version') {
+			let assets = [];
+			try { assets = [...(await readFile(join(staticDir, 'index.html'), 'utf8')).matchAll(/\/assets\/[\w.-]+\.js/g)].map((m) => m[0]); } catch { /* no built site (tests, dev) */ }
+			return [200, { assets }];
+		}
 		if (method === 'GET' && path === '/api/health') {
 			await db.get('SELECT 1 AS ok'); // also proves the database answers
 			return [200, { ok: true, db: db.dialect }];
@@ -414,7 +421,17 @@ export function createApp(db, { secret, staticDir } = {}) {
 		try {
 			const body = await readFile(file);
 			const type = MIME[extname(file)] || 'application/octet-stream';
-			res.writeHead(200, { 'Content-Type': type, 'Cache-Control': file.endsWith('index.html') ? 'no-cache' : 'public, max-age=3600' });
+			// The game engine (/engine/*.js) has a fixed name but changes together with the hashed bundle (/assets/*): a browser
+			// that kept an old engine for an hour next to a new bundle broke things like the live auction. So everything
+			// except the hashed bundle files and the pictures is re-checked on every load (a cheap 304 when nothing changed).
+			const hashed = clean.replace(/\\/g, '/').startsWith('/assets/');
+			const picture = /\.(png|jpe?g|gif|svg|webp|ico|woff2?)$/i.test(file);
+			const headers = { 'Content-Type': type, 'Cache-Control': hashed ? 'public, max-age=31536000, immutable' : picture ? 'public, max-age=3600' : 'no-cache' };
+			if (!hashed && !picture) {
+				headers.ETag = `"${createHash('sha1').update(body).digest('base64url')}"`;
+				if (req.headers['if-none-match'] === headers.ETag) { res.writeHead(304, headers); res.end(); return true; }
+			}
+			res.writeHead(200, headers);
 			res.end(req.method === 'HEAD' ? undefined : body);
 			return true;
 		} catch {
