@@ -1946,7 +1946,8 @@ td.statscellname[title="Mortgaged"]::after {
 .mg-rent { font-size: 11px; color: #ffffffa6; margin-left: 6px; line-height: 8px; }
 .mg-btn { width: 34px; height: 34px; border-radius: 9px; font: 800 17px Montserrat, sans-serif; flex-shrink: 0; cursor: pointer; padding: 0; }
 .mg-buy { border: none; background: #acfa00; color: #1d1d1d; }
-.mg-sell { border: 1px solid #ffffff40; background: transparent; color: #fff; }
+.mg-sell { border: 1px solid #ffffff40; background: transparent; color: #fff; width: auto; min-width: 62px; padding: 0 9px; font: 700 11.5px Montserrat, sans-serif; white-space: nowrap; }
+.mg-sell:not(:disabled) { border-color: #ff9d5c; color: #ff9d5c; background: #ff9d5c1a; }
 .mg-mort-btn { height: 34px; padding: 0 10px; border-radius: 9px; font: 700 11.5px Montserrat, sans-serif; flex-shrink: 0; border: 1px solid #ffffff40; background: transparent; color: #fff; cursor: pointer; min-width: 52px; }
 .mg-mort-btn.mg-back { border-color: #facc15; background: #facc151f; color: #facc15; }
 .mg-btn:disabled, .mg-mort-btn:disabled { border: 1px solid #ffffff1f; background: transparent; color: #ffffff40; cursor: not-allowed; }
@@ -2658,3 +2659,9 @@ body.online-game #moneybar tr.mb-self .mb-trade { display: none; }
 .to-open { flex: none; padding: 6px 12px; border-radius: 999px; background: var(--green); color: #161616; font-size: 12px; font-weight: 800; }
 /* until the card is clicked, the offer's window stays closed (on every screen) */
 body.trade-collapsed #trade { display: none !important; }
+
+/* in jail: "Pay $50 fine" / "Use card" (mirrors of the engine's hidden buttons) beside Roll Dice; not for players waiting for their turn */
+.jail-proxy { flex: none; height: 50px; padding: 0 16px; border: 1.5px solid #acfa00; border-radius: 14px; background: #acfa0014; color: #acfa00; font: 800 14px Montserrat, sans-serif; cursor: pointer; white-space: nowrap; }
+.jail-proxy:hover { background: #acfa0026; }
+.jail-proxy[hidden], body.online-wait .jail-proxy { display: none; }
+@media (max-width: 1129px) { .jail-proxy { height: 48px; border-radius: 13px; padding: 0 11px; font-size: 12px; } }

@@ -18,7 +18,7 @@ export const RELAYED = new Set(['nextbutton', 'popupclose', 'popupyes', 'popupno
 	// Milestone 3: auctions, trade, building, mortgage, bankruptcy
 	'auctionbid', 'auctionpass', 'auctionexit',
 	'proposetradebutton', 'accepttradebutton', 'rejecttradebutton', 'canceltradebutton',
-	'buyhousebutton', 'sellhousebutton', 'mortgagebutton', 'bankunmortgage']);
+	'buyhousebutton', 'sellhousebutton', 'sellpropertybutton', 'mortgagebutton', 'bankunmortgage']);
 
 // Extra data an action may carry; everything is rebuilt from numbers, never copied as is.
 function cleanPayload(a) {
