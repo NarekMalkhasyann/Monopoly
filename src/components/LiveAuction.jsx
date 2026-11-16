@@ -66,7 +66,7 @@ export default function LiveAuction() {
 				</div>
 				<div className="la-body">
 					<div className="la-main">
-						<div className={`la-high${la.high > 0 ? '' : ' la-none'}`}>
+						<div key={`hi${la.history.length}`} className={`la-high${la.high > 0 ? '' : ' la-none'}`}>
 							<Avatar who={la.bidder} big />
 							<div className="la-high-mid">
 								<small>HIGHEST BID</small>
@@ -89,7 +89,7 @@ export default function LiveAuction() {
 						<div className="la-history-wrap"><div className="la-history">
 							{la.history.length === 0 && <div className="la-empty">The bids will appear here.</div>}
 							{la.history.slice(0, 12).map((h, i) => (
-								<div key={`${h.at}-${i}`} className="la-hrow" style={{ opacity: Math.max(0.35, 1 - i * 0.12) }}>
+								<div key={h.amount} className="la-hrow" style={{ opacity: Math.max(0.35, 1 - i * 0.12) }}>
 									<Avatar who={h.bidder} /><span>{h.bidder.name}</span><b>${h.amount}</b>
 								</div>
 							))}

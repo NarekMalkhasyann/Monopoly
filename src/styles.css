@@ -2592,3 +2592,15 @@ td.statscellname[title="Mortgaged"]::after {
 	.la-history-wrap { max-height: 130px; order: 4; }
 	.la-bidlabel { order: 5; } .la-buttons { order: 6; } .la-hint { order: 7; }
 }
+
+/* live auction: small motion on every new bid (the card is re-created per bid, the new history row slides in) */
+@keyframes la-flash { 0% { box-shadow: inset 0 0 0 1.5px #5a8a12, 0 0 0 0 #acfa0066; } 40% { box-shadow: inset 0 0 0 2px var(--green), 0 0 24px 2px #acfa0055; } 100% { box-shadow: inset 0 0 0 1.5px #5a8a12, 0 0 0 0 #acfa0000; } }
+@keyframes la-pop { 0% { transform: scale(0.6); opacity: 0.2; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes la-rise { 0% { transform: translateY(8px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes la-slide { 0% { transform: translateY(-14px); opacity: 0; max-height: 0; } 100% { transform: none; max-height: 48px; } }
+.la-high:not(.la-none) { animation: la-flash 0.7s ease-out; }
+.la-high:not(.la-none) .la-avatar-big { animation: la-pop 0.4s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.la-high:not(.la-none) .la-high-mid b { animation: la-rise 0.3s ease-out; }
+.la-hrow { animation: la-slide 0.35s ease-out; }
+.la-buttons button b { transition: transform 0.15s; }
+@media (prefers-reduced-motion: reduce) { .la-high, .la-high * , .la-hrow { animation: none !important; } }
