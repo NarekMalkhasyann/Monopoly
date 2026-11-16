@@ -1712,7 +1712,7 @@ function updateOwned() {
 				}
 				var rent = sq.mortgage ? "Mortgaged" : "Rent $" + currentRent(sq, full);
 				HTML += "<div class='property-cell-row mg-row" + (sq.mortgage ? " mg-mort" : "") + "' data-sq='" + i + "'><input type='checkbox' id='propertycheckbox" + i + "' /><div class='mg-main'><span class='propertycellname mg-name' onmouseover='showdeed(" + i + ");' onmouseout='hidedeed();'>" + sq.name + "</span><span class='mg-sub'>" + pips + "<span class='mg-rent'>" + rent + "</span></span></div>" +
-					"<button type='button' class='mg-btn mg-sell' data-act='sell' aria-label='Sell a house'>&minus;</button><button type='button' class='mg-btn mg-buy' data-act='buy' aria-label='Build a house'>+</button><button type='button' class='mg-mort-btn' data-act='mort'></button></div>";
+					"<button type='button' class='mg-btn mg-sell' data-act='sell' aria-label='Sell a house to the bank'></button><button type='button' class='mg-btn mg-buy' data-act='buy' aria-label='Build a house'>+</button><button type='button' class='mg-mort-btn' data-act='mort'></button></div>";
 			}
 			HTML += "</div>";
 		}
@@ -1752,7 +1752,8 @@ function updateOwned() {
 		mb.text(q.mortgage ? "\u2212$" + Math.round(q.price * 0.55) : "+$" + (q.price * 0.5));
 		mb.attr("title", document.getElementById("mortgagebutton").title);
 		$row.find("[data-act=buy]").attr("title", document.getElementById("buyhousebutton").title);
-		$row.find("[data-act=sell]").attr("title", document.getElementById("sellhousebutton").title);
+		// The sell button says what the bank pays: "Sell +$25" (a hotel: "Sell hotel +$25").
+		$row.find("[data-act=sell]").text((q.hotel ? "Sell hotel +$" : "Sell +$") + (q.houseprice * 0.5)).attr("title", document.getElementById("sellhousebutton").title);
 	});
 	$("#owned input[type=checkbox]").prop("checked", false);
 
