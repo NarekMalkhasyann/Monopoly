@@ -843,9 +843,13 @@ function Game() {
 
 	this.cancelTrade = function() {
 		if (pendingTradeNames) {
-			addAlert(pendingTradeNames[1] + " declined the trade offered by " + pendingTradeNames[0] + ".", "trade");
+			// (online: window.tradeEnd says why the offer ended)
+			if (window.tradeEnd == "withdrawn") { addAlert(pendingTradeNames[0] + " withdrew the trade offered to " + pendingTradeNames[1] + ".", "trade"); }
+			else if (window.tradeEnd == "expired") { addAlert("The trade offered by " + pendingTradeNames[0] + " to " + pendingTradeNames[1] + " expired.", "trade"); }
+			else { addAlert(pendingTradeNames[1] + " declined the trade offered by " + pendingTradeNames[0] + ".", "trade"); }
 			pendingTradeNames = null;
 		}
+		window.tradeEnd = undefined;
 		$("#trade").hide();
 		$("#buy-menu-item").click(); // back to the first tab
 

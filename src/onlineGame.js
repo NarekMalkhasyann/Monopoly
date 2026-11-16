@@ -41,6 +41,7 @@ let idleSince = 0;      // since when the screen has been still while the next c
 let lastTick = 0;
 let savedDice = null;
 let tradeViewOpen = false; // the offer's window is expanded on this screen (it starts collapsed: only the card in the side panel shows it)
+let tradeSeq = 0;          // the number of the click that opened the offer that is open now (the server's expiry names it)
 let tradeShared = false; // a trade offer is on everybody's screen (not just being edited by one player)
 let originalConfirm = null;
 let info = { myTurn: false, turnName: '', desync: false, me: '' };
@@ -110,6 +111,7 @@ function syncTradeShared() {
 function allowed(id, who) {
 	syncTradeShared();
 	if (AUCTION_BUTTONS.has(id)) return who === win.game.getCurrentBidder();
+	if (id === 'canceltradebutton') return who === byName(text('trade-rightp-name')); // the one who made the offer may withdraw it
 	if (TRADE_BUTTONS.has(id)) return who === byName(text('trade-leftp-name'));
 	const t = win.player[win.turn];
 	if (id === 'bankunmortgage') return !!t && who === t.creditor;
@@ -131,6 +133,7 @@ function tradeBusy() {
 
 function whoseTurnText(id) {
 	if (AUCTION_BUTTONS.has(id)) return `It is ${win.player[win.game.getCurrentBidder()].name}'s turn to bid.`;
+	if (id === 'canceltradebutton') return `Only ${text('trade-rightp-name')}, who made the offer, can withdraw it.`;
 	if (TRADE_BUTTONS.has(id)) return `This trade is waiting for ${text('trade-leftp-name')}.`;
 	return `It is ${win.player[win.turn].name}'s turn.`;
 }
@@ -273,7 +276,7 @@ function tick() {
 	}
 
 	const id = m.a.id;
-	const direct = id === 'proposetradebutton' || id === 'forfeit' || id === 'autopass' || id === 'autoend' || id === 'bankunmortgage';
+	const direct = id === 'proposetradebutton' || id === 'forfeit' || id === 'tradeexpire' || id === 'autopass' || id === 'autoend' || id === 'bankunmortgage';
 	const aucEvent = id === 'aucopen' || id === 'aucbid' || id === 'aucend' || id === 'aucsync';
 	const manage = MANAGE.has(id);
 
@@ -298,7 +301,7 @@ function tick() {
 	}
 	else if (direct) ready = !(win.jQuery && win.jQuery(':animated').length);
 	else if (manage) ready = !!el && !el.disabled && el.style.display !== 'none';
-	else if (TRADE_BUTTONS.has(id)) ready = !!el && !el.disabled && el.style.display !== 'none'; // the offer window is hidden by CSS for players it is not about, but their game still answers it
+	else if (TRADE_BUTTONS.has(id)) ready = !!el && !el.disabled && tradeShared; // (these buttons are hidden for players they are not meant for, and the whole window is hidden by CSS for some; every game still answers the offer)
 	else if (id === 'buybutton' || id === 'payfiftybutton' || id === 'gojfbutton') ready = !!el && !el.disabled; // the real Buy / jail buttons are hidden on purpose (the panel shows its own); they exist only while the action is possible
 	else ready = !!el && !el.disabled && isVisible(el);
 	const nowMs = Date.now();
@@ -349,9 +352,13 @@ function tick() {
 			// after 5 seconds). The window with the details stays closed until the card in the side panel is clicked.
 			const forMe = m.a.v.r === myIndex;
 			const orig = win.popup;
-			win.popup = (html, ...rest) => (!forMe && /has proposed a trade/.test(html) ? undefined : orig(html, ...rest));
+			win.popup = (html, ...rest) => (!forMe && /has proposed a trade/.test(html) ? undefined : orig(/has proposed a trade/.test(html) ? html.replace(', reject, or modify the offer', ' or reject the offer') : html, ...rest));
 			try { win.game.applyTrade(m.a.v); } finally { win.popup = orig; }
-			tradeShared = true; tradeViewOpen = false;
+			tradeShared = true; tradeViewOpen = false; tradeSeq = m.seq;
+		}
+		else if (id === 'tradeexpire') {
+			// The server withdrew an offer nobody answered. Only if it is still that offer (it may have been answered meanwhile).
+			if (tradeShared && tradeSeq === m.a.v) { win.tradeEnd = 'expired'; win.game.cancelTrade(); tradeShared = false; }
 		}
 		else if (id === 'forfeit') {
 			// Only if that player is still in the game and it is their turn (two people may press at once).
@@ -381,6 +388,7 @@ function tick() {
 		else if (id === 'bankunmortgage') win.game.bankruptcyUnmortgageSquare(m.a.v);
 		else {
 			if (id === 'auctionbid') el.parentElement.parentElement.querySelector('#bid').value = String(m.a.v);
+			if (id === 'canceltradebutton') win.tradeEnd = 'withdrawn';
 			el.click();
 			if (id === 'accepttradebutton' || id === 'rejecttradebutton' || id === 'canceltradebutton') {
 				tradeShared = document.getElementById('trade').style.display !== 'none'; // (not isVisible: the window is hidden by CSS for bystanders)
@@ -428,6 +436,11 @@ function refreshInfo() {
 	const involved = tradeShared && (byName(text('trade-leftp-name')) === myIndex || byName(text('trade-rightp-name')) === myIndex);
 	document.body.classList.toggle('trade-bystander', tradeShared && !involved);
 	if (!tradeShared) tradeViewOpen = false;
+	if (tradeShared) { // the window's buttons for what I may do: answer it (the player it is made to) or withdraw it (the one who made it)
+		const answers = myIndex === byName(text('trade-leftp-name')), mine = myIndex === byName(text('trade-rightp-name'));
+		const set = (id, on, label) => { const b = document.getElementById(id); if (b) { b.style.display = on ? '' : 'none'; if (label) b.value = label; } };
+		set('accepttradebutton', answers); set('rejecttradebutton', answers); set('canceltradebutton', mine, 'Withdraw offer');
+	}
 	document.body.classList.toggle('trade-collapsed', tradeShared && !tradeViewOpen);
 	const toIdx = tradeShared ? byName(text('trade-leftp-name')) : 0; // (the window is written from the point of view of the player who answers)
 	const fromIdx = tradeShared ? byName(text('trade-rightp-name')) : 0;

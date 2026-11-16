@@ -8,7 +8,7 @@ process.env.FORFEIT_AFTER_MS = '400';
 process.env.ABANDON_AFTER_MS = '700';
 process.env.SWEEP_EVERY_MS = '200';
 process.env.ADMIN_EMAILS = 'root@x.am';
-process.env.AUCTION_FIRST_MS = '700'; process.env.AUCTION_BID_MS = '350'; process.env.AUCTION_GRACE_MS = '100';
+process.env.TRADE_EXPIRE_MS = '400'; process.env.TRADE_EXPIRE_MS = '400'; process.env.AUCTION_FIRST_MS = '700'; process.env.AUCTION_BID_MS = '350'; process.env.AUCTION_GRACE_MS = '100';
 const db = await openDb(process.env.TEST_DATABASE_URL || ':memory:');
 const server = createApp(db, { secret: 'test-secret' });
 await new Promise((r) => server.listen(0, r));
@@ -384,6 +384,17 @@ a.send({ t: 'join', code: ja.room.code }); assert.match((await a.next('error', (
 	await all('aucend', 3);
 	// a browser whose own count runs ahead of the server's still opens the auction (the number only has to grow)
 	sv.send({ t: 'auction-open', n: 7, turn: 1 }); await all('aucopen', 7); await all('aucend', 7);
+	// a trade offer nobody answers is withdrawn by the server (named by the number of the offer); an answered one is not
+	const offerMsg = { t: 'act', a: { id: 'proposetradebutton', turn: 1, v: { i: 1, r: 2, m: 5, p: Array(40).fill(0), cc: 0, ch: 0 } } };
+	su.send(offerMsg);
+	const proposed = await sv.next('act', (m) => m.a.id === 'proposetradebutton');
+	const expired = await sv.next('act', (m) => m.a.id === 'tradeexpire');
+	assert.equal(expired.a.v, proposed.seq);
+	su.send(offerMsg); const p2 = await sv.next('act', (m) => m.a.id === 'proposetradebutton');
+	sv.send({ t: 'act', a: { id: 'rejecttradebutton', turn: 1 } }); await su.next('act', (m) => m.a.id === 'rejecttradebutton');
+	await new Promise((r) => setTimeout(r, 700)); // an answered offer is not withdrawn afterwards
+	su.send({ t: 'auction-open', n: 8, turn: 1 }); const nx = await su.next('act', (m) => m.seq > p2.seq && (m.a.id === 'aucopen' || m.a.id === 'tradeexpire'));
+	assert.equal(nx.a.id, 'aucopen'); await all('aucend', 8); assert.ok(p2.seq > proposed.seq);
 	sx.close();
 	for (const x of socks) x.close();
 }
