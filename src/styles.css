@@ -2235,6 +2235,9 @@ td.statscellname[title="Mortgaged"]::after {
 }
 .mb-trade:hover { background: #ffffff14; color: #fff; }
 #moneybar tr:not(:has(.money-bar-arrow:not([style*="none"]))) .mb-trade { display: grid; }
+/* online: you trade as yourself, so every other player has the button (also the one whose turn it is), you do not */
+body.online-game #moneybar tr:not(.mb-self) .mb-trade { display: grid; }
+body.online-game #moneybar tr.mb-self .mb-trade { display: none; }
 
 /* online: a small status dot on the avatar */
 .moneybarcell[data-presence]::after {

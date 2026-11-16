@@ -96,7 +96,15 @@ const byName = (name) => {
 const text = (id) => (document.getElementById(id) || {}).textContent || '';
 
 // Who may press this button right now? (the engine decides whose turn it is; so do we)
+// "An offer is open" must always match the screen: if the trade window is gone (answered, cancelled, closed by a
+// bankruptcy...) a stale flag would block every new offer with "Finish the open trade first."
+function syncTradeShared() {
+	const t = document.getElementById('trade');
+	if (tradeShared && (!t || t.style.display === 'none')) tradeShared = false;
+}
+
 function allowed(id, who) {
+	syncTradeShared();
 	if (AUCTION_BUTTONS.has(id)) return who === win.game.getCurrentBidder();
 	if (TRADE_BUTTONS.has(id)) return who === byName(text('trade-leftp-name'));
 	const t = win.player[win.turn];
@@ -175,6 +183,7 @@ function share(id, extra) {
 }
 
 function onClickCapture(e) {
+	syncTradeShared();
 	if (!started || bypass || !(e.target instanceof Element)) return;
 	// The game is over (one player left): the winner's "OK" only closes the pop-up on this screen. There is no
 	// turn any more (after the last opponent was removed it is "the bank's turn"), so nothing is shared.
@@ -235,6 +244,7 @@ function onKeyCapture(e) {
 
 // ---- receiving: press the same button, in the server's order -----------------
 function tick() {
+	syncTradeShared();
 	if (loadingOn && Date.now() - loadStart > 90000) { loadingOn = false; finishLoading(0); } // never trap the player behind it
 	const m = queue[0];
 	if (!m) { restoreFast(); if (loadingOn) endLoad(); return; }
@@ -388,6 +398,9 @@ function restoreFast() {
 }
 
 function refreshInfo() {
+	syncTradeShared();
+	// the trade button of a player's row: everybody except me (online you always trade as yourself)
+	for (let n = 1; n <= 8; n++) { const row = document.getElementById('moneybarrow' + n); if (row) row.classList.toggle('mb-self', n === myIndex); }
 	if (!started || !win.player || !win.player[win.turn]) return;
 	const over = win.pcount <= 1;
 	const myTurn = !over && win.turn === myIndex;
