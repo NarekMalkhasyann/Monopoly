@@ -512,7 +512,7 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 			const room = s.room;
 			if (!room || room.status !== 'active' || !room.members.has(s.user.id)) return;
 			const n = Number(msg.n);
-			if (room.auction || !Number.isInteger(n) || n !== room.auctionN + 1) return;
+			if (room.auction || !Number.isInteger(n) || n <= room.auctionN) return; // (a browser's count may run ahead of the server's, never behind)
 			room.auctionN = n;
 			room.auction = { n, turn: Number(msg.turn) || 0, high: 0, seat: -1, deadline: 0, timer: null };
 			auctionSchedule(room, AUCTION_FIRST_MS());

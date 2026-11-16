@@ -11,18 +11,29 @@ export const getLiveAuction = () => state;
 export const subscribeLiveAuction = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 
 // The engine reached the start of auction number n (every browser does, at the same point of the game).
-export function engineOpened({ index, n, turn }, quiet) {
+// Every browser reports it; the first report counts. It is sent again a few times if the server has not answered
+// (a lost message, a slow start), so the auction can never stay at "Starting..." for good.
+let retry = 0;
+export function engineOpened({ index, n, turn }) {
 	set({ ...CLOSED, open: true, n, index, hint: '' });
-	if (!quiet) send({ t: 'auction-open', n, turn }).catch(() => {});
+	clearInterval(retry);
+	let tries = 0;
+	const report = () => send({ t: 'auction-open', n, turn }).catch(() => {});
+	report();
+	retry = setInterval(() => {
+		const s = state;
+		if (!s.open || s.deadlineAt > 0 || s.n !== n || ++tries > 6) { clearInterval(retry); return; }
+		report();
+	}, 1500);
 }
 // The server says it is open: the clock starts, remMs is what is left.
-export function serverOpened(remMs) { set({ startedAt: Date.now(), totalMs: remMs, deadlineAt: Date.now() + remMs, hint: '' }); }
+export function serverOpened(remMs, n) { set({ n, startedAt: Date.now(), totalMs: remMs, deadlineAt: Date.now() + remMs, hint: '' }); }
 export function serverBid({ bidder, amount, remMs }) {
 	set({ high: amount, bidder, history: [{ bidder, amount, at: Date.now() }, ...state.history], startedAt: Date.now(), totalMs: remMs, deadlineAt: Date.now() + remMs, hint: '' });
 }
 // A browser that joined in the middle of an auction: what the server still has left.
 export function serverSnapshot({ remMs }) { set({ startedAt: Date.now(), totalMs: Math.max(remMs, state.high ? 5000 : 20000), deadlineAt: Date.now() + remMs }); }
-export const close = () => set(CLOSED);
+export const close = () => { clearInterval(retry); set(CLOSED); };
 export const showHint = (hint) => set({ hint });
 
 // The player pressed a bid button: amount is the new total (not the step).
