@@ -3,6 +3,7 @@
 // shows / hides rows and the arrow that marks whose turn it is.
 
 import MyProperties from './MyProperties.jsx';
+import TradeOfferCard from './TradeOfferCard.jsx';
 
 // Opens the Trade window for the player whose turn it is, with this player already chosen.
 function quickTrade(n) {
@@ -49,6 +50,7 @@ export default function MoneyBar() {
 					</tbody>
 				</table>
 			</div>
+			<TradeOfferCard />
 			<MyProperties />
 		</div>
 	);
