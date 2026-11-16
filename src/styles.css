@@ -2604,3 +2604,39 @@ td.statscellname[title="Mortgaged"]::after {
 .la-hrow { animation: la-slide 0.35s ease-out; }
 .la-buttons button b { transition: transform 0.15s; }
 @media (prefers-reduced-motion: reduce) { .la-high, .la-high * , .la-hrow { animation: none !important; } }
+
+/* live auction on short screens (small phones, phones held sideways): everything must fit without scrolling */
+#live-auction { display: flex; }
+.la-card { margin: auto; }
+@media (max-width: 700px) { #live-auction { padding: 8px; } .la-card { margin: auto 0 0; } }
+@media (max-width: 700px) and (max-height: 700px) {
+	.la-card { padding: 12px 12px 10px; }
+	.la-head { margin-bottom: 8px; }
+	.la-title p, .la-count { display: none; }
+	.la-body, .la-main { gap: 8px; }
+	.la-high-mid b { font-size: 28px; }
+	.la-high-mid span { font-size: 13px; }
+	.la-avatar-big { width: 46px !important; height: 46px !important; font-size: 20px !important; }
+	.la-bank { font-size: 11px; } .la-bank b { font-size: 15px; }
+	.la-history-wrap { max-height: 66px; }
+	.la-history { padding-bottom: 22px; }
+	.la-hrow { padding: 4px 8px; font-size: 13px; }
+	.la-buttons button { padding: 7px 4px; } .la-buttons button b { font-size: 17px; }
+	.la-bidlabel { display: none; }
+}
+@media (max-height: 520px) {
+	#live-auction { padding: 58px 6px 6px; } /* below the game bar */
+	.la-card { padding: 10px 14px; width: min(760px, 100%); margin: auto; }
+	.la-head { margin-bottom: 6px; }
+	.la-gavel { width: 34px; height: 34px; } .la-gavel svg { width: 20px; height: 20px; }
+	.la-title h3 { font-size: 18px; } .la-title p { display: none; }
+	.la-body { grid-template-columns: 1fr 210px; gap: 12px; }
+	.la-deed { order: 0; display: block; }
+	.la-deed-head { padding: 8px; } .la-deed-name { font-size: 15px; } .la-deed-kind, .la-deed-cat, .la-deed-logo { display: none; }
+	.la-deed-rows, .la-deed-foot { display: none; } .la-deed-price { padding: 6px 12px; }
+	.la-high { padding: 8px 12px; } .la-high-mid b { font-size: 26px; }
+	.la-avatar-big { width: 42px !important; height: 42px !important; font-size: 18px !important; }
+	.la-history-wrap { display: none; }
+	.la-bidlabel { display: none; }
+	.la-buttons button { padding: 6px 4px; } .la-buttons button b { font-size: 16px; }
+}
