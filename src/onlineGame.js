@@ -286,7 +286,7 @@ function tick() {
 	else if (direct) ready = !(win.jQuery && win.jQuery(':animated').length);
 	else if (manage) ready = !!el && !el.disabled && el.style.display !== 'none';
 	else if (TRADE_BUTTONS.has(id)) ready = !!el && !el.disabled && el.style.display !== 'none'; // the offer window is hidden by CSS for players it is not about, but their game still answers it
-	else if (id === 'buybutton') ready = !!el && !el.disabled; // the real Buy button is hidden on purpose (the panel shows its own); it is only there while a purchase is possible
+	else if (id === 'buybutton' || id === 'payfiftybutton' || id === 'gojfbutton') ready = !!el && !el.disabled; // the real Buy / jail buttons are hidden on purpose (the panel shows its own); they exist only while the action is possible
 	else ready = !!el && !el.disabled && isVisible(el);
 	const nowMs = Date.now();
 	// A hidden tab (or a sleeping laptop) runs timers and animations very slowly: that is not a broken game,

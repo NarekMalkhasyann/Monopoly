@@ -27,6 +27,15 @@ function useBuyProxy() {
 			const landed = document.getElementById('landed');
 			const show = !!(real && landed && landed.style.display !== 'none' && !real.disabled);
 			proxy.hidden = !show;
+			// in jail: the engine draws "Pay $50 fine" / "Use Card" inside #landed (hidden by CSS); mirror them next to Roll Dice
+			for (const [proxyId, realId, text] of [['jailproxy', 'payfiftybutton', 'Pay $50 fine'], ['cardproxy', 'gojfbutton', 'Use card']]) {
+				const jp = document.getElementById(proxyId);
+				if (!jp) continue;
+				const rb = document.getElementById(realId);
+				const on = !!(rb && landed && landed.style.display !== 'none' && !rb.disabled);
+				jp.hidden = !on;
+				if (on && jp.textContent !== text) jp.textContent = text;
+			}
 			if (show) {
 				const link = landed.querySelector('a');
 				const price = (real.value.match(/\$[\d,]+/) || [''])[0];
@@ -106,6 +115,8 @@ export default function ControlPanel() {
 						<td colSpan={2} style={{ border: 'none' }}>
 							<div style={{ paddingTop: 8 }}>
 								<button type="button" id="buyproxy" hidden onClick={() => { const b = document.getElementById('buybutton'); if (b) b.click(); }} />
+								<button type="button" id="jailproxy" className="jail-proxy" hidden onClick={() => { const b = document.getElementById('payfiftybutton'); if (b) b.click(); }} />
+								<button type="button" id="cardproxy" className="jail-proxy" hidden onClick={() => { const b = document.getElementById('gojfbutton'); if (b) b.click(); }} />
 								<input type="button" id="nextbutton" title="Roll the dice and move your token accordingly." value="Roll Dice" />
 								<input
 									type="button"

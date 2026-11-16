@@ -2658,3 +2658,9 @@ body.online-game #moneybar tr.mb-self .mb-trade { display: none; }
 .to-open { flex: none; padding: 6px 12px; border-radius: 999px; background: var(--green); color: #161616; font-size: 12px; font-weight: 800; }
 /* until the card is clicked, the offer's window stays closed (on every screen) */
 body.trade-collapsed #trade { display: none !important; }
+
+/* in jail: "Pay $50 fine" / "Use card" (mirrors of the engine's hidden buttons) beside Roll Dice; not for players waiting for their turn */
+.jail-proxy { flex: none; height: 50px; padding: 0 16px; border: 1.5px solid #acfa00; border-radius: 14px; background: #acfa0014; color: #acfa00; font: 800 14px Montserrat, sans-serif; cursor: pointer; white-space: nowrap; }
+.jail-proxy:hover { background: #acfa0026; }
+.jail-proxy[hidden], body.online-wait .jail-proxy { display: none; }
+@media (max-width: 1129px) { .jail-proxy { height: 48px; border-radius: 13px; padding: 0 11px; font-size: 12px; } }
