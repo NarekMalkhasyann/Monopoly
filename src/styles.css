@@ -2516,18 +2516,26 @@ td.statscellname[title="Mortgaged"]::after {
 /* ===== Live auction (online games): anyone bids at any time, the last top bid wins after 5 seconds ===== */
 #live-auction { position: fixed; inset: 0; z-index: 17; display: grid; place-items: center; padding: 16px; background: #000000cc; backdrop-filter: blur(4px); color: var(--white); overflow-y: auto; font-family: 'Montserrat', sans-serif; }
 .la-card { width: min(880px, 100%); background: #1f1f1f; border-radius: 24px; padding: 22px 24px 20px; box-shadow: inset 0 0 0 1px #ffffff14, 0 40px 100px rgba(0, 0, 0, 0.8); }
-.la-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.la-head h3 { margin: 0; font-size: 22px; font-weight: 800; }
-.la-head h3 span { color: var(--green); }
+.la-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.la-gavel { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 14px; background: #3a4a17; color: var(--green); }
+.la-title { flex: 1; min-width: 0; }
+.la-title h3 { margin: 0; font-size: 26px; font-weight: 800; line-height: 1.1; }
+.la-title p { margin: 3px 0 0; font-size: 14px; color: #ffffff99; }
 .la-count { font-size: 12px; font-weight: 700; color: #ffffff99; background: #ffffff0f; padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
 .la-body { display: grid; grid-template-columns: 1fr 290px; gap: 22px; align-items: start; }
 .la-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.la-high { background: #262626; border-radius: 16px; padding: 14px 16px; box-shadow: inset 0 0 0 1px #ffffff0d; }
-.la-high small, .la-bidlabel { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; color: #ffffff80; }
-.la-high-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; }
-.la-high-row b { font-size: 38px; font-weight: 800; color: var(--green); line-height: 1; }
-.la-high-row.la-none b { font-size: 22px; color: #ffffff80; }
-.la-high-row span { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.la-high { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border-radius: 20px; background: linear-gradient(110deg, #2c3a17 0%, #262626 70%); box-shadow: inset 0 0 0 1.5px #5a8a12; }
+.la-high.la-none { background: #262626; box-shadow: inset 0 0 0 1px #ffffff14; }
+.la-high-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.la-high-mid small { font-size: 13px; font-weight: 800; letter-spacing: 0.1em; color: var(--green); }
+.la-high-mid b { font-size: 46px; font-weight: 800; color: #fff; line-height: 1.05; }
+.la-high.la-none .la-high-mid b { font-size: 26px; color: #ffffffb3; margin: 4px 0; }
+.la-high-mid span { font-size: 15px; color: #ffffff99; }
+.la-high-mid strong { color: #fff; }
+.la-bank { text-align: right; font-size: 14px; color: #ffffff99; display: flex; flex-direction: column; }
+.la-bank b { font-size: 18px; color: #fff; }
+.la-bidlabel { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; color: #ffffff80; }
+.la-avatar-big { width: 74px !important; height: 74px !important; font-size: 32px !important; }
 .la-avatar { width: 26px; height: 26px; border-radius: 50%; flex: none; display: inline-grid; place-items: center; font-style: normal; font-size: 12px; font-weight: 800; color: #161616; }
 .la-bar { height: 10px; border-radius: 999px; background: #ffffff14; overflow: hidden; }
 .la-bar i { display: block; height: 100%; border-radius: inherit; background: var(--green); transition: width 0.12s linear; }
@@ -2545,7 +2553,9 @@ td.statscellname[title="Mortgaged"]::after {
 .la-hint { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: #ffffff80; }
 .la-hint b { color: #fff; white-space: nowrap; }
 .la-hint.la-warn span { color: #ff8a8a; font-weight: 700; }
-.la-history { display: flex; flex-direction: column; gap: 6px; max-height: 170px; overflow-y: auto; }
+.la-history-wrap { position: relative; max-height: 250px; overflow: hidden; }
+.la-history-wrap::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 70px; pointer-events: none; background: linear-gradient(to bottom, #1f1f1f00, #1f1f1fe6); backdrop-filter: blur(3px); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 70%); mask-image: linear-gradient(to bottom, transparent, #000 70%); }
+.la-history { display: flex; flex-direction: column; gap: 6px; padding-bottom: 30px; }
 .la-hrow { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 10px; background: #ffffff0a; font-size: 14px; }
 .la-hrow span { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .la-hrow b { color: var(--green); }
@@ -2573,7 +2583,12 @@ td.statscellname[title="Mortgaged"]::after {
 	.la-deed-name { font-size: 16px; }
 	.la-deed-price { padding: 0 14px; font-size: 11px; }
 	.la-deed-price b { font-size: 15px; display: block; }
-	.la-high-row b { font-size: 30px; }
-	.la-history { max-height: 96px; order: 4; }
+	.la-high { padding: 12px 14px; gap: 12px; }
+	.la-high-mid b { font-size: 34px; }
+	.la-avatar-big { width: 56px !important; height: 56px !important; font-size: 24px !important; }
+	.la-gavel { width: 42px; height: 42px; }
+	.la-title h3 { font-size: 21px; }
+	.la-title p { font-size: 12px; }
+	.la-history-wrap { max-height: 130px; order: 4; }
 	.la-bidlabel { order: 5; } .la-buttons { order: 6; } .la-hint { order: 7; }
 }

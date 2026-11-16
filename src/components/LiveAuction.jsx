@@ -28,7 +28,7 @@ function Deed({ sq }) {
 	);
 }
 
-const Avatar = ({ who }) => <i className="la-avatar" style={{ background: who ? who.color : '#444' }}>{who ? who.name.slice(0, 1).toUpperCase() : '?'}</i>;
+const Avatar = ({ who, big }) => <i className={`la-avatar${big ? ' la-avatar-big' : ''}`} style={{ background: who ? who.color : '#444' }}>{who ? who.name.slice(0, 1).toUpperCase() : '?'}</i>;
 
 export default function LiveAuction() {
 	const la = useSyncExternalStore(subscribeLiveAuction, getLiveAuction);
@@ -60,18 +60,19 @@ export default function LiveAuction() {
 		<div id="live-auction" role="dialog" aria-label={`Auction for ${sq.name}`}>
 			<div className="la-card">
 				<div className="la-head">
-					<h3>Auction <span>{sq.name}</span></h3>
+					<span className="la-gavel"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m14 13-8.5 8.5a2.1 2.1 0 0 1-3-3L11 10" /><path d="m16 16 6-6" /><path d="m8 8 6-6" /><path d="m9 7 8 8" /><path d="m21 11-8-8" /></svg></span>
+					<div className="la-title"><h3>Auction</h3><p>{DEFAULT_HINT}</p></div>
 					<span className="la-count">{window.pcount} players in</span>
 				</div>
 				<div className="la-body">
 					<div className="la-main">
-						<div className="la-high">
-							<small>HIGHEST BID</small>
-							{la.high > 0 ? (
-								<div className="la-high-row"><b>${la.high}</b><span><Avatar who={la.bidder} />{la.bidder && la.bidder.name}</span></div>
-							) : (
-								<div className="la-high-row la-none"><b>No bids yet</b></div>
-							)}
+						<div className={`la-high${la.high > 0 ? '' : ' la-none'}`}>
+							<Avatar who={la.bidder} big />
+							<div className="la-high-mid">
+								<small>HIGHEST BID</small>
+								{la.high > 0 ? <><b>${la.high}</b><span>by <strong>{la.bidder && la.bidder.name}</strong></span></> : <><b>No bids yet</b><span>Be the first to bid</span></>}
+							</div>
+							<div className="la-bank"><span>Bank price</span><b>${sq.price}</b></div>
 						</div>
 						<div className={`la-timer${urgent ? ' la-urgent' : ''}${la.high > 0 ? '' : ' la-idle'}`}>
 							<div className="la-bar"><i style={{ width: `${frac * 100}%` }} /></div>
@@ -84,15 +85,15 @@ export default function LiveAuction() {
 								return <button key={step} type="button" disabled={!started || total > cash} onClick={() => placeBid(total)}><small>+${step}</small><b>${total}</b></button>;
 							})}
 						</div>
-						<div className={`la-hint${la.hint ? ' la-warn' : ''}`}><span>{la.hint || DEFAULT_HINT}</span><b>Your cash ${cash}</b></div>
-						<div className="la-history">
+						<div className={`la-hint${la.hint ? ' la-warn' : ''}`}><span>{la.hint}</span><b>Your cash ${cash}</b></div>
+						<div className="la-history-wrap"><div className="la-history">
 							{la.history.length === 0 && <div className="la-empty">The bids will appear here.</div>}
-							{la.history.map((h, i) => (
-								<div key={`${h.at}-${i}`} className="la-hrow" style={{ opacity: Math.max(0.3, 1 - i * 0.18) }}>
+							{la.history.slice(0, 12).map((h, i) => (
+								<div key={`${h.at}-${i}`} className="la-hrow" style={{ opacity: Math.max(0.35, 1 - i * 0.12) }}>
 									<Avatar who={h.bidder} /><span>{h.bidder.name}</span><b>${h.amount}</b>
 								</div>
 							))}
-						</div>
+						</div></div>
 					</div>
 					<Deed sq={sq} />
 				</div>
