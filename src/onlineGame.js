@@ -13,6 +13,7 @@
 import { onAction, send, getOnline } from './online.js';
 import { trackOnline } from './session.js';
 import * as live from './liveAuction.js';
+import { setTradeOffer, onTradeOfferClick } from './tradeOffer.js';
 
 // Buttons whose clicks are shared (keep in sync with RELAYED in server/rooms.js).
 const RELAYED = new Set(['nextbutton', 'popupclose', 'popupyes', 'popupno',
@@ -39,6 +40,7 @@ let waitingSince = 0;
 let idleSince = 0;      // since when the screen has been still while the next click cannot be pressed
 let lastTick = 0;
 let savedDice = null;
+let tradeViewOpen = false; // the offer's window is expanded on this screen (it starts collapsed: only the card in the side panel shows it)
 let tradeShared = false; // a trade offer is on everybody's screen (not just being edited by one player)
 let originalConfirm = null;
 let info = { myTurn: false, turnName: '', desync: false, me: '' };
@@ -98,6 +100,8 @@ const text = (id) => (document.getElementById(id) || {}).textContent || '';
 // Who may press this button right now? (the engine decides whose turn it is; so do we)
 // "An offer is open" must always match the screen: if the trade window is gone (answered, cancelled, closed by a
 // bankruptcy...) a stale flag would block every new offer with "Finish the open trade first."
+onTradeOfferClick(() => { if (tradeShared && document.body.classList.contains('trade-bystander') === false) tradeViewOpen = !tradeViewOpen; });
+
 function syncTradeShared() {
 	const t = document.getElementById('trade');
 	if (tradeShared && (!t || t.style.display === 'none')) tradeShared = false;
@@ -216,7 +220,7 @@ function onClickCapture(e) {
 	if (tradeShared && RELAYED.has(id) && !TRADE_BUTTONS.has(id) && id !== 'popupclose' && id !== 'popupyes' && id !== 'popupno') {
 		e.preventDefault();
 		e.stopImmediatePropagation();
-		toast('A trade offer is open. Wait until it is answered.');
+		toast('A trade offer is open. Open it from the Trade offer card and answer it first.');
 		return;
 	}
 	// The "X has proposed a trade with you" pop-up exists only on the recipient's screen, so closing it is local too.
@@ -328,11 +332,12 @@ function tick() {
 		if (aucEvent) applyAuctionEvent(m);
 		else if (id === 'proposetradebutton') {
 			// The pop-up "X has proposed a trade with you" is only for the player the offer is made to.
-			const forMe = m.a.v.r === myIndex;
+			// The pop-up is not shown: the offer is a card in the side panel (src/components/TradeOfferCard.jsx) and the
+			// window with the details opens when the player clicks it.
 			const orig = win.popup;
-			win.popup = (html, ...rest) => (!forMe && /has proposed a trade/.test(html) ? undefined : orig(html, ...rest));
+			win.popup = (html, ...rest) => (/has proposed a trade/.test(html) ? undefined : orig(html, ...rest));
 			try { win.game.applyTrade(m.a.v); } finally { win.popup = orig; }
-			tradeShared = true;
+			tradeShared = true; tradeViewOpen = false;
 		}
 		else if (id === 'forfeit') {
 			// Only if that player is still in the game and it is their turn (two people may press at once).
@@ -408,6 +413,11 @@ function refreshInfo() {
 	// An open offer is only on the screens of the two players it is about.
 	const involved = tradeShared && (byName(text('trade-leftp-name')) === myIndex || byName(text('trade-rightp-name')) === myIndex);
 	document.body.classList.toggle('trade-bystander', tradeShared && !involved);
+	if (!tradeShared) tradeViewOpen = false;
+	document.body.classList.toggle('trade-collapsed', tradeShared && !tradeViewOpen);
+	const toIdx = tradeShared ? byName(text('trade-leftp-name')) : 0; // (the window is written from the point of view of the player who answers)
+	const fromIdx = tradeShared ? byName(text('trade-rightp-name')) : 0;
+	setTradeOffer(toIdx && fromIdx ? { from: { name: win.player[fromIdx].name, color: win.player[fromIdx].color }, to: { name: win.player[toIdx].name, color: win.player[toIdx].color }, involved, forMe: toIdx === myIndex, expanded: tradeViewOpen } : null);
 	// the turn moved on while Manage was open: it would now list the next player's properties, so go back to the main view
 	const manage = document.getElementById('manage');
 	if (!myTurn && manage && isVisible(manage)) { const back = document.getElementById('buy-menu-item'); if (back) back.click(); }
