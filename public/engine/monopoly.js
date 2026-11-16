@@ -1744,7 +1744,10 @@ function updateOwned() {
 			var el = document.getElementById(id);
 			return el.style.display !== "none" && !el.disabled;
 		}
-		$row.find("[data-act=sell]").prop("disabled", !usable("sellhousebutton")).toggle(q.groupNumber >= 3);
+		// One "Sell" button per row: it sells a house while the property has buildings, otherwise the property itself to the bank.
+		var sellMode = (q.house || q.hotel) ? "house" : "prop";
+		var sellOk = sellMode == "house" ? usable("sellhousebutton") : usable("sellpropertybutton");
+		$row.find("[data-act=sell]").attr("data-mode", sellMode).prop("disabled", !sellOk).toggle(q.groupNumber >= 3 || sellMode == "prop");
 		$row.find("[data-act=buy]").prop("disabled", !usable("buyhousebutton")).toggle(q.groupNumber >= 3);
 		var mb = $row.find("[data-act=mort]");
 		var ok = usable("mortgagebutton");
@@ -1753,7 +1756,11 @@ function updateOwned() {
 		mb.attr("title", document.getElementById("mortgagebutton").title);
 		$row.find("[data-act=buy]").attr("title", document.getElementById("buyhousebutton").title);
 		// The sell button says what the bank pays: "Sell +$25" (a hotel: "Sell hotel +$25").
-		$row.find("[data-act=sell]").text((q.hotel ? "Sell hotel +$" : "Sell +$") + (q.houseprice * 0.5)).attr("title", document.getElementById("sellhousebutton").title);
+		if (sellMode == "house") {
+			$row.find("[data-act=sell]").text((q.hotel ? "Sell hotel +$" : "Sell house +$") + (q.houseprice * 0.5)).attr("title", document.getElementById("sellhousebutton").title);
+		} else {
+			$row.find("[data-act=sell]").text("Sell property +$" + (q.price * 0.5)).attr("title", document.getElementById("sellpropertybutton").title);
+		}
 	});
 	$("#owned input[type=checkbox]").prop("checked", false);
 
@@ -1776,7 +1783,7 @@ function updateOwned() {
 		var btn = $(e.target).closest(".mg-btn, .mg-mort-btn");
 		selectRow(n);
 		if (btn.length && !btn.prop("disabled")) {
-			var id = btn.attr("data-act") == "sell" ? "sellhousebutton" : btn.attr("data-act") == "buy" ? "buyhousebutton" : "mortgagebutton";
+			var id = btn.attr("data-act") == "sell" ? (btn.attr("data-mode") == "prop" ? "sellpropertybutton" : "sellhousebutton") : btn.attr("data-act") == "buy" ? "buyhousebutton" : "mortgagebutton";
 			document.getElementById(id).click();
 		}
 	});
@@ -1797,8 +1804,27 @@ function currentRent(sq, fullSet) {
 	return fullSet ? sq.baserent * 2 : sq.baserent;
 }
 
+// Selling a property to the bank: only an unmortgaged property without buildings, in a colour set without buildings.
+function updateSellProperty(index) {
+	var btn = document.getElementById("sellpropertybutton");
+	if (!btn) { return; }
+	var sq = index >= 0 && index < 40 ? square[index] : null;
+	if (!sq || !sq.groupNumber || sq.owner <= 0) { $(btn).hide(); return; }
+	var why = "";
+	if (sq.mortgage) { why = "Unmortgage " + sq.name + " first."; }
+	else if (sq.house || sq.hotel) { why = "Sell the houses on " + sq.name + " first."; }
+	else if (sq.groupNumber >= 3) {
+		for (var g = 0; g < sq.group.length; g++) { if (square[sq.group[g]].house || square[sq.group[g]].hotel) { why = "Sell the houses of this colour group first."; } }
+	}
+	$(btn).show();
+	btn.disabled = !!why;
+	btn.value = "Sell property ($" + (sq.price * 0.5) + ")";
+	btn.title = why || "Sell " + sq.name + " to the bank for $" + (sq.price * 0.5) + ".";
+}
+
 function updateOption() {
 	$("#option").show();
+	updateSellProperty(getCheckedProperty());
 
 	var allGroupUninproved = true;
 	var allGroupUnmortgaged = true;
@@ -2332,6 +2358,17 @@ function sellHouse(index) {
 	}
 
 	p.money += sq.houseprice * 0.5;
+	updateOwned();
+	updateMoney();
+}
+
+function sellProperty(index) {
+	var sq = square[index];
+	var p = player[sq.owner];
+	p.money += sq.price * 0.5;
+	sq.owner = 0;
+	sq.mortgage = false;
+	addAlert(p.name + " sold " + sq.name + " to the bank for $" + (sq.price * 0.5) + ".", "money");
 	updateOwned();
 	updateMoney();
 }
@@ -3374,6 +3411,13 @@ window.onload = function() {
 	});
 
 	$("#sellhousebutton").click(function() { sellHouse(getCheckedProperty()); });
+	$("#sellpropertybutton").click(function() {
+		var i = getCheckedProperty();
+		var s = square[i];
+		popup("<p>" + player[s.owner].name + ", sell " + s.name + " to the bank for $" + (s.price * 0.5) + "? The bank gets it back and anybody can buy it again.</p>", function() {
+			sellProperty(i);
+		}, "Yes/No");
+	});
 
 	$("#viewstats").on("click", showStats);
 	$("#statsclose, #statsbackground").on("click", function() {

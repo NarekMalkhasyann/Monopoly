@@ -94,6 +94,7 @@ export default function ControlPanel() {
 									<input type="button" value="Buy house" id="buyhousebutton" />
 									<input type="button" value="Mortgage" id="mortgagebutton" />
 									<input type="button" value="Sell house" id="sellhousebutton" />
+									<input type="button" value="Sell property" id="sellpropertybutton" />
 								</div>
 								<div id="owned" />
 								<button type="button" className="manage-done" onClick={() => document.getElementById('buy-menu-item').click()}>Done</button>

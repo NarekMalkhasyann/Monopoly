@@ -20,8 +20,8 @@ const RELAYED = new Set(['nextbutton', 'popupclose', 'popupyes', 'popupno',
 	'buybutton', 'payfiftybutton', 'gojfbutton', 'resignbutton',
 	'auctionbid', 'auctionpass', 'auctionexit',
 	'proposetradebutton', 'accepttradebutton', 'rejecttradebutton', 'canceltradebutton',
-	'buyhousebutton', 'sellhousebutton', 'mortgagebutton', 'bankunmortgage']);
-const MANAGE = new Set(['buyhousebutton', 'sellhousebutton', 'mortgagebutton']);
+	'buyhousebutton', 'sellhousebutton', 'sellpropertybutton', 'mortgagebutton', 'bankunmortgage']);
+const MANAGE = new Set(['buyhousebutton', 'sellhousebutton', 'sellpropertybutton', 'mortgagebutton']);
 const TRADE_BUTTONS = new Set(['proposetradebutton', 'accepttradebutton', 'rejecttradebutton', 'canceltradebutton']);
 const AUCTION_BUTTONS = new Set(['auctionbid', 'auctionpass', 'auctionexit']);
 
