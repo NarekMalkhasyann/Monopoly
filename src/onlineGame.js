@@ -332,10 +332,11 @@ function tick() {
 		if (aucEvent) applyAuctionEvent(m);
 		else if (id === 'proposetradebutton') {
 			// The pop-up "X has proposed a trade with you" is only for the player the offer is made to.
-			// The pop-up is not shown: the offer is a card in the side panel (src/components/TradeOfferCard.jsx) and the
-			// window with the details opens when the player clicks it.
+			// The pop-up "X has proposed a trade with you" is only for the player the offer is made to (it fades by itself
+			// after 5 seconds). The window with the details stays closed until the card in the side panel is clicked.
+			const forMe = m.a.v.r === myIndex;
 			const orig = win.popup;
-			win.popup = (html, ...rest) => (/has proposed a trade/.test(html) ? undefined : orig(html, ...rest));
+			win.popup = (html, ...rest) => (!forMe && /has proposed a trade/.test(html) ? undefined : orig(html, ...rest));
 			try { win.game.applyTrade(m.a.v); } finally { win.popup = orig; }
 			tradeShared = true; tradeViewOpen = false;
 		}
