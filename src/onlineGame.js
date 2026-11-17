@@ -173,12 +173,10 @@ function prepare(id) {
 		if (t.m > 0 && t.m > from.money) { say(l, `${from.name} does not have $${t.m}.`); return null; }
 		if (t.m < 0 && -t.m > to.money) { say(r, `${to.name} does not have $${-t.m}.`); return null; }
 		if (!t.p.some(Boolean) && !t.cc && !t.ch) { win.popup('<p>One or more properties must be selected in order to trade.</p>'); return null; }
-		if (!originalConfirm(`${from.name}, are you sure you want to make this offer to ${to.name}?`)) return null;
 		return { v: t };
 	}
 	if (id === 'accepttradebutton') {
-		const from = win.player[byName(text('trade-leftp-name'))], to = win.player[byName(text('trade-rightp-name'))];
-		return originalConfirm(`${from.name}, are you sure you want to make this exchange with ${to.name}?`) ? {} : null;
+		return {}; // (no "are you sure?" box: the offer window already shows what is exchanged)
 	}
 	if (id === 'bankunmortgage') return null; // set by the caller (needs the square number)
 	return {};
