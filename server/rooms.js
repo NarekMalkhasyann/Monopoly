@@ -602,9 +602,13 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 			});
 		},
 
+		// The host's browser ends the game when one player is left. If the host is already out of the game, the winner's
+		// browser does it: a member may end the game when the winner it names is themself (the first message counts).
 		end(s, msg) {
 			const room = s.room;
-			if (!room || room.status !== 'active' || room.hostId !== s.user.id) return;
+			if (!room || room.status !== 'active') return;
+			const me = room.members.get(s.user.id);
+			if (room.hostId !== s.user.id && !(me && me.name === String(msg.winner_name || ''))) return;
 			room.status = 'finished';
 			const winner = String(msg.winner_name || '').slice(0, 16) || null;
 			const turns = Number(msg.turn_count) || room.turnCount;

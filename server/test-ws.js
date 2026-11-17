@@ -126,7 +126,7 @@ assert.equal((await call('GET', `/api/games/${j.room.id}`, null, tC)).status, 40
 assert.equal((await call('DELETE', `/api/games/${j.room.id}`, null, tA)).status, 409);
 
 // finish
-b2s.send({ t: 'end', winner_name: 'Ben', players: [] }); // not host: ignored
+b2s.send({ t: 'end', winner_name: 'Anna', players: [] }); // not host, and not the winner it names: ignored
 a.send({ t: 'end', winner_name: 'Anna', turn_count: 9, players: [{ seat: 1, money: 2400, rank: 1 }, { seat: 2, money: 0, rank: 2 }] });
 await a.next('ended');
 const fin = (await call('GET', `/api/games/${j.room.id}`, null, tB)).body.game;

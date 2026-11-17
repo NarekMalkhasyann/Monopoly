@@ -507,6 +507,7 @@ export function startOnlineGame(room, you) {
 
 	trackOnline({
 		isHost: you.userId === room.hostId,
+		meName: players.find((p) => p.userId === you.userId).name,
 		seats: players.map((p) => ({ seat: p.seat, name: p.name })),
 		roomId: room.id,
 		send: (msg) => send(msg).catch(() => {}),
