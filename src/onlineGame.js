@@ -56,7 +56,7 @@ export function subscribeGameInfo(fn) {
 }
 function markDesync(why, kind = 'stuck') {
 	console.warn('[online] out of sync:', why);
-	if (loadingOn) { loadingOn = false; finishLoading(0); }
+	if (loadingOn) { loadingOff(); finishLoading(0); }
 	setInfo({ desync: true, desyncKind: kind, desyncWhy: why });
 }
 function setInfo(patch) {
@@ -92,7 +92,12 @@ function toast(text) {
 	toast.t = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
-const isVisible = (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+// Replaying a long history asks this about every click; the exact test forces the browser to lay the page out each time,
+// so while the loading screen is up only the inline "display: none" of the element and its parents is looked at.
+const isVisible = (el) => {
+	if (loadingOn) { for (let e = el; e && e !== document.body; e = e.parentElement) if (e.hidden || e.style.display === 'none') return false; return true; }
+	return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+};
 const byName = (name) => {
 	for (let i = 1; i <= win.pcount; i++) if (win.player[i] && win.player[i].name === name) return i;
 	return 0;
@@ -267,12 +272,20 @@ function onKeyCapture(e) {
 }
 
 // ---- receiving: press the same button, in the server's order -----------------
+// One loop step. While a long backlog is replayed (a rejoin) many clicks are pressed in one go, as long as each one is
+// ready at once; the pause between steps only exists to let the screen draw.
 function tick() {
+	const t0 = performance.now();
+	let n = 0;
+	while (tickOnce() && queue.length > 0 && loadingOn && performance.now() - t0 < 25 && ++n < 400);
+}
+
+function tickOnce() {
 	syncMyIndex();
 	syncTradeShared();
-	if (loadingOn && Date.now() - loadStart > 90000) { loadingOn = false; finishLoading(0); } // never trap the player behind it
+	if (loadingOn && Date.now() - loadStart > 90000) { loadingOff(); finishLoading(0); } // never trap the player behind it
 	const m = queue[0];
-	if (!m) { restoreFast(); if (loadingOn) endLoad(); return; }
+	if (!m) { restoreFast(); if (loadingOn) endLoad(); return false; }
 
 	// A long backlog (rejoining) is replayed without animations.
 	if (queue.length > 1) {
@@ -288,6 +301,7 @@ function tick() {
 	const manage = MANAGE.has(id);
 
 	// Before pressing a house / mortgage button, tick the same property as the sender did.
+	if (manage && loadingOn && saved.updateOwned) saved.updateOwned(); // (the property list is not drawn while replaying; the click needs its tick boxes)
 	if (manage && m.a.check !== undefined) {
 		for (let i = 0; i < 42; i++) {
 			const box = document.getElementById(`propertycheckbox${i}`);
@@ -330,13 +344,13 @@ function tick() {
 				queue.shift(); noteMove();
 				if (m.seat === mySeat) inflightSince = 0;
 				idleSince = 0; waitingSince = 0;
-				return;
+				return true;
 			}
 		}
 		// The engine is not ready for this click yet (dice still rolling, pop-up fading in).
 		if (!waitingSince || throttled) waitingSince = nowMs;
 		if (nowMs - waitingSince > 12000) markDesync(`the game could not press "${id}" for 12 seconds (turn ${win.turn}, ${queue.length} click(s) waiting)`);
-		return;
+		return false;
 	}
 	waitingSince = 0; idleSince = 0;
 	if (m.seat === mySeat) inflightSince = 0; // my click reached the screen: the next one may be sent
@@ -346,10 +360,10 @@ function tick() {
 	if (id === 'proposetradebutton' && (tradeShared || tradeBusy())) {
 		queue.shift(); noteMove();
 		if (m.seat === mySeat) { inflightSince = 0; toast(tradeShared ? 'Another trade offer is already open.' : 'Not possible right now. Try again in a moment.'); }
-		return;
+		return true;
 	}
 	queue.shift(); noteMove();
-	if (m.a.turn && win.turn !== m.a.turn && !TRADE_BUTTONS.has(id)) markDesync(`"${id}" was sent during turn ${m.a.turn} but this browser is on turn ${win.turn}`, 'mismatch');
+	if (m.a.turn && win.turn !== m.a.turn && !TRADE_BUTTONS.has(id) && id !== 'tradeexpire') markDesync(`"${id}" was sent during turn ${m.a.turn} but this browser is on turn ${win.turn}`, 'mismatch');
 	bypass = true;
 	try {
 		if (aucEvent) applyAuctionEvent(m);
@@ -402,6 +416,7 @@ function tick() {
 			}
 		}
 	} finally { bypass = false; }
+	return true;
 }
 
 // ---- live auction (the server numbers and times it, see server/rooms.js) -----------------
@@ -542,6 +557,9 @@ export function startOnlineGame(room, you) {
 	// Rejoining a long game replays every stored move: show how far it is instead of letting it flash by on the board.
 	if (queue.length >= LOAD_MIN_MOVES) {
 		loadingOn = true; loadStart = Date.now(); applied = 0;
+		// the property lists and cash numbers are drawn once at the end instead of after every single move
+		for (const f of REDRAW) { saved[f] = win[f]; win[f] = () => {}; }
+		document.body.classList.add('replaying'); // (the board is not drawn while the moves run behind the loading screen)
 		startLoading('Loading your game', `Replaying ${queue.length} moves…`);
 		setLoading(0.15);
 	} else finishLoading();
@@ -549,11 +567,19 @@ export function startOnlineGame(room, you) {
 
 // ---- loading screen while a long backlog is replayed
 let loadingOn = false;
+const REDRAW = ['updateOwned', 'updateMoney'];
+const saved = {};
+function loadingOff() {
+	loadingOn = false;
+	document.body.classList.remove('replaying');
+	for (const f of REDRAW) if (saved[f]) { win[f] = saved[f]; saved[f] = undefined; win[f](); }
+}
 let loadStart = 0;
 let applied = 0;
 let lastPaint = 0;
+let lastMoveAt = 0;
 function noteMove() {
-	applied++;
+	applied++; lastMoveAt = Date.now();
 	if (!loadingOn) return;
 	const now = Date.now();
 	if (now - lastPaint < 80) return;
@@ -563,16 +589,15 @@ function noteMove() {
 }
 function endLoad() {
 	const moving = (win.jQuery && win.jQuery(':animated').length > 0) || document.getElementById('dice-scene')?.classList.contains('visible');
-	if (moving) return; // the last move is still being drawn
-	loadingOn = false;
-	if (win.updateMoney) win.updateMoney();
+	if (moving && Date.now() - lastMoveAt < 700) return; // the last move is still being drawn (but never keep the loading screen up for it)
+	loadingOff();
 	setLoading(1, `Move ${applied} of ${applied}`);
 	finishLoading();
 }
 
 export function stopOnlineGame() {
 	clearInterval(timer);
-	loadingOn = false; finishLoading(0);
+	loadingOff(); finishLoading(0);
 	document.removeEventListener('click', onClickCapture, true);
 	document.removeEventListener('keydown', onKeyCapture, true);
 	win.liveAuction = undefined; live.close();
