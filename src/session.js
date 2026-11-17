@@ -30,7 +30,7 @@ let eliminated = [];      // names, in the order they went bankrupt
 let ended = false;
 let chain = Promise.resolve();
 let status = 'idle';      // idle | saving | saved | offline
-let online = null;        // set for online games: { isHost, seats, roomId, send }
+let online = null;        // set for online games: { isHost, meName, seats, roomId, send }
 let runningKey = null;    // which game this page load is playing ('local', or a game id)
 const listeners = new Set();
 
@@ -192,10 +192,10 @@ win.onPlayerEliminated = (name) => { eliminated.push(name); };
 win.onGameEnd = (winner) => {
 	ended = true;
 	if (online) {
-		if (online.isHost) {
-			online.send({ t: 'log', events: events.splice(0), turn_count: turnNo });
-			online.send({ t: 'end', winner_name: winner, turn_count: turnNo, players: buildResults(winner) });
-		}
+		// The host saves the result. If the host is no longer in the game (removed or bankrupt), the winner saves it
+		// (the server accepts the first one and ignores the rest).
+		if (online.isHost) online.send({ t: 'log', events: events.splice(0), turn_count: turnNo });
+		if (online.isHost || online.meName === winner) online.send({ t: 'end', winner_name: winner, turn_count: turnNo, players: buildResults(winner) });
 		return;
 	}
 	finish(winner);

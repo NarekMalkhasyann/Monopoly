@@ -71,8 +71,11 @@ export default function GameBar() {
 	const room = isOnline ? online.room : null;
 	const turnPlayer = room && !info.over && info.turnName ? room.players.find((p) => p.name === info.turnName) : null;
 	const away = turnPlayer && !turnPlayer.online ? turnPlayer.awayMs + (Date.now() - seen) : 0;
-	const canRemove = turnPlayer && away >= room.forfeitAfterMs && turnPlayer.userId !== online.you?.userId;
 	const isHost = room && online.you && room.hostId === online.you.userId;
+	// Only the host removes players (if the host is away too, nobody could: then anybody may)
+	const hostPlayer = room && room.players.find((p) => p.userId === room.hostId);
+	const hostAway = !!hostPlayer && !hostPlayer.online && hostPlayer.awayMs + (Date.now() - seen) >= room.forfeitAfterMs;
+	const canRemove = turnPlayer && away >= room.forfeitAfterMs && turnPlayer.userId !== online.you?.userId && (isHost || hostAway);
 	const ended = room && room.status === 'abandoned';
 
 	if (ended) {
@@ -110,7 +113,7 @@ export default function GameBar() {
 					{offlineCount > 0 && !info.over && <span className="save-state offline">{offlineCount} away</span>}
 					{info.waitingMe && !info.myTurn && <span className="save-state saved">Your move</span>}
 					{turnPlayer && !turnPlayer.online && !canRemove && (
-						<span className="save-state offline">{turnPlayer.name} is away ({Math.max(0, Math.ceil((room.forfeitAfterMs - away) / 1000))}s)</span>
+						<span className="save-state offline">{turnPlayer.name} is away{away >= room.forfeitAfterMs ? ' (the host can remove them)' : ` (${Math.max(0, Math.ceil((room.forfeitAfterMs - away) / 1000))}s)`}</span>
 					)}
 					{canRemove && (
 						<button className="btn-danger" onClick={() => setAsk({ kind: 'remove', seat: turnPlayer.seat, name: turnPlayer.name })} title="Removes them from the game; their properties return to the bank">
