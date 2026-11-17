@@ -81,7 +81,7 @@ export default function LiveAuction() {
 						<div className="la-bidlabel">I'M BIDDING…</div>
 						<div className="la-buttons">
 							{STEPS.map((step) => {
-								const total = la.high + step;
+								const total = Math.max(la.high, la.pending) + step;
 								return <button key={step} type="button" disabled={!started || total > cash} onClick={() => placeBid(total)}><small>+${step}</small><b>${total}</b></button>;
 							})}
 						</div>
