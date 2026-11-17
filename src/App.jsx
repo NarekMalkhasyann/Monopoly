@@ -80,6 +80,10 @@ export default function App() {
 	const showGame = !!user && (route.name === 'local' && user.role !== 'not-approved' || (route.name === 'game' && (gameLive || running === route.params.id)));
 	useEffect(() => { document.body.classList.toggle('in-game', showGame); }, [showGame]); // the board keeps its lighter grey; the portal pages are darker
 
+	// An online game is about to start on this page: until it does, the side panel must not show its placeholder names and $1500s.
+	const onlineBooting = showGame && route.name === 'game' && running !== route.params.id;
+	useEffect(() => { document.body.classList.toggle('online-route', onlineBooting); }, [onlineBooting]);
+
 	let page = null;
 	if (user === undefined) {
 		page = <div className="boot">Loading…</div>;

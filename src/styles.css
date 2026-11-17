@@ -2669,3 +2669,6 @@ body.trade-collapsed #trade { display: none !important; }
 /* a tab opened before an update: ask for a refresh */
 #new-version { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 40; display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; border-radius: 14px; background: #1f1f1f; color: #fff; font: 600 13px Montserrat, sans-serif; box-shadow: inset 0 0 0 1px #acfa0080, 0 12px 40px #000c; max-width: calc(100vw - 24px); }
 #new-version button { border: none; border-radius: 10px; padding: 8px 14px; background: #acfa00; color: #161616; font: 800 13px Montserrat, sans-serif; cursor: pointer; }
+
+/* online game still loading: no placeholder names / $1500 in the side panel */
+body.online-route:not(.online-game) #moneybarwrap { visibility: hidden; }

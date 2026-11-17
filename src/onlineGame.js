@@ -28,7 +28,7 @@ const AUCTION_BUTTONS = new Set(['auctionbid', 'auctionpass', 'auctionexit']);
 import { startLoading, setLoading, finishLoading } from './loading.js';
 
 const STALE_AFTER_MS = 1500;
-const LOAD_MIN_MOVES = 10; // a backlog this long (rejoining a game) gets the loading screen with a progress bar
+const LOAD_MIN_MOVES = 1; // any backlog (rejoining a game) gets the loading screen with a progress bar, so numbers never flicker through old values
 
 const win = window;
 const queue = [];
@@ -431,12 +431,25 @@ function restoreFast() {
 	if (savedDice) { if (!win.animateDice) win.animateDice = savedDice; savedDice = null; }
 }
 
+// The cash numbers on the screen always show what the engine has (also right after a rejoin has replayed every move).
+function syncMoneyDisplay() {
+	for (let i = 1; i <= win.pcount; i++) {
+		const q = win.player[i], el = document.getElementById(`p${i}money`);
+		if (q && el && el.textContent !== String(q.money)) el.textContent = q.money;
+		const nm = document.getElementById(`p${i}moneyname`);
+		if (q && nm && nm.textContent !== q.name) nm.textContent = q.name;
+	}
+	const t = win.player[win.turn];
+	const pm = document.getElementById('pmoney');
+	if (t && pm && pm.textContent !== `$${t.money}`) pm.textContent = `$${t.money}`;
+}
 function refreshInfo() {
 	syncMyIndex();
 	syncTradeShared();
 	// the trade button of a player's row: everybody except me (online you always trade as yourself)
 	for (let n = 1; n <= 8; n++) { const row = document.getElementById('moneybarrow' + n); if (row) row.classList.toggle('mb-self', n === myIndex); }
 	if (!started || !win.player || !win.player[win.turn]) return;
+	syncMoneyDisplay();
 	const over = win.pcount <= 1;
 	const myTurn = !over && win.turn === myIndex;
 	document.body.classList.toggle('online-wait', !myTurn && !over);
@@ -552,6 +565,7 @@ function endLoad() {
 	const moving = (win.jQuery && win.jQuery(':animated').length > 0) || document.getElementById('dice-scene')?.classList.contains('visible');
 	if (moving) return; // the last move is still being drawn
 	loadingOn = false;
+	if (win.updateMoney) win.updateMoney();
 	setLoading(1, `Move ${applied} of ${applied}`);
 	finishLoading();
 }
