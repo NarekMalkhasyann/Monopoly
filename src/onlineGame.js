@@ -33,7 +33,8 @@ const LOAD_MIN_MOVES = 10; // a backlog this long (rejoining a game) gets the lo
 const win = window;
 const queue = [];
 let started = false;
-let myIndex = 0;         // my player number inside the engine
+let myIndex = 0;         // my player number inside the engine (it changes when a player with a lower number leaves the game)
+let myName = '';
 let bypass = false;      // true while we press a button for a relayed action
 let timer = null;
 let waitingSince = 0;
@@ -96,6 +97,11 @@ const byName = (name) => {
 	for (let i = 1; i <= win.pcount; i++) if (win.player[i] && win.player[i].name === name) return i;
 	return 0;
 };
+// The engine renumbers the players when one is eliminated or removed, so the number is looked up again every time.
+function syncMyIndex() {
+	if (!myName) return;
+	for (let i = 1; i <= win.pcount; i++) if (win.player[i] && win.player[i].name === myName) { myIndex = i; return; }
+}
 const text = (id) => (document.getElementById(id) || {}).textContent || '';
 
 // Who may press this button right now? (the engine decides whose turn it is; so do we)
@@ -190,6 +196,7 @@ function share(id, extra) {
 }
 
 function onClickCapture(e) {
+	syncMyIndex();
 	syncTradeShared();
 	if (!started || bypass || !(e.target instanceof Element)) return;
 	// The game is over (one player left): the winner's "OK" only closes the pop-up on this screen. There is no
@@ -252,6 +259,7 @@ function onClickCapture(e) {
 
 // Pressing Enter in the bid box is a bid.
 function onKeyCapture(e) {
+	syncMyIndex();
 	if (!started || bypass || e.key !== 'Enter' || !(e.target instanceof Element) || e.target.id !== 'bid') return;
 	e.preventDefault();
 	e.stopImmediatePropagation();
@@ -262,6 +270,7 @@ function onKeyCapture(e) {
 
 // ---- receiving: press the same button, in the server's order -----------------
 function tick() {
+	syncMyIndex();
 	syncTradeShared();
 	if (loadingOn && Date.now() - loadStart > 90000) { loadingOn = false; finishLoading(0); } // never trap the player behind it
 	const m = queue[0];
@@ -425,6 +434,7 @@ function restoreFast() {
 }
 
 function refreshInfo() {
+	syncMyIndex();
 	syncTradeShared();
 	// the trade button of a player's row: everybody except me (online you always trade as yourself)
 	for (let n = 1; n <= 8; n++) { const row = document.getElementById('moneybarrow' + n); if (row) row.classList.toggle('mb-self', n === myIndex); }
@@ -508,7 +518,7 @@ export function startOnlineGame(room, you) {
 
 	const me = players.find((p) => p.userId === you.userId);
 	mySeat = me.seat; inflightSince = 0;
-	for (let i = 1; i <= win.pcount; i++) if (win.player[i].name === me.name) myIndex = i;
+	myName = me.name; syncMyIndex();
 	setInfo({ me: me.name });
 
 	// The engine asks before it presses OK on a Chance / Community Chest card by itself: only the player whose turn it is does, and never while moves are being replayed.
@@ -562,7 +572,7 @@ export const playerIndexOfSeat = (room, seat) => {
 	return p ? byName(p.name) : 0;
 };
 
-export const myPlayerIndex = () => myIndex;
+export const myPlayerIndex = () => { syncMyIndex(); return myIndex; };
 export const isOnlineGameRunning = () => started;
 // Still catching up on clicks (rejoin, or a click is on its way): the turn timer waits.
 export const isReplaying = () => queue.length > 0;
