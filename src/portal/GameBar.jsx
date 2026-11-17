@@ -126,7 +126,7 @@ export default function GameBar() {
 							<p className="muted">
 								{ask.kind === 'abandon'
 									? 'Are you sure you want to abandon the game? It ends for everybody without a winner (you can bring it back later from History).'
-									: `Are you sure you want to remove ${ask.name} from the game? Their properties return to the bank. This cannot be undone.`}
+									: `Are you sure you want to remove ${ask.name} from the game? Their properties return to the bank (they are not auctioned) and the game goes on. This cannot be undone.`}
 							</p>
 							<div className="modal-actions">
 								<button className="btn-ghost" onClick={() => setAsk(null)}>Cancel</button>

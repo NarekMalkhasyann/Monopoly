@@ -54,6 +54,9 @@ const AUCTION_FIRST_MS = () => num(process.env.AUCTION_FIRST_MS, 20_000);
 const AUCTION_BID_MS = () => num(process.env.AUCTION_BID_MS, 5_000);
 const AUCTION_GRACE_MS = () => (process.env.AUCTION_GRACE_MS === '0' ? 0 : num(process.env.AUCTION_GRACE_MS, 300));
 const AUCTION_MAX_BID = 1_000_000;
+// A trade offer nobody answers (the other player is away, the tab sleeps) is withdrawn by the server after this time,
+// so it can never block everybody's game buttons. The server is the clock; the end is a numbered event like a click.
+const TRADE_EXPIRE_MS = () => num(process.env.TRADE_EXPIRE_MS, 60_000);
 
 export function createRooms(db) {
 	// SQL is portable between SQLite and PostgreSQL (see db.js).
@@ -96,6 +99,23 @@ export function createRooms(db) {
 		return job;
 	};
 
+	function tradeClear(room) { clearTimeout(room.offerTimer); room.offerTimer = null; }
+	function tradeWatch(room, seq, turn, ms) {
+		tradeClear(room);
+		room.offerTimer = setTimeout(() => {
+			room.offerTimer = null;
+			if (room.status === 'active') auctionEvent(room, 0, { id: 'tradeexpire', turn, v: seq });
+		}, ms);
+		room.offerTimer.unref();
+	}
+	// After a restart: an offer that was still open gets a new full period.
+	async function tradeRecover(room) {
+		const row = await db.get("SELECT seq, text FROM game_actions WHERE game_id = ? AND type = 'click' AND (text LIKE '%\"id\":\"proposetradebutton\"%' OR text LIKE '%\"id\":\"accepttradebutton\"%' OR text LIKE '%\"id\":\"rejecttradebutton\"%' OR text LIKE '%\"id\":\"canceltradebutton\"%' OR text LIKE '%\"id\":\"tradeexpire\"%' OR text LIKE '%\"id\":\"forfeit\"%') ORDER BY seq DESC LIMIT 1", [room.id]);
+		if (!row) return;
+		let o; try { o = JSON.parse(row.text); } catch { return; }
+		if (o.a && o.a.id === 'proposetradebutton') tradeWatch(room, row.seq, Number(o.a.turn) || 0, TRADE_EXPIRE_MS());
+	}
+
 	// ---- live auction ---------------------------------------------------------
 	// The server is the only clock of an auction. Opening, every accepted bid and the end are numbered like clicks
 	// (ids "aucopen", "aucbid", "aucend") and stored with them, so every browser, and a player who rejoins, sees the
@@ -121,7 +141,7 @@ export function createRooms(db) {
 		if (room.status !== 'active') return;
 		auctionEvent(room, au.seat < 0 ? 0 : au.seat, { id: 'aucend', n: au.n, turn: au.turn, v: au.high, w: au.seat });
 	}
-	const auctionStop = (room) => { if (room.auction) { clearTimeout(room.auction.timer); room.auction = null; } };
+	const auctionStop = (room) => { clearTimeout(room.offerTimer); if (room.auction) { clearTimeout(room.auction.timer); room.auction = null; } };
 	// What a browser that (re)joins in the middle of an auction needs to start its own clock.
 	const auctionSnapshot = (room) => (room.auction ? { n: room.auction.n, high: room.auction.high, seat: room.auction.seat, remMs: Math.max(0, room.auction.deadline - Date.now()) } : null);
 	// After a server restart the clock of a running auction is gone: close it with no sale (the property stays with the bank).
@@ -203,7 +223,7 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 			for (const m of await q.members(row.id)) {
 				room.members.set(m.user_id, { userId: m.user_id, seat: m.seat, name: m.name, color: m.color, sessions: new Set(), offlineSince: Date.now() });
 			}
-			if (row.status === 'active') await auctionRecover(room);
+			if (row.status === 'active') { await auctionRecover(room); await tradeRecover(room); }
 			rooms.set(row.id, room);
 			return room;
 		})();
@@ -504,6 +524,8 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 			const seq = ++room.seq;
 			written(room, async () => { await q.insertAction(room.id, seq, action.a.turn, 'click', JSON.stringify(action)); await q.bump(room.id); });
 			broadcast(room, { t: 'act', seq, ...action });
+			if (a.id === 'proposetradebutton') tradeWatch(room, seq, action.a.turn, TRADE_EXPIRE_MS());
+			else if (a.id === 'rejecttradebutton' || a.id === 'canceltradebutton') tradeClear(room);
 		},
 
 		// Live auction. Every browser's engine reaches the start of the same auction at the same point of the click order and

@@ -813,6 +813,16 @@ function Game() {
 		$("#popupbackground").hide();
 		$("#popupwrap").hide();
 		$("#trade").hide();
+		// A player removed for being away: everything goes straight back to the bank (no auction of each property; the
+		// remove button promises exactly this). Only a bankruptcy during the game sends the properties to auction.
+		for (var i = 0; i < 40; i++) {
+			if (square[i].owner == p.index) {
+				square[i].owner = 0;
+				square[i].mortgage = false;
+				square[i].house = 0;
+				square[i].hotel = 0;
+			}
+		}
 		p.money = -1;
 		p.creditor = 0;
 		game.bankruptcy();
@@ -833,9 +843,13 @@ function Game() {
 
 	this.cancelTrade = function() {
 		if (pendingTradeNames) {
-			addAlert(pendingTradeNames[1] + " declined the trade offered by " + pendingTradeNames[0] + ".", "trade");
+			// (online: window.tradeEnd says why the offer ended)
+			if (window.tradeEnd == "withdrawn") { addAlert(pendingTradeNames[0] + " withdrew the trade offered to " + pendingTradeNames[1] + ".", "trade"); }
+			else if (window.tradeEnd == "expired") { addAlert("The trade offered by " + pendingTradeNames[0] + " to " + pendingTradeNames[1] + " expired.", "trade"); }
+			else { addAlert(pendingTradeNames[1] + " declined the trade offered by " + pendingTradeNames[0] + ".", "trade"); }
 			pendingTradeNames = null;
 		}
+		window.tradeEnd = undefined;
 		$("#trade").hide();
 		$("#buy-menu-item").click(); // back to the first tab
 

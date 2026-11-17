@@ -2,7 +2,7 @@
 // numbered events "aucopen", "aucbid" and "aucend" say (they are applied in order by src/onlineGame.js).
 import { send } from './online.js';
 
-const CLOSED = { open: false, n: 0, index: 0, high: 0, bidder: null, history: [], startedAt: 0, totalMs: 0, deadlineAt: 0, hint: '' };
+const CLOSED = { open: false, n: 0, index: 0, high: 0, bidder: null, history: [], startedAt: 0, totalMs: 0, deadlineAt: 0, hint: '', pending: 0 };
 let state = CLOSED;
 const listeners = new Set();
 const set = (patch) => { state = { ...state, ...patch }; listeners.forEach((fn) => fn()); };
@@ -29,15 +29,18 @@ export function engineOpened({ index, n, turn }) {
 // The server says it is open: the clock starts, remMs is what is left.
 export function serverOpened(remMs, n) { set({ n, startedAt: Date.now(), totalMs: remMs, deadlineAt: Date.now() + remMs, hint: '' }); }
 export function serverBid({ bidder, amount, remMs }) {
-	set({ high: amount, bidder, history: [{ bidder, amount, at: Date.now() }, ...state.history], startedAt: Date.now(), totalMs: remMs, deadlineAt: Date.now() + remMs, hint: '' });
+	set({ high: amount, bidder, history: [{ bidder, amount, at: Date.now() }, ...state.history], startedAt: Date.now(), totalMs: remMs, deadlineAt: Date.now() + remMs, pending: 0 });
 }
 // A browser that joined in the middle of an auction: what the server still has left.
 export function serverSnapshot({ remMs }) { set({ startedAt: Date.now(), totalMs: Math.max(remMs, state.high ? 5000 : 20000), deadlineAt: Date.now() + remMs }); }
 export const close = () => { clearInterval(retry); set(CLOSED); };
-export const showHint = (hint) => set({ hint });
+export const showHint = (hint) => set(hint ? { hint, pending: 0 } : { hint });
 
-// The player pressed a bid button: amount is the new total (not the step).
-export function placeBid(amount) {
+// The player pressed a bid button: step is how much to add. It is added to the highest bid or, when the player
+// clicks fast and the server has not answered yet, to their own last bid (so the second click is not "too low").
+export function placeBid(step) {
 	if (!state.open) return;
+	const amount = Math.max(state.high, state.pending) + step;
+	set({ pending: amount, hint: '' });
 	send({ t: 'auction-bid', n: state.n, amount }).catch(() => {});
 }
