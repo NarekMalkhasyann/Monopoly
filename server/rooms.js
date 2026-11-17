@@ -566,6 +566,10 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 			if (target.sessions.size > 0 || !target.offlineSince || Date.now() - target.offlineSince < FORFEIT_AFTER_MS()) {
 				return err(s.conn, 'This player is not away long enough yet');
 			}
+			// Only the host removes players. (If the host is away too, nobody could, and the game would be stuck: then anybody may.)
+			const host = room.members.get(room.hostId);
+			const hostAway = !!host && host.sessions.size === 0 && !!host.offlineSince && Date.now() - host.offlineSince >= FORFEIT_AFTER_MS();
+			if (room.hostId !== s.user.id && !hostAway) return err(s.conn, 'Only the host can remove players');
 			const member = room.members.get(s.user.id);
 			const action = { seat: member.seat, a: { id: 'forfeit', turn: Number(msg.turn) || 0, v: target.seat } };
 			const seq = ++room.seq;
