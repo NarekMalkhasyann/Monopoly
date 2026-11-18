@@ -129,7 +129,7 @@ export default function GameBar() {
 					{offlineCount > 0 && !info.over && <span className="save-state offline">{offlineCount} away</span>}
 					{info.waitingMe && !info.myTurn && <span className="save-state saved">Your move</span>}
 					{turnPlayer && !turnPlayer.online && !canRemove && (
-						<span className="save-state offline">{turnPlayer.name} is away{away >= room.forfeitAfterMs ? ' (the host can remove them)' : ` (${Math.max(0, Math.ceil((room.forfeitAfterMs - away) / 1000))}s)`}</span>
+						<span className="save-state offline gb-away">{turnPlayer.name} is away{away >= room.forfeitAfterMs ? ' (the host can remove them)' : ` (${Math.max(0, Math.ceil((room.forfeitAfterMs - away) / 1000))}s)`}</span>
 					)}
 					{canRemove && (
 						<button className="btn-danger" onClick={() => setAsk({ kind: 'remove', seat: turnPlayer.seat, name: turnPlayer.name })} title="Removes them from the game; their properties return to the bank">
