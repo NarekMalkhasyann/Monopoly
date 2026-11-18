@@ -1241,6 +1241,7 @@ function Game() {
 }
 
 var game;
+var GO_SALARY = 300; // what a player collects for passing (or landing on) GO
 
 
 // The colour names offered in the setup, shown in the game's palette (the same tones as the property groups).
@@ -2177,16 +2178,16 @@ function advance(destination, pass) {
 			p.position = pass;
 		} else {
 			p.position = pass;
-			p.money += 200;
-			addAlert(p.name + " collected a $200 salary for passing GO.", "money");
+			p.money += GO_SALARY;
+			addAlert(p.name + " collected a $" + GO_SALARY + " salary for passing GO.", "money");
 		}
 	}
 	if (p.position < destination) {
 		p.position = destination;
 	} else {
 		p.position = destination;
-		p.money += 200;
-		addAlert(p.name + " collected a $200 salary for passing GO.", "money");
+		p.money += GO_SALARY;
+		addAlert(p.name + " collected a $" + GO_SALARY + " salary for passing GO.", "money");
 	}
 
 	land();
@@ -2201,8 +2202,8 @@ function advanceToNearestUtility() {
 		p.position = 28;
 	} else if (p.position >= 28) {
 		p.position = 12;
-		p.money += 200;
-		addAlert(p.name + " collected a $200 salary for passing GO.", "money");
+		p.money += GO_SALARY;
+		addAlert(p.name + " collected a $" + GO_SALARY + " salary for passing GO.", "money");
 	}
 
 	land(true);
@@ -2219,8 +2220,8 @@ function advanceToNearestRailroad() {
 		p.position = 25;
 	} else if (p.position >= 35) {
 		p.position = 5;
-		p.money += 200;
-		addAlert(p.name + " collected a $200 salary for passing GO.", "money");
+		p.money += GO_SALARY;
+		addAlert(p.name + " collected a $" + GO_SALARY + " salary for passing GO.", "money");
 	}
 
 	land(true);
@@ -2732,13 +2733,13 @@ function land(increasedRent) {
 		citytax();
 	}
 
-	// Go to jail. Go directly to Jail. Do not pass GO. Do not collect $200.
+	// Go to jail. Go directly to Jail. Do not pass GO. Do not collect $" + GO_SALARY + ".
 	if (p.position === 30) {
 		updateMoney();
 		updatePosition();
 
 		if (p.human) {
-			popup("<div>Go to jail. Go directly to Jail. Do not pass GO. Do not collect $200.</div>", gotojail);
+			popup("<div>Go to jail. Go directly to Jail. Do not pass GO. Do not collect $" + GO_SALARY + ".</div>", gotojail);
 		} else {
 			gotojail();
 		}
@@ -2907,11 +2908,11 @@ function applyRoll() {
 		// Move player
 		p.position += die1 + die2;
 
-		// Collect $200 salary as you pass GO
+		// Collect the GO salary as you pass GO
 		if (p.position >= 40) {
 			p.position -= 40;
-			p.money += 200;
-			addAlert(p.name + " collected a $200 salary for passing GO.", "money");
+			p.money += GO_SALARY;
+			addAlert(p.name + " collected a $" + GO_SALARY + " salary for passing GO.", "money");
 		}
 
 		land();
