@@ -141,6 +141,8 @@ class DiceBox {
 
 		// this.cannonDebugger = new CannonDebugger(this.scene,this.world)
 		this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+		// do not wait for the graphics card to finish compiling every shader (it froze the page for about half a second at the first roll)
+		this.renderer.debug.checkShaderErrors = false
 		this.container.appendChild(this.renderer.domElement);
 		this.renderer.shadowMap.enabled = this.shadows;
 		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;

@@ -2487,7 +2487,13 @@ function showdeed(property) {
 	var logoBox = document.getElementById("deed-logo");
 	var logoImg = document.getElementById("deed-logo-img");
 	if (sq.logo) {
-		logoImg.src = "images/card-logos/" + sq.logo + ".png";
+		var logoUrl = "images/card-logos/" + sq.logo + ".png";
+		if (logoImg.getAttribute("src") !== logoUrl) {
+			// do not show the previous company's logo while the new one is still being fetched
+			logoImg.style.visibility = "hidden";
+			logoImg.addEventListener("load", function showLogo() { logoImg.style.visibility = ""; logoImg.removeEventListener("load", showLogo); });
+			logoImg.src = logoUrl;
+		}
 		logoBox.style.display = "flex";
 	} else {
 		logoBox.style.display = "none";
@@ -3083,6 +3089,16 @@ function menuitem_onmouseout(element) {
 window.onload = function() {
 	game = new Game();
 
+	// Fetch every brand logo once in the background, so a title deed never waits for its picture.
+	setTimeout(function() {
+		for (var i = 0; i < 40; i++) {
+			if (square[i] && square[i].logo) {
+				new Image().src = "images/card-logos/" + square[i].logo + ".png";
+				new Image().src = "images/card-logos/large/" + square[i].logo + ".png";
+			}
+		}
+	}, 300);
+
 	for (var i = 0; i <= 8; i++) {
 		player[i] = new Player("", "");
 		player[i].index = i;
@@ -3209,7 +3225,6 @@ window.onload = function() {
 			var enlargeLogo = document.createElement("img");
 			enlargeLogo.className = "enlarge-logo";
 			enlargeLogo.alt = s.name;
-			enlargeLogo.loading = "lazy";
 			enlargeLogo.src = "images/card-logos/large/" + s.logo + ".png";
 			enlargeBox.insertBefore(enlargeLogo, document.getElementById("enlarge" + i + "name").previousSibling);
 		}
