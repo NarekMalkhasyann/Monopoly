@@ -3092,7 +3092,10 @@ window.onload = function() {
 	// Fetch every brand logo once in the background, so a title deed never waits for its picture.
 	setTimeout(function() {
 		for (var i = 0; i < 40; i++) {
-			if (square[i] && square[i].logo) { new Image().src = "images/card-logos/" + square[i].logo + ".png"; }
+			if (square[i] && square[i].logo) {
+				new Image().src = "images/card-logos/" + square[i].logo + ".png";
+				new Image().src = "images/card-logos/large/" + square[i].logo + ".png";
+			}
 		}
 	}, 300);
 
@@ -3222,7 +3225,6 @@ window.onload = function() {
 			var enlargeLogo = document.createElement("img");
 			enlargeLogo.className = "enlarge-logo";
 			enlargeLogo.alt = s.name;
-			enlargeLogo.loading = "lazy";
 			enlargeLogo.src = "images/card-logos/large/" + s.logo + ".png";
 			enlargeBox.insertBefore(enlargeLogo, document.getElementById("enlarge" + i + "name").previousSibling);
 		}
