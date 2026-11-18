@@ -1,6 +1,7 @@
 // State of the live auction (online games only). The server keeps the clock; this store only mirrors what the
 // numbered events "aucopen", "aucbid" and "aucend" say (they are applied in order by src/onlineGame.js).
 import { send } from './online.js';
+import { play } from './sound.js';
 
 const CLOSED = { open: false, n: 0, index: 0, high: 0, bidder: null, history: [], startedAt: 0, totalMs: 0, deadlineAt: 0, hint: '', pending: 0 };
 let state = CLOSED;
@@ -27,8 +28,9 @@ export function engineOpened({ index, n, turn }) {
 	}, 1500);
 }
 // The server says it is open: the clock starts, remMs is what is left.
-export function serverOpened(remMs, n) { set({ n, startedAt: Date.now(), totalMs: remMs, deadlineAt: Date.now() + remMs, hint: '' }); }
+export function serverOpened(remMs, n) { play('aucopen'); set({ n, startedAt: Date.now(), totalMs: remMs, deadlineAt: Date.now() + remMs, hint: '' }); }
 export function serverBid({ bidder, amount, remMs }) {
+	play('bid');
 	set({ high: amount, bidder, history: [{ bidder, amount, at: Date.now() }, ...state.history], startedAt: Date.now(), totalMs: remMs, deadlineAt: Date.now() + remMs, pending: 0 });
 }
 // A browser that joined in the middle of an auction: what the server still has left.

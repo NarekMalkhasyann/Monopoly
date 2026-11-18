@@ -6,6 +6,21 @@ import { send } from '../online.js';
 import { navigate } from '../router.jsx';
 import { useOnline } from '../online.js';
 import { Modal } from './GameDetails.jsx';
+import { soundOn, setSoundOn, subscribeSound } from '../sound.js';
+
+// Speaker button: sound effects on / off (remembered in this browser).
+function SoundButton() {
+	const [on, setOn] = useState(soundOn());
+	useEffect(() => subscribeSound(() => setOn(soundOn())), []);
+	return (
+		<button className="btn-ghost gb-sound" onClick={() => setSoundOn(!on)} aria-pressed={on} aria-label={on ? 'Sound effects on' : 'Sound effects off'} title={on ? 'Sound effects: on (click to mute)' : 'Sound effects: off (click to turn on)'}>
+			<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+				<path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" />
+				{on ? <><path d="M16.5 8.5a5 5 0 0 1 0 7" /><path d="M19 6a8.5 8.5 0 0 1 0 12" /></> : <><path d="M17 9l5 6" /><path d="M22 9l-5 6" /></>}
+			</svg>
+		</button>
+	);
+}
 
 const LABEL = { idle: '', saving: 'Saving…', saved: 'Saved', offline: 'Offline – will retry' };
 
@@ -94,6 +109,7 @@ export default function GameBar() {
 	return (
 		<div className="game-bar" ref={barRef}>
 			<button className="btn-ghost" onClick={leave}>← Menu</button>
+			<SoundButton />
 			<span className="gb-brand">
 				<span className="gb-mark" aria-hidden="true">A</span>
 				<b>ACT Monopoly</b>

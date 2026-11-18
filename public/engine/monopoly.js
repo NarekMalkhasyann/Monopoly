@@ -21,6 +21,7 @@ function Game() {
 		die1 = Math.floor(gameRandom() * 6) + 1;
 		die2 = Math.floor(gameRandom() * 6) + 1;
 		areDiceRolled = true;
+		if (typeof window.sfx === "function") window.sfx("dice");
 	};
 
 	this.resetDice = function() {
@@ -1124,6 +1125,7 @@ function Game() {
 			// }
 			// document.getElementById("refresh").innerHTML += "<br><br><div><textarea type='text' style='width: 980px;' onclick='javascript:select();' />" + text + "</textarea></div>";
 
+			if (typeof window.sfx === "function") window.sfx("win", player[1].name);
 			if (typeof window.onGameEnd === "function") window.onGameEnd(player[1].name);
 
 			popup("<p>Congratulations, " + player[1].name + ", you have won the game.</p><div>");
@@ -1365,6 +1367,8 @@ var pendingTradeNames = null; // [offered by, offered to] while a trade offer wa
 function addAlert(alertText, kind) {
 	// Hook: the app keeps a readable log of the game (see src/session.js).
 	if (typeof window.onGameEvent === "function") window.onGameEvent(alertText);
+	// Hook: sound effects (src/sound.js) choose a sound from the kind and the text of the line.
+	if (typeof window.onGameSound === "function") window.onGameSound(kind, alertText);
 
 	if (!player[turn].human) {
 		player[turn].AI.alertList += "<div>" + alertText + "</div>";
@@ -2000,6 +2004,7 @@ function chanceCommunityChest() {
 
 	// Community Chest
 	if (p.position === 2 || p.position === 17 || p.position === 33) {
+		if (typeof window.sfx === "function") window.sfx("card");
 		var communityChestIndex = communityChestCards.deck[communityChestCards.index];
 
 		// Remove the get out of jail free card from the deck.
@@ -2019,6 +2024,7 @@ function chanceCommunityChest() {
 
 	// Chance
 	} else if (p.position === 7 || p.position === 22 || p.position === 36) {
+		if (typeof window.sfx === "function") window.sfx("card");
 		var chanceIndex = chanceCards.deck[chanceCards.index];
 
 		// Remove the get out of jail free card from the deck.
