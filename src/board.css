@@ -198,3 +198,20 @@
 	.tk { width: 12px; height: 12px; font-size: 7px; box-shadow: 0 0 0 2px #161616, 0 3px 8px #000a; }
 	.tk.tk-turn { outline-width: 1.5px; outline-offset: 2px; }
 }
+
+/* ---- animations when a property is bought (src/fx.js) ---- */
+.cell.fx-breathe { animation: fx-breathe 1.3s ease-in-out; }
+@keyframes fx-breathe {
+	0%, 100% { box-shadow: inset 0 0 0 1px #ffffff0d, 0 0 0 0 transparent; }
+	25%, 75% { box-shadow: inset 0 0 0 3px var(--fx), 0 0 24px var(--fx); }
+	50% { box-shadow: inset 0 0 0 1px var(--fx), 0 0 6px var(--fx); }
+}
+.cell.fx-wave { animation: fx-wave 0.7s ease-out both; animation-delay: var(--fx-delay, 0ms); position: relative; }
+@keyframes fx-wave {
+	0% { transform: scale(1); filter: none; }
+	35% { transform: scale(1.14); filter: brightness(1.5) drop-shadow(0 0 12px var(--fx)); z-index: 20; }
+	100% { transform: scale(1); filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.cell.fx-breathe, .cell.fx-wave { animation-duration: 0.01s; animation-delay: 0s; }
+}

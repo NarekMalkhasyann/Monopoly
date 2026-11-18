@@ -69,6 +69,7 @@ function Game() {
 			p.pay(highestbid, 0);
 			sq.owner = highestbidder;
 			addAlert(p.name + " bought " + sq.name + " for $" + highestbid + ".", "buy");
+			fxAfterBuy(auctionproperty);
 		} else if (window.liveAuction) {
 			addAlert(sq.name + " was not sold.", "info");
 		}
@@ -2569,6 +2570,21 @@ function hidedeed() {
 	$("#deed").hide();
 }
 
+// Board animation for a new owner: the square breathes in the owner's colour; if that completed the colour set
+// (or both stations / utilities) the whole set does a wave in board order. (src/fx.js draws it)
+function fxAfterBuy(i) {
+	if (!window.fxBought) { return; }
+	var sq = square[i];
+	if (!sq || sq.owner <= 0) { return; }
+	var set = null;
+	if (sq.group && sq.group.length >= 2) {
+		var all = true;
+		for (var g = 0; g < sq.group.length; g++) { if (square[sq.group[g]].owner !== sq.owner) { all = false; } }
+		if (all) { set = sq.group.slice().sort(function(x, y) { return x - y; }); }
+	}
+	window.fxBought(i, player[sq.owner].color, set);
+}
+
 function buy() {
 	var p = player[turn];
 	var property = square[p.position];
@@ -2580,6 +2596,7 @@ function buy() {
 		property.owner = turn;
 		updateMoney();
 		addAlert(p.name + " bought " + property.name + " for " + property.pricetext + ".", "buy");
+		fxAfterBuy(p.position);
 
 		updateOwned();
 
