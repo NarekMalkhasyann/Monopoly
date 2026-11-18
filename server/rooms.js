@@ -58,6 +58,13 @@ const AUCTION_MAX_BID = 1_000_000;
 // so it can never block everybody's game buttons. The server is the clock; the end is a numbered event like a click.
 const TRADE_EXPIRE_MS = () => num(process.env.TRADE_EXPIRE_MS, 60_000);
 
+// The GO salary was $300 from 2026-11-18 09:21 to 20:41 (UTC) and $200 before and after. A game is rebuilt by replaying
+// every click in each browser with the engine's current rules, so each game must replay with the salary it was played
+// with, or the money differs and the clicks no longer fit the screen ("dropped a stale click", "out of sync").
+const GO_300_FROM = '2026-11-18 09:21:00';
+const GO_300_UNTIL = '2026-11-18 20:41:00';
+const goSalaryByDate = (createdAt) => { const t = String(createdAt || ''); return t >= GO_300_FROM && t < GO_300_UNTIL ? 300 : 200; };
+
 export function createRooms(db) {
 	// SQL is portable between SQLite and PostgreSQL (see db.js).
 	const q = {
@@ -215,11 +222,16 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 			const room = {
 				id: row.id, code: row.room_code, hostId: row.owner_id, status: row.status, seed: row.seed,
 				isPrivate: !!row.is_private, pwHash: row.room_password || null,
+				goSalary: goSalaryByDate(row.created_at), // (corrected below from the game's own log when it has a GO line)
 				seq: await q.lastSeq(row.id), turnCount: row.turn_count || 0, writes: Promise.resolve(),
 				auction: null, auctionN: 0, // the running live auction (see above) and how many were opened
 				banned: new Set(), // users the host removed: they cannot come back to this room
 				members: new Map(), // userId -> { seat, name, color, sessions:Set }
 			};
+			// The log of a game that has passed GO says what was paid: "<name> collected a $300 salary for passing GO."
+			const goLine = await db.get("SELECT text FROM game_actions WHERE game_id = ? AND type != 'click' AND text LIKE '% salary for passing GO.' ORDER BY seq LIMIT 1", [row.id]);
+			const paid = goLine && /collected a \$(\d+) salary/.exec(goLine.text);
+			if (paid) room.goSalary = Number(paid[1]);
 			for (const m of await q.members(row.id)) {
 				room.members.set(m.user_id, { userId: m.user_id, seat: m.seat, name: m.name, color: m.color, sessions: new Set(), offlineSince: Date.now() });
 			}
@@ -237,7 +249,7 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 	function publicRoom(room) {
 		return {
 			id: room.id, code: room.code, status: room.status, hostId: room.hostId, forfeitAfterMs: FORFEIT_AFTER_MS(),
-			isPrivate: !!room.isPrivate,
+			isPrivate: !!room.isPrivate, goSalary: room.goSalary,
 			seed: room.status === 'active' ? room.seed : null,
 			players: [...room.members.values()].sort((a, b) => a.seat - b.seat).map((m) => ({
 				seat: m.seat, userId: m.userId, name: m.name, color: m.color,

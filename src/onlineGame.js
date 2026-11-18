@@ -504,6 +504,7 @@ export function startOnlineGame(room, you) {
 	started = true;
 	document.body.classList.add('online-game');
 
+	win.GO_SALARY = room.goSalary || 200; // each game replays with the salary it was played with (see server/rooms.js)
 	win.seededRandom = seeded(room.seed);
 
 	// The page-load shuffle of the card decks used Math.random: redo it from the seed.
