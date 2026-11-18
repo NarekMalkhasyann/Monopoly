@@ -1683,6 +1683,9 @@ function updateOwned() {
 		sq = square[i];
 		if (sq.groupNumber && sq.owner === 0) {
 			$("#cell" + i + "owner").hide();
+			var unownedAnchor = document.getElementById("cell" + i + "owner").parentNode;
+			unownedAnchor.classList.remove("owned");
+			unownedAnchor.style.removeProperty("--owner");
 		} else if (sq.groupNumber && sq.owner > 0) {
 			var currentCellOwner = document.getElementById("cell" + i + "owner");
 
@@ -1690,6 +1693,9 @@ function updateOwned() {
 			currentCellOwner.style.backgroundColor = player[sq.owner].color;
 			currentCellOwner.style.boxShadow = "0 0 14px " + player[sq.owner].color + "66";
 			currentCellOwner.title = player[sq.owner].name;
+			// the whole square fades from the owner's colour (see board.css .cell-anchor.owned::before)
+			currentCellOwner.parentNode.classList.add("owned");
+			currentCellOwner.parentNode.style.setProperty("--owner", player[sq.owner].color);
 		}
 	}
 
