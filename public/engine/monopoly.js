@@ -1241,7 +1241,7 @@ function Game() {
 }
 
 var game;
-var GO_SALARY = 300; // what a player collects for passing (or landing on) GO
+var GO_SALARY = 200; // what a player collects for passing (or landing on) GO
 
 
 // The colour names offered in the setup, shown in the game's palette (the same tones as the property groups).
