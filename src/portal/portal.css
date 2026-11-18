@@ -535,6 +535,17 @@ body.online-game #setup { display: none !important; }
 	.save-state { font-size: 12px; white-space: nowrap; }
 }
 
+/* phones and tablets: the title would not fit next to the buttons and status chips, so it is left out and the row scrolls sideways if the chips are still too many */
+@media (max-width: 1129px) {
+	.gb-brand { display: none; }
+	.game-bar { overflow-x: auto; scrollbar-width: none; gap: 8px; padding: 0 10px; }
+	.game-bar::-webkit-scrollbar { display: none; }
+	.game-bar > * { flex-shrink: 0; }
+	.game-bar .gb-sound { width: 36px; height: 36px; padding: 0; border-radius: 10px; }
+	.game-bar .btn-danger { white-space: nowrap; max-width: 60vw; overflow: hidden; text-overflow: ellipsis; }
+	.game-bar .save-state { padding: 0; }
+}
+
 /* ---------- accounts waiting for approval ---------- */
 .btn-locked { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .join-form .btn-ghost { display: inline-flex; align-items: center; gap: 6px; }
