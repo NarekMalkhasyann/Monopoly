@@ -13,6 +13,7 @@
 import { onAction, send, getOnline } from './online.js';
 import { trackOnline } from './session.js';
 import * as live from './liveAuction.js';
+import { setReplaying } from './sound.js';
 import { setTradeOffer, onTradeOfferClick } from './tradeOffer.js';
 
 // Buttons whose clicks are shared (keep in sync with RELAYED in server/rooms.js).
@@ -281,6 +282,7 @@ function tick() {
 }
 
 function tickOnce() {
+	setReplaying(queue.length > 1 || loadingOn); // old moves (rejoining, catching up) are replayed without sound
 	syncMyIndex();
 	syncTradeShared();
 	if (loadingOn && Date.now() - loadStart > 90000) { loadingOff(); finishLoading(0); } // never trap the player behind it
@@ -546,6 +548,7 @@ export function startOnlineGame(room, you) {
 	const me = players.find((p) => p.userId === you.userId);
 	mySeat = me.seat; inflightSince = 0;
 	myName = me.name; syncMyIndex();
+	win.sfxMine = (name) => name === myName; // sound effects: the bell for my turn, the winner's fanfare only for the winner
 	setInfo({ me: me.name });
 
 	// The engine asks before it presses OK on a Chance / Community Chest card by itself: only the player whose turn it is does, and never while moves are being replayed.
@@ -601,6 +604,7 @@ export function stopOnlineGame() {
 	document.removeEventListener('click', onClickCapture, true);
 	document.removeEventListener('keydown', onKeyCapture, true);
 	win.liveAuction = undefined; live.close();
+	win.sfxMine = undefined; setReplaying(false);
 }
 
 // A player removed because they stayed away: the engine takes everything they own back to the bank.

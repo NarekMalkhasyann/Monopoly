@@ -2673,3 +2673,4 @@ body.trade-collapsed #trade { display: none !important; }
 /* online game still loading: no placeholder names / $1500 in the side panel */
 body.online-route:not(.online-game) #moneybarwrap { visibility: hidden; }
 body.replaying #game-layout { display: none !important; }
+.gb-sound { display: inline-flex; align-items: center; justify-content: center; padding: 6px 9px; }
