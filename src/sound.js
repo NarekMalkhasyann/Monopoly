@@ -28,6 +28,7 @@ export function setSoundOn(on) {
 }
 // true while moves of the past are replayed (rejoining a game): they must stay silent
 export const setReplaying = (v) => { replaying = !!v; };
+export const isReplaying = () => replaying;
 
 // Browsers keep sound off until the person has clicked or pressed a key on the page.
 function unlock() {

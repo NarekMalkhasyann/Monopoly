@@ -3,7 +3,8 @@ import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import './styles.css';
 import './board.css';
-import './sound.js'; // sound effects (sets window.sfx / window.onGameSound for the engine)
+import './sound.js';
+import './fx.js'; // board animations when a property is bought (sets window.fxBought)
 
 // The game engine (public/engine/*.js) looks up its elements by id when the
 // page finishes loading (window.onload), so the markup must already be in the
