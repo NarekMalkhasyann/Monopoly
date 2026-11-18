@@ -107,7 +107,7 @@ var logoOf = {
 
 var square = [];
 
-square[0] = new Square("GO", "COLLECT $200 SALARY AS YOU PASS.", "#FFFFFF");
+square[0] = new Square("GO", "COLLECT $300 SALARY AS YOU PASS.", "#FFFFFF");
 square[1] = new Square("Jermuk", "$60", "#38bdf8", 60, 3, 2, 10, 30, 90, 160, 250);
 square[2] = new Square("Community Chest", "FOLLOW INSTRUCTIONS ON TOP CARD", "#FFFFFF");
 square[3] = new Square("Bjni", "$60", "#38bdf8", 60, 3, 2, 10, 30, 90, 160, 250);
@@ -137,7 +137,7 @@ square[26] = new Square("American University of Armenia", "$260", "#facc15", 260
 square[27] = new Square("Polytechnic", "$260", "#facc15", 260, 8, 22, 110, 330, 800, 975, 1150);
 square[28] = new Square("ACT College", "$280", "#facc15", 280, 8, 24, 120, 360, 850, 1025, 1200);
 square[29] = new Square("Yerevan City", "$300", "#10b981", 300, 9, 26, 130, 390, 900, 1100, 1275);
-square[30] = new Square("Go to Jail", "Go directly to Jail. Do not pass GO. Do not collect $200.", "#FFFFFF");
+square[30] = new Square("Go to Jail", "Go directly to Jail. Do not pass GO. Do not collect $300.", "#FFFFFF");
 square[31] = new Square("SAS", "$300", "#10b981", 300, 9, 26, 130, 390, 900, 1100, 1275);
 square[32] = new Square("Nor Zovq", "$320", "#10b981", 320, 9, 28, 150, 450, 1000, 1200, 1400);
 square[33] = new Square("Community Chest", "FOLLOW INSTRUCTIONS ON TOP CARD", "#FFFFFF");
@@ -164,9 +164,9 @@ communityChestCards[9] = new Card("Bank error in your favor. Collect $200.", fun
 communityChestCards[10] = new Card("Pay school fees of $50.", function() { subtractamount(50, 'Community Chest');});
 communityChestCards[11] = new Card("Doctor's fee. Pay $50.", function() { subtractamount(50, 'Community Chest');});
 communityChestCards[12] = new Card("It is your birthday. Collect $10 from every player.", function() { collectfromeachplayer(10, 'Community Chest');});
-communityChestCards[13] = new Card("Advance to \"GO\" (Collect $200).", function() { advance(0);});
+communityChestCards[13] = new Card("Advance to \"GO\" (Collect $300).", function() { advance(0);});
 communityChestCards[14] = new Card("You are assessed for street repairs. $40 per house. $115 per hotel.", function() { streetrepairs(40, 115);});
-communityChestCards[15] = new Card("Go to Jail. Go directly to Jail. Do not pass \"GO\". Do not collect $200.", function() { gotojail();});
+communityChestCards[15] = new Card("Go to Jail. Go directly to Jail. Do not pass \"GO\". Do not collect $300.", function() { gotojail();});
 
 
 chanceCards[0] = new Card("GET OUT OF JAIL FREE. This card may be kept until needed or traded.", function(p) { p.chanceJailCard=true; updateOwned();});
@@ -178,10 +178,10 @@ chanceCards[5] = new Card("Your brand wins an export contract. Collect $100.", f
 chanceCards[6] = new Card("Bank pays you dividend of $50.", function() { addamount(50, 'Chance');});
 chanceCards[7] = new Card("ADVANCE TO THE NEAREST STATION. If UNOWNED, you may buy it from the Bank. If OWNED, pay owner twice the rental to which they are otherwise entitled.", function() { advanceToNearestRailroad();});
 chanceCards[8] = new Card("Pay poor tax of $15.", function() { subtractamount(15, 'Chance');});
-chanceCards[9] = new Card("Take a trip to Yerevan Station. If you pass \"GO\" collect $200.", function() { advance(5);});
+chanceCards[9] = new Card("Take a trip to Yerevan Station. If you pass \"GO\" collect $300.", function() { advance(5);});
 chanceCards[10] = new Card("ADVANCE to ACBA Bank.", function() { advance(39);});
-chanceCards[11] = new Card("ADVANCE to Proshyan. If you pass \"GO\" collect $200.", function() { advance(24);});
+chanceCards[11] = new Card("ADVANCE to Proshyan. If you pass \"GO\" collect $300.", function() { advance(24);});
 chanceCards[12] = new Card("Your building loan matures. Collect $150.", function() { addamount(150, 'Chance');});
 chanceCards[13] = new Card("ADVANCE TO THE NEAREST STATION. If UNOWNED, you may buy it from the Bank. If OWNED, pay owner twice the rental to which they are otherwise entitled.", function() { advanceToNearestRailroad();});
-chanceCards[14] = new Card("ADVANCE to Bonilat. If you pass \"GO\" collect $200.", function() { advance(11);});
-chanceCards[15] = new Card("Go to Jail. Go Directly to Jail. Do not pass \"GO\". Do not collect $200.", function() { gotojail();});
+chanceCards[14] = new Card("ADVANCE to Bonilat. If you pass \"GO\" collect $300.", function() { advance(11);});
+chanceCards[15] = new Card("Go to Jail. Go Directly to Jail. Do not pass \"GO\". Do not collect $300.", function() { gotojail();});
