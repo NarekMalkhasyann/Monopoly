@@ -117,6 +117,13 @@
 .board-top .cell-owner, .board-bottom .cell-owner { height: 16px; }
 .board-left .cell-owner, .board-right .cell-owner { width: 16px; }
 
+/* a property that has an owner fades from the owner's colour (on the outer edge) towards the middle of the board */
+.cell-anchor.owned { position: relative; }
+.cell-anchor.owned::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(to bottom, var(--owner), transparent); }
+.board-bottom .cell-anchor.owned::before { background: linear-gradient(to top, var(--owner), transparent); }
+.board-left .cell-anchor.owned::before { background: linear-gradient(to right, var(--owner), transparent); }
+.board-right .cell-anchor.owned::before { background: linear-gradient(to left, var(--owner), transparent); }
+
 /* name */
 .cell-name {
 	z-index: 3;
