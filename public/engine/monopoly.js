@@ -2542,6 +2542,10 @@ function showdeed(property) {
 		if (owner) {
 			lit = sq.hotel ? 5 : sq.house;
 		}
+		// the owner of the whole colour set collects double the plain rent from an unbuilt property: show what is really paid
+		if (owner && ownedInGroup === sq.group.length && !sq.house && !sq.hotel) {
+			rows[0] = ["Rent \u00b7 full set \u00d72", "$" + (sq.baserent * 2)];
+		}
 	} else if (sq.groupNumber == 1) {
 		rows = [["1 station", "$25"], ["2 stations", "$50"], ["3 stations", "$100"], ["4 stations", "$200"]];
 		if (owner) {
