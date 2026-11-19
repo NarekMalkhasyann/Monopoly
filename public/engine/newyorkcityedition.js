@@ -70,7 +70,7 @@ function luxurytax() {
 
 var square = [];
 
-square[0] = new Square("GO", "COLLECT $200 SALARY AS YOU PASS.", "white");
+square[0] = new Square("GO", "COLLECT $200 AS YOU PASS. STOP ON GO: $300.", "white");
 square[1] = new Square("Port Authority Bus Terminal", "$60", "#6366f1", 60, 3, 2, 10, 30, 90, 160, 250);
 square[2] = new Square("Community Chest", "FOLLOW INSTRUCTIONS ON TOP CARD", "white");
 square[3] = new Square("Lincoln Tunnel", "$60", "#6366f1", 60, 3, 4, 20, 60, 180, 320, 450);

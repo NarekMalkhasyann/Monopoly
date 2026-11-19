@@ -107,7 +107,7 @@ var logoOf = {
 
 var square = [];
 
-square[0] = new Square("GO", "COLLECT $200 SALARY AS YOU PASS.", "#FFFFFF");
+square[0] = new Square("GO", "COLLECT $200 AS YOU PASS. STOP ON GO: $300.", "#FFFFFF");
 square[1] = new Square("Jermuk", "$60", "#38bdf8", 60, 3, 2, 10, 30, 90, 160, 250);
 square[2] = new Square("Community Chest", "FOLLOW INSTRUCTIONS ON TOP CARD", "#FFFFFF");
 square[3] = new Square("Bjni", "$60", "#38bdf8", 60, 3, 2, 10, 30, 90, 160, 250);
