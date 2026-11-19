@@ -2193,6 +2193,11 @@ function advance(destination, pass) {
 	}
 	if (p.position < destination) {
 		p.position = destination;
+	} else if (destination === 0 && goLandSalary() !== GO_SALARY) {
+		// "Advance to GO": stopping on GO pays the landing salary
+		p.position = 0;
+		p.money += goLandSalary();
+		addAlert(p.name + " collected a $" + goLandSalary() + " salary for landing on GO.", "money");
 	} else {
 		p.position = destination;
 		p.money += GO_SALARY;

@@ -164,7 +164,7 @@ communityChestCards[9] = new Card("Bank error in your favor. Collect $200.", fun
 communityChestCards[10] = new Card("Pay school fees of $50.", function() { subtractamount(50, 'Community Chest');});
 communityChestCards[11] = new Card("Doctor's fee. Pay $50.", function() { subtractamount(50, 'Community Chest');});
 communityChestCards[12] = new Card("It is your birthday. Collect $10 from every player.", function() { collectfromeachplayer(10, 'Community Chest');});
-communityChestCards[13] = new Card("Advance to \"GO\" (Collect $200).", function() { advance(0);});
+communityChestCards[13] = new Card("Advance to \"GO\" (Collect $300).", function() { advance(0);});
 communityChestCards[14] = new Card("You are assessed for street repairs. $40 per house. $115 per hotel.", function() { streetrepairs(40, 115);});
 communityChestCards[15] = new Card("Go to Jail. Go directly to Jail. Do not pass \"GO\". Do not collect $200.", function() { gotojail();});
 
