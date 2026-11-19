@@ -817,7 +817,7 @@ function Game() {
 		$("#trade").hide();
 		// A player removed for being away: everything goes straight back to the bank (no auction of each property; the
 		// remove button promises exactly this). Only a bankruptcy during the game sends the properties to auction.
-		for (var i = 0; i < 40; i++) {
+		for (var i = 0; window.FORFEIT_TO_BANK !== false && i < 40; i++) {
 			if (square[i].owner == p.index) {
 				square[i].owner = 0;
 				square[i].mortgage = false;

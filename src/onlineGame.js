@@ -504,6 +504,7 @@ export function startOnlineGame(room, you) {
 	started = true;
 	document.body.classList.add('online-game');
 
+	win.FORFEIT_TO_BANK = room.forfeitToBank !== false; // games from before 16 Nov 19:35 UTC auctioned a removed player's properties
 	win.GO_SALARY = room.goSalary || 200; // each game replays with the salary it was played with (see server/rooms.js)
 	win.seededRandom = seeded(room.seed);
 

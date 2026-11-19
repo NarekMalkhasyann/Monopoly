@@ -63,6 +63,9 @@ const TRADE_EXPIRE_MS = () => num(process.env.TRADE_EXPIRE_MS, 60_000);
 // with, or the money differs and the clicks no longer fit the screen ("dropped a stale click", "out of sync").
 const GO_300_FROM = '2026-11-18 09:21:00';
 const GO_300_UNTIL = '2026-11-18 20:41:00';
+// Until this moment (UTC) removing an away player sent each of their properties to auction; after it they go straight back
+// to the bank. A game whose first removal happened before it must replay the old way (its saved clicks contain the auctions).
+const FORFEIT_TO_BANK_FROM = '2026-11-16 19:35:00';
 const goSalaryByDate = (createdAt) => { const t = String(createdAt || ''); return t >= GO_300_FROM && t < GO_300_UNTIL ? 300 : 200; };
 
 export function createRooms(db) {
@@ -232,6 +235,8 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 			const goLine = await db.get("SELECT text FROM game_actions WHERE game_id = ? AND type != 'click' AND text LIKE '% salary for passing GO.' ORDER BY seq LIMIT 1", [row.id]);
 			const paid = goLine && /collected a \$(\d+) salary/.exec(goLine.text);
 			if (paid) room.goSalary = Number(paid[1]);
+			const firstForfeit = await db.get("SELECT created_at FROM game_actions WHERE game_id = ? AND type = 'click' AND text LIKE '%\"id\":\"forfeit\"%' ORDER BY seq LIMIT 1", [row.id]);
+			room.forfeitToBank = !(firstForfeit && String(firstForfeit.created_at) < FORFEIT_TO_BANK_FROM);
 			for (const m of await q.members(row.id)) {
 				room.members.set(m.user_id, { userId: m.user_id, seat: m.seat, name: m.name, color: m.color, sessions: new Set(), offlineSince: Date.now() });
 			}
@@ -249,7 +254,7 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 	function publicRoom(room) {
 		return {
 			id: room.id, code: room.code, status: room.status, hostId: room.hostId, forfeitAfterMs: FORFEIT_AFTER_MS(),
-			isPrivate: !!room.isPrivate, goSalary: room.goSalary,
+			isPrivate: !!room.isPrivate, goSalary: room.goSalary, forfeitToBank: room.forfeitToBank !== false,
 			seed: room.status === 'active' ? room.seed : null,
 			players: [...room.members.values()].sort((a, b) => a.seat - b.seat).map((m) => ({
 				seat: m.seat, userId: m.userId, name: m.name, color: m.color,
