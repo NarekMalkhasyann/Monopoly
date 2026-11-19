@@ -126,6 +126,8 @@ const SOUNDS = {
 	bid: () => { tone(1250, { dur: 0.07, type: 'triangle', vol: 0.22, to: 1500 }); },
 	unsold: () => { tone(196, { dur: 0.3, type: 'triangle', vol: 0.18, to: 130 }); },
 	win: () => { [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, { t: i * 0.13, dur: i === 6 ? 0.9 : 0.25, type: 'triangle', vol: 0.22 })); tone(262, { t: 0.78, dur: 0.9, type: 'sine', vol: 0.18 }); },
+	// a colour set (or both stations / utilities) is complete: a bright run up with a sparkle on top, just after the "buy" coins
+	set: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, { t: 0.22 + i * 0.075, dur: 0.3, type: 'triangle', vol: 0.2 })); tone(2093, { t: 0.62, dur: 0.5, type: 'sine', vol: 0.1 }); coin(0.62, 2637, 0.1); },
 	over: () => { [440, 330].forEach((f, i) => tone(f, { t: i * 0.2, dur: 0.5, type: 'triangle', vol: 0.18 })); },
 };
 

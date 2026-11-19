@@ -817,7 +817,7 @@ function Game() {
 		$("#trade").hide();
 		// A player removed for being away: everything goes straight back to the bank (no auction of each property; the
 		// remove button promises exactly this). Only a bankruptcy during the game sends the properties to auction.
-		for (var i = 0; i < 40; i++) {
+		for (var i = 0; window.FORFEIT_TO_BANK !== false && i < 40; i++) {
 			if (square[i].owner == p.index) {
 				square[i].owner = 0;
 				square[i].mortgage = false;
@@ -1243,6 +1243,8 @@ function Game() {
 
 var game;
 var GO_SALARY = 200; // what a player collects for passing (or landing on) GO
+// $ for stopping exactly on GO (rule set 2: 300; old online games set window.GO_LAND_SALARY themselves)
+function goLandSalary() { return typeof window.GO_LAND_SALARY === "number" ? window.GO_LAND_SALARY : 300; }
 
 
 // The colour names offered in the setup, shown in the game's palette (the same tones as the property groups).
@@ -2191,6 +2193,11 @@ function advance(destination, pass) {
 	}
 	if (p.position < destination) {
 		p.position = destination;
+	} else if (destination === 0 && goLandSalary() !== GO_SALARY) {
+		// "Advance to GO": stopping on GO pays the landing salary
+		p.position = 0;
+		p.money += goLandSalary();
+		addAlert(p.name + " collected a $" + goLandSalary() + " salary for landing on GO.", "money");
 	} else {
 		p.position = destination;
 		p.money += GO_SALARY;
@@ -2541,6 +2548,10 @@ function showdeed(property) {
 		rows = [["Rent", "$" + sq.baserent], ["1 house", "$" + sq.rent1], ["2 houses", "$" + sq.rent2], ["3 houses", "$" + sq.rent3], ["4 houses", "$" + sq.rent4], ["Hotel", "$" + sq.rent5]];
 		if (owner) {
 			lit = sq.hotel ? 5 : sq.house;
+		}
+		// the owner of the whole colour set collects double the plain rent from an unbuilt property: show what is really paid
+		if (owner && ownedInGroup === sq.group.length && !sq.house && !sq.hotel) {
+			rows[0] = ["Rent \u00b7 full set \u00d72", "$" + (sq.baserent * 2)];
 		}
 	} else if (sq.groupNumber == 1) {
 		rows = [["1 station", "$25"], ["2 stations", "$50"], ["3 stations", "$100"], ["4 stations", "$200"]];
@@ -2934,8 +2945,14 @@ function applyRoll() {
 		// Collect the GO salary as you pass GO
 		if (p.position >= 40) {
 			p.position -= 40;
-			p.money += GO_SALARY;
-			addAlert(p.name + " collected a $" + GO_SALARY + " salary for passing GO.", "money");
+			if (p.position === 0 && goLandSalary() !== GO_SALARY) {
+				// stopping exactly on GO pays more than passing it
+				p.money += goLandSalary();
+				addAlert(p.name + " collected a $" + goLandSalary() + " salary for landing on GO.", "money");
+			} else {
+				p.money += GO_SALARY;
+				addAlert(p.name + " collected a $" + GO_SALARY + " salary for passing GO.", "money");
+			}
 		}
 
 		land();
@@ -3021,8 +3038,33 @@ function play() {
 	}
 }
 
+// Rule set 2 (new games): house and hotel rents halved (+10% on Mineral Water and Dairy Products), cheaper houses in
+// the cheap categories, and $300 for stopping exactly on GO. An old online game sets window.GAME_RULES = 1 and keeps
+// the rents and house prices it was played with. Local games always use the newest rules.
+var HOUSE_PRICE_V2 = {3: 25, 4: 50, 5: 75, 6: 100, 7: 125, 8: 150, 9: 175, 10: 200};
+function applyRules() {
+	var v2 = (typeof window.GAME_RULES === "number" ? window.GAME_RULES : 2) >= 2;
+	for (var i = 0; i < 40; i++) {
+		var sq = square[i];
+		if (!sq.groupNumber || sq.groupNumber < 3) { continue; }
+		if (!sq.original) { sq.original = {rents: [sq.rent1, sq.rent2, sq.rent3, sq.rent4, sq.rent5], house: sq.houseprice}; }
+		sq.houseprice = v2 ? HOUSE_PRICE_V2[sq.groupNumber] : sq.original.house;
+		var cheap = sq.groupNumber <= 4; // Mineral Water, Dairy Products: +10%, rounded to $1 (the others to $5)
+		var scale = cheap ? 0.55 : 0.5;
+		var prev = sq.baserent;
+		for (var h = 1; h <= 5; h++) {
+			var r = sq.original.rents[h - 1];
+			if (v2) { r = Math.max(cheap ? Math.round(r * scale) : Math.round(r * scale / 5) * 5, prev + 1); }
+			sq["rent" + h] = r;
+			prev = r;
+		}
+	}
+}
+
 function setup() {
 	pcount = parseInt(document.getElementById("playernumber").value, 10);
+
+	applyRules();
 
 	var playerArray = new Array(pcount);
 	var p;

@@ -104,7 +104,7 @@ export function buildFrames(events, players) {
 					if (to >= 0) { s.money[to] += Number(m[1]); lastRentTo[p] = to; }
 				} else if ((m = /^paid \$(\d+) for landing on (.+)\.$/.exec(rest))) {
 					s.money[p] -= Number(m[1]); // City Tax / Luxury Tax go to the bank
-				} else if ((m = /^collected a \$(\d+) salary for passing GO\.$/.exec(rest))) {
+				} else if ((m = /^collected a \$(\d+) salary for (?:passing|landing on) GO\.$/.exec(rest))) {
 					s.money[p] += Number(m[1]); // (games played before the raise say $200)
 				} else if ((m = /^lost \$(\d+) (?:from|to) (.+)\.$/.exec(rest))) {
 					s.money[p] -= Number(m[1]);

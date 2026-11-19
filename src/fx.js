@@ -3,7 +3,7 @@
 //   * the buy completes a set: the squares of the set pop one after another, in board order, in the owner's colour
 //     (the order follows the squares, so a set that turns a corner of the board works too).
 // Nothing plays while old moves are replayed (rejoining a game) or while the tab is hidden.
-import { isReplaying } from './sound.js';
+import { isReplaying, play } from './sound.js';
 
 const DURATION = 1500; // ms, longer than the CSS animations
 
@@ -21,7 +21,7 @@ function run(index, cls, color, delay = 0) {
 window.fxBought = (index, color, set) => {
 	if (isReplaying() || document.hidden) return;
 	try {
-		if (set && set.length >= 2) set.forEach((sq, k) => run(sq, 'fx-wave', color, k * 180));
+		if (set && set.length >= 2) { set.forEach((sq, k) => run(sq, 'fx-wave', color, k * 180)); play('set'); }
 		else run(index, 'fx-breathe', color);
 	} catch { /* animation must never break the game */ }
 };
