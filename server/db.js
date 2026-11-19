@@ -44,6 +44,7 @@ const tables = (pg) => {
 			seed ${big},                                 -- online games: seed of the shared random numbers
 			is_private INTEGER NOT NULL DEFAULT 0,       -- online lobby: 1 = not in the open-rooms list, needs the password
 			room_password TEXT,                          -- scrypt hash of that password (never the password itself)
+			rules INTEGER NOT NULL DEFAULT 1,            -- online: rule set the game is played with (1 = original, 2 = lower house rents); old games keep 1
 			created_at TEXT NOT NULL,
 			updated_at TEXT NOT NULL,
 			finished_at TEXT
@@ -91,6 +92,7 @@ async function openSqlite(file) {
 		if (!has('games', 'seed')) raw.exec('ALTER TABLE games ADD COLUMN seed INTEGER');
 		if (!has('games', 'is_private')) raw.exec('ALTER TABLE games ADD COLUMN is_private INTEGER NOT NULL DEFAULT 0');
 		if (!has('games', 'room_password')) raw.exec('ALTER TABLE games ADD COLUMN room_password TEXT');
+		if (!has('games', 'rules')) raw.exec('ALTER TABLE games ADD COLUMN rules INTEGER NOT NULL DEFAULT 1');
 		if (!has('game_players', 'user_id')) raw.exec('ALTER TABLE game_players ADD COLUMN user_id INTEGER');
 		if (!has('game_players', 'hidden')) raw.exec('ALTER TABLE game_players ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0');
 		raw.exec(`CREATE UNIQUE INDEX IF NOT EXISTS games_room_code ON games(room_code) WHERE room_code IS NOT NULL;
@@ -153,6 +155,7 @@ async function openPostgres(url) {
 	// databases made before public / private rooms
 	await pool.query('ALTER TABLE games ADD COLUMN IF NOT EXISTS is_private INTEGER NOT NULL DEFAULT 0');
 	await pool.query('ALTER TABLE games ADD COLUMN IF NOT EXISTS room_password TEXT');
+	await pool.query('ALTER TABLE games ADD COLUMN IF NOT EXISTS rules INTEGER NOT NULL DEFAULT 1');
 	await pool.query('ALTER TABLE game_players ADD COLUMN IF NOT EXISTS hidden INTEGER NOT NULL DEFAULT 0');
 	return api;
 }

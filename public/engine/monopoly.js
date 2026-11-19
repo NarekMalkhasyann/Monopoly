@@ -3025,8 +3025,27 @@ function play() {
 	}
 }
 
+// House and hotel rents are scaled (default 0.5 for new games; an old online game sets window.HOUSE_RENT_SCALE = 1 so
+// it replays with the rents it was played with). Rounded to $5, never below the rent of the step before.
+function applyHouseRentScale() {
+	var scale = typeof window.HOUSE_RENT_SCALE === "number" ? window.HOUSE_RENT_SCALE : 0.5;
+	for (var i = 0; i < 40; i++) {
+		var sq = square[i];
+		if (!sq.groupNumber || sq.groupNumber < 3) { continue; }
+		if (!sq.originalRents) { sq.originalRents = [sq.rent1, sq.rent2, sq.rent3, sq.rent4, sq.rent5]; }
+		var prev = sq.baserent;
+		for (var h = 1; h <= 5; h++) {
+			var r = scale === 1 ? sq.originalRents[h - 1] : Math.max(Math.round(sq.originalRents[h - 1] * scale / 5) * 5, prev + 1);
+			sq["rent" + h] = r;
+			prev = r;
+		}
+	}
+}
+
 function setup() {
 	pcount = parseInt(document.getElementById("playernumber").value, 10);
+
+	applyHouseRentScale();
 
 	var playerArray = new Array(pcount);
 	var p;
