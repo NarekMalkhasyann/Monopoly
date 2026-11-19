@@ -17,7 +17,11 @@ function read() {
 			const sq = w.square[i];
 			if (sq && sq.owner === p && sq.groupNumber) props.push({ i, name: sq.name, color: sq.color, houses: sq.hotel ? 5 : sq.house, mort: !!sq.mortgage });
 		}
-		out.push({ p, name: pl.name, color: pl.color, props });
+		// "Get Out of Jail Free" cards (one from Chance, one from Community Chest) are kept on the player
+		const cards = [];
+		if (pl.chanceJailCard) cards.push('Chance');
+		if (pl.communityChestJailCard) cards.push('Community Chest');
+		out.push({ p, name: pl.name, color: pl.color, props, cards });
 	}
 	return out;
 }
@@ -66,7 +70,7 @@ export default function MyProperties() {
 	if (!active) return null;
 	const meName = online ? (room.players.find((x) => x.userId === (you && you.userId)) || {}).name : (window.player && window.player[window.turn] ? window.player[window.turn].name : null); // local game: whoever's turn it is
 	const mine = meName ? list.find((x) => x.name === meName) : null;
-	const others = list.filter((x) => x !== mine && x.props.length);
+	const others = list.filter((x) => x !== mine && (x.props.length || x.cards.length));
 	const groups = mine ? [mine, ...others] : others;
 
 	return (
@@ -74,8 +78,8 @@ export default function MyProperties() {
 			{groups.length === 0 && <div className="mp-empty">No one owns a property yet.</div>}
 			{groups.map((g) => (
 				<section key={g.p} className="mp-group">
-					<h4 className="mp-head"><i style={{ background: g.color }} />{g === mine ? 'My properties' : g.name}<span>{g.props.length}</span></h4>
-					{g.props.length === 0 && <div className="mp-empty">None yet.</div>}
+					<h4 className="mp-head"><i style={{ background: g.color }} />{g === mine ? 'My properties' : g.name}<span>{g.props.length + g.cards.length}</span></h4>
+					{g.props.length === 0 && g.cards.length === 0 && <div className="mp-empty">None yet.</div>}
 					<ul>
 						{g.props.map((s) => (
 							<li key={s.i} className={s.mort ? 'mp-mort' : ''}
@@ -83,6 +87,13 @@ export default function MyProperties() {
 								<span className="mp-chip" style={{ background: s.color }} />
 								<span className="mp-name">{s.name}</span>
 								{s.houses > 0 && <span className="mp-houses" title={s.houses === 5 ? 'Hotel' : `${s.houses} house${s.houses > 1 ? 's' : ''}`}>{s.houses === 5 ? '🏨' : '🏠'.repeat(s.houses)}</span>}
+							</li>
+						))}
+						{g.cards.map((c) => (
+							<li key={c} className="mp-card" title={`Get Out of Jail Free card (${c})`}>
+								<span className="mp-chip mp-card-chip" aria-hidden="true">🔑</span>
+								<span className="mp-name">Get Out of Jail Free</span>
+								<span className="mp-houses">{c}</span>
 							</li>
 						))}
 					</ul>

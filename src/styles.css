@@ -2683,3 +2683,7 @@ body.trade-collapsed #trade { display: none !important; }
 body.online-route:not(.online-game) #moneybarwrap { visibility: hidden; }
 body.replaying #game-layout { display: none !important; }
 .gb-sound { display: inline-flex; align-items: center; justify-content: center; padding: 6px 9px; }
+
+/* "Get Out of Jail Free" card in the properties list */
+#myprops .mp-card-chip { width: auto; height: auto; background: none; border: none; font-size: 11px; line-height: 1; }
+#myprops .mp-card .mp-houses { letter-spacing: normal; opacity: 0.7; }
