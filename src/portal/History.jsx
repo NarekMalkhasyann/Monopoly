@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api } from '../api.js';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { api, peek } from '../api.js';
 import { navigate } from '../router.jsx';
 import { fmtDate } from './format.js';
 import PlayerDots from './PlayerDots.jsx';
@@ -24,7 +24,7 @@ export default function History({ detailId, replay }) {
 	const [error, setError] = useState('');
 	const [toDelete, setToDelete] = useState(null);
 
-	const query = useCallback((offset) => {
+	const query = useCallback((offset, peekOnly) => {
 		const qs = new URLSearchParams({ limit: PAGE, offset });
 		if (status) qs.set('status', status);
 		if (mode) qs.set('mode', mode);
@@ -33,7 +33,8 @@ export default function History({ detailId, replay }) {
 		applyAdvanced(qs, advQ);
 		const [by, dir] = sort.split(':');
 		qs.set('sort', by); qs.set('dir', dir);
-		return api('GET', `/games?${qs}`);
+		const path = `/games?${qs}`;
+		return peekOnly ? peek(path) : api('GET', path);
 	}, [status, mode, from, to, sort, advQ]);
 
 	// An abandoned online game comes back as a running one, and its player opens it again.
@@ -45,9 +46,10 @@ export default function History({ detailId, replay }) {
 	const filtered = !!(status || mode || advCount || sort !== 'updated:desc');
 	const clear = () => { setStatus(''); setMode(''); setFrom(''); setTo(''); setSort('updated:desc'); setAdv(NO_ADVANCED); };
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		let stale = false;
-		setLoading(true);
+		const hit = query(0, true); // seen before: show it at once, refresh below
+		if (hit) { setGames(hit.games); setTotal(hit.total); setLoading(false); } else setLoading(true);
 		query(0).then((r) => { if (!stale) { setGames(r.games); setTotal(r.total); setError(''); } })
 			.catch((e) => !stale && setError(e.message))
 			.finally(() => !stale && setLoading(false));

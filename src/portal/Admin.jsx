@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api } from '../api.js';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { api, peek } from '../api.js';
 import { navigate } from '../router.jsx';
 import { fmtDate } from './format.js';
 import PlayerDots from './PlayerDots.jsx';
@@ -62,7 +62,7 @@ function Bars({ title, data }) {
 }
 
 function Overview() {
-	const [s, setS] = useState(null);
+	const [s, setS] = useState(() => peek('/admin/stats') || null);
 	const [error, setError] = useState('');
 	useEffect(() => { api('GET', '/admin/stats').then(setS).catch((e) => setError(e.message)); }, []);
 	if (error) return <p className="auth-error">{error}</p>;
@@ -104,7 +104,7 @@ function AdminGames({ userId }) {
 	const [open, setOpen] = useState(null); // { id, replay }
 	const [stamp, setStamp] = useState(0);   // bumped after an admin ended / deleted a game
 
-	const query = useCallback((offset) => {
+	const query = useCallback((offset, peekOnly) => {
 		const qs = new URLSearchParams({ limit: PAGE, offset });
 		if (userId) qs.set('user', userId);
 		if (status) qs.set('status', status);
@@ -115,12 +115,14 @@ function AdminGames({ userId }) {
 		applyAdvanced(qs, advQ);
 		const [by, dir] = sort.split(':');
 		qs.set('sort', by); qs.set('dir', dir);
-		return api('GET', `/admin/games?${qs}`);
+		const path = `/admin/games?${qs}`;
+		return peekOnly ? peek(path) : api('GET', path);
 	}, [userId, status, mode, search, from, to, sort, advQ]);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		let stale = false;
-		setLoading(true);
+		const hit = query(0, true);
+		if (hit) { setGames(hit.games); setTotal(hit.total); setLoading(false); } else setLoading(true);
 		query(0).then((r) => { if (!stale) { setGames(r.games); setTotal(r.total); setError(''); } })
 			.catch((e) => !stale && setError(e.message)).finally(() => !stale && setLoading(false));
 		return () => { stale = true; };
@@ -253,18 +255,20 @@ function Users() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 
-	const query = useCallback((offset) => {
+	const query = useCallback((offset, peekOnly) => {
 		const qs = new URLSearchParams({ limit: PAGE, offset });
 		if (role) qs.set('role', role);
 		if (search.trim()) qs.set('q', search.trim());
 		const [by, dir] = sort.split(':');
 		qs.set('sort', by); qs.set('dir', dir);
-		return api('GET', `/admin/users?${qs}`);
+		const path = `/admin/users?${qs}`;
+		return peekOnly ? peek(path) : api('GET', path);
 	}, [role, search, sort]);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		let stale = false;
-		setLoading(true);
+		const hit = query(0, true);
+		if (hit) { setUsers(hit.users); setTotal(hit.total); setLoading(false); } else setLoading(true);
 		query(0).then((r) => { if (!stale) { setUsers(r.users); setTotal(r.total); setError(''); } })
 			.catch((e) => !stale && setError(e.message)).finally(() => !stale && setLoading(false));
 		return () => { stale = true; };
