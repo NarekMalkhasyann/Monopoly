@@ -1373,6 +1373,8 @@ function addAlert(alertText, kind) {
 	if (typeof window.onGameEvent === "function") window.onGameEvent(alertText);
 	// Hook: sound effects (src/sound.js) choose a sound from the kind and the text of the line.
 	if (typeof window.onGameSound === "function") window.onGameSound(kind, alertText);
+	// Hook: board animations (src/fx.js) - rent, GO, jail, mortgage, bankruptcy.
+	if (typeof window.onGameFx === "function") window.onGameFx(kind, alertText);
 
 	if (!player[turn].human) {
 		player[turn].AI.alertList += "<div>" + alertText + "</div>";

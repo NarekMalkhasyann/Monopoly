@@ -23,12 +23,12 @@ const dieValue = (id) => {
 };
 
 export default function TurnCard() {
-	const [v, setV] = useState({ name: '', a: 0, b: 0 });
+	const [v, setV] = useState({ name: '', a: 0, b: 0, other: false });
 	useEffect(() => {
 		const read = () => {
 			const name = (document.getElementById('pname') || {}).textContent || '';
-			const next = { name, a: dieValue('die0'), b: dieValue('die1') };
-			setV((o) => (o.name === next.name && o.a === next.a && o.b === next.b ? o : next));
+			const next = { name, a: dieValue('die0'), b: dieValue('die1'), other: document.body.classList.contains('online-wait') }; // online and not my turn
+			setV((o) => (o.name === next.name && o.other === next.other && o.a === next.a && o.b === next.b ? o : next));
 		};
 		read();
 		const t = setInterval(read, 150);
@@ -36,7 +36,7 @@ export default function TurnCard() {
 	}, []);
 	return (
 		<div className="turn-card">
-			<span className="tc-label">YOUR TURN</span>
+			<span className="tc-label">{v.other ? 'TURN' : 'YOUR TURN'}</span>
 			<span className="tc-name">{v.name}</span>
 			<div className="tc-dice"><Die n={v.a} /><Die n={v.b} /></div>
 		</div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../api.js';
+import { api, peek } from '../api.js';
 import { createRoom, useOnline, clearKicked } from '../online.js';
 import { navigate } from '../router.jsx';
 import { fmtDate } from './format.js';
@@ -9,8 +9,9 @@ import { NoAccess, Padlock } from './NoAccess.jsx';
 export default function Home({ user, blocked = false }) {
 	const locked = user.role === 'not-approved';
 	const [noAccess, setNoAccess] = useState(blocked);
-	const [active, setActive] = useState(null);
-	const [counts, setCounts] = useState({ active: 0, finished: 0 });
+	const A = peek('/games?status=active&limit=3'), F = peek('/games?status=finished&limit=1'); // seen before: show at once
+	const [active, setActive] = useState(A ? A.games : null);
+	const [counts, setCounts] = useState(A && F ? { active: A.total, finished: F.total } : { active: 0, finished: 0 });
 	const [error, setError] = useState('');
 	const [code, setCode] = useState('');
 	const [busy, setBusy] = useState(false);

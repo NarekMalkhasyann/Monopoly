@@ -215,3 +215,47 @@
 @media (prefers-reduced-motion: reduce) {
 	.cell.fx-breathe, .cell.fx-wave { animation-duration: 0.01s; animation-delay: 0s; }
 }
+
+/* ==========================================================================
+   Animations and houses (drawn by src/fx.js)
+   ========================================================================== */
+/* houses / hotel sit on the owner's strip (the outer edge of the square, in the player's colour) */
+.cell-owner.has-b { position: relative; }
+.cell-owner .bh { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 1px; padding: 0 2px; box-sizing: border-box; }
+.board-left .cell-owner .bh, .board-right .cell-owner .bh { flex-direction: column; padding: 2px 0; }
+.cell-owner .bh svg { width: 11px; height: 11px; flex: none; filter: drop-shadow(0 1px 1px #0008); }
+.cell-owner .bh svg.bh-hotel { width: 24px; height: 15px; }
+.board-left .cell-owner .bh svg.bh-hotel, .board-right .cell-owner .bh svg.bh-hotel { width: 15px; height: 24px; }
+@media (max-width: 640px) {
+	.board-top .cell-owner.has-b, .board-bottom .cell-owner.has-b { height: 10px; }
+	.board-left .cell-owner.has-b, .board-right .cell-owner.has-b { width: 10px; }
+	.cell-owner .bh { padding: 0 1px; gap: 0; }
+	.cell-owner .bh svg { width: 7px; height: 7px; }
+	.cell-owner .bh svg.bh-hotel { width: 14px; height: 9px; }
+	.board-left .cell-owner .bh svg.bh-hotel, .board-right .cell-owner .bh svg.bh-hotel { width: 9px; height: 14px; }
+}
+@keyframes bh-drop { 0% { transform: translateY(-26px) scale(1.5); opacity: 0; } 60% { transform: translateY(1px) scale(.95); opacity: 1; } 80% { transform: translateY(-2px); } 100% { transform: none; } }
+@keyframes bh-pop { 0% { transform: scale(.3); opacity: 0; } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+.cell-owner svg.bh-new { animation: bh-drop .5s cubic-bezier(.3, 1.5, .5, 1) both; }
+.cell-owner svg.bh-pop { animation: bh-pop .5s cubic-bezier(.3, 1.6, .5, 1) both; }
+
+/* mortgaged: the square turns grey */
+.cell .cell-anchor { transition: filter .4s; }
+.cell.mortgaged .cell-anchor { filter: grayscale(1) brightness(.7); }
+
+/* one-off pulses */
+@keyframes fx-ring { 0% { box-shadow: 0 0 0 0 var(--ring, #acfa00cc); transform: scale(1); } 40% { transform: scale(1.08); } 100% { box-shadow: 0 0 0 14px #0000; transform: scale(1); } }
+.cell.fx-go { --ring: #acfa00cc; animation: fx-ring .9s ease-out; position: relative; z-index: 4; }
+.cell.fx-hotel { --ring: #ffdf6bcc; animation: fx-ring .9s ease-out; position: relative; z-index: 4; }
+.cell.fx-swap { --ring: #ffffffbb; animation: fx-ring 1.1s ease-out; position: relative; z-index: 4; }
+.cell.fx-sweep { --ring: #e5484dcc; animation: fx-ring .9s ease-out; position: relative; z-index: 4; }
+#jail.fx-jail { box-shadow: inset 0 0 0 2px #e5484d, 0 0 16px #e5484d99; animation: fx-ring 1s ease-out 2; --ring: #e5484daa; }
+
+/* floating amounts and coins (above everything, they never take clicks) */
+#fx-layer { position: fixed; inset: 0; pointer-events: none; z-index: 5000; overflow: hidden; }
+.fx-fly { position: absolute; font: 800 14px Montserrat, sans-serif; padding: 3px 10px; border-radius: 99px; color: #161616; background: #acfa00; box-shadow: 0 4px 12px #0008; white-space: nowrap; will-change: transform, opacity; }
+.fx-fly.neg { background: #e5484d; color: #fff; }
+.fx-coin { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #e8b100; border: 2px solid #fff7; box-shadow: 0 2px 6px #0008; will-change: transform, opacity; }
+
+/* cash numbers while they count */
+.cnt-up { color: #acfa00; } .cnt-dn { color: #ff6b6b; }
