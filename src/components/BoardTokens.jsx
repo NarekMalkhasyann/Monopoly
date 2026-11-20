@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { isReplaying } from '../sound.js';
 
 // The player pieces. The engine redraws them in their new square at once (a jump); this layer draws its own
 // pieces on top, which walk square by square after a roll (and glide for longer moves such as cards or "Go to jail").
@@ -44,6 +45,12 @@ export default function BoardTokens() {
 				if (!cur) return;
 				cur.sq = (cur.sq + 1) % 40;
 				publish();
+				if (!isReplaying() && !document.hidden) { // a small hop on every step
+					requestAnimationFrame(() => {
+						const tk = [...document.querySelectorAll('#token-layer .tk')].find((t) => t.getAttribute('aria-label') === name);
+						if (tk) tk.animate([{ translate: '0 0' }, { translate: '0 -7px' }, { translate: '0 0' }], { duration: STEP_MS, easing: 'ease-out' });
+					});
+				}
 				if (cur.sq !== to) later(stepOnce, STEP_MS); else cur.walking = false;
 			};
 			stepOnce();
