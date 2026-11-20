@@ -219,26 +219,25 @@
 /* ==========================================================================
    Animations and houses (drawn by src/fx.js)
    ========================================================================== */
-/* houses / hotel sit on the colour bar, which gets a little thicker */
-.cell-color-bar.has-b { display: flex; align-items: center; justify-content: center; gap: 1px; padding: 0 2px; box-sizing: border-box; }
-.board-top .cell-color-bar.has-b, .board-bottom .cell-color-bar.has-b { height: 17px; }
-.board-left .cell-color-bar.has-b, .board-right .cell-color-bar.has-b { width: 17px; flex-direction: column; }
-.cell-color-bar.has-b svg { width: 11px; height: 11px; flex: none; filter: drop-shadow(0 1px 1px #0006); }
-.cell-color-bar.has-b svg.bh-hotel { width: 24px; height: 15px; }
-.board-left .cell-color-bar.has-b svg.bh-hotel, .board-right .cell-color-bar.has-b svg.bh-hotel { width: 15px; height: 24px; }
+/* houses / hotel sit on the owner's strip (the outer edge of the square, in the player's colour) */
+.cell-owner.has-b { position: relative; }
+.cell-owner .bh { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 1px; padding: 0 2px; box-sizing: border-box; }
+.board-left .cell-owner .bh, .board-right .cell-owner .bh { flex-direction: column; padding: 2px 0; }
+.cell-owner .bh svg { width: 11px; height: 11px; flex: none; filter: drop-shadow(0 1px 1px #0008); }
+.cell-owner .bh svg.bh-hotel { width: 24px; height: 15px; }
+.board-left .cell-owner .bh svg.bh-hotel, .board-right .cell-owner .bh svg.bh-hotel { width: 15px; height: 24px; }
 @media (max-width: 640px) {
-	.board-top .cell-color-bar.has-b, .board-bottom .cell-color-bar.has-b { height: 10px; }
-	.board-left .cell-color-bar.has-b, .board-right .cell-color-bar.has-b { width: 10px; }
-	.cell-color-bar.has-b { padding: 0 1px; gap: 0; }
-	.cell-color-bar.has-b svg { width: 7px; height: 7px; }
-	.cell-color-bar.has-b svg.bh-hotel { width: 14px; height: 9px; }
-	.board-left .cell-color-bar.has-b svg.bh-hotel, .board-right .cell-color-bar.has-b svg.bh-hotel { width: 9px; height: 14px; }
+	.board-top .cell-owner.has-b, .board-bottom .cell-owner.has-b { height: 10px; }
+	.board-left .cell-owner.has-b, .board-right .cell-owner.has-b { width: 10px; }
+	.cell-owner .bh { padding: 0 1px; gap: 0; }
+	.cell-owner .bh svg { width: 7px; height: 7px; }
+	.cell-owner .bh svg.bh-hotel { width: 14px; height: 9px; }
+	.board-left .cell-owner .bh svg.bh-hotel, .board-right .cell-owner .bh svg.bh-hotel { width: 9px; height: 14px; }
 }
 @keyframes bh-drop { 0% { transform: translateY(-26px) scale(1.5); opacity: 0; } 60% { transform: translateY(1px) scale(.95); opacity: 1; } 80% { transform: translateY(-2px); } 100% { transform: none; } }
 @keyframes bh-pop { 0% { transform: scale(.3); opacity: 0; } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
-.cell-color-bar svg.bh-new { animation: bh-drop .5s cubic-bezier(.3, 1.5, .5, 1) both; }
-.cell-color-bar svg.bh-pop { animation: bh-pop .5s cubic-bezier(.3, 1.6, .5, 1) both; }
-.cell-color-bar { overflow: visible; }
+.cell-owner svg.bh-new { animation: bh-drop .5s cubic-bezier(.3, 1.5, .5, 1) both; }
+.cell-owner svg.bh-pop { animation: bh-pop .5s cubic-bezier(.3, 1.6, .5, 1) both; }
 
 /* mortgaged: the square turns grey */
 .cell .cell-anchor { transition: filter .4s; }

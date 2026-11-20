@@ -5,7 +5,7 @@
 // Nothing plays while old moves are replayed (rejoining a game) or while the tab is hidden.
 //
 // Also here (drawn from the game state a few times a second, so they are right after a rejoin too):
-//   * houses and hotels on the colour bar of each street (a new house drops in);
+//   * houses and hotels on the owner's strip of each street (a new house drops in);
 //   * mortgaged squares turn grey;
 //   * a property that changes hands in a trade pulses in its new owner's colour; a bankrupt player's properties
 //     sweep back to the bank one after another;
@@ -136,11 +136,11 @@ function syncBoard() {
 		const sq = S[i];
 		if (sq.groupNumber >= 3) {
 			const n = sq.hotel ? 5 : Math.min(4, sq.house || 0);
-			const bar = document.getElementById(`cell${i}colorbar`);
+			const bar = document.getElementById(`cell${i}owner`); // the owner's strip: the player's colour, outer edge
 			if (bar && shown[i] !== n) {
 				const old = shown[i];
 				bar.classList.toggle('has-b', n > 0);
-				bar.innerHTML = n === 5 ? HOTEL : HOUSE.repeat(n);
+				bar.innerHTML = n ? `<span class="bh">${n === 5 ? HOTEL : HOUSE.repeat(n)}</span>` : '';
 				if (!q && old >= 0 && n > old) { // a house (or hotel) was built: the new one drops in
 					const items = bar.querySelectorAll('svg');
 					items[items.length - 1].classList.add(n === 5 ? 'bh-pop' : 'bh-new');
