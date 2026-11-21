@@ -1,4 +1,5 @@
 import { SQUARES } from './boardData.js';
+import { hex } from './colors.js';
 
 // Right-hand column of Replay and the admin Live view: one card per player (cash, turn, jail) and everybody's properties.
 export function PlayerCards({ state, list }) {
@@ -10,7 +11,7 @@ export function PlayerCards({ state, list }) {
 					const on = state.turn === i && !state.out[i];
 					return (
 						<div key={p.seat} className={`rp${on ? ' rp-on' : ''}${state.out[i] ? ' rp-out' : ''}`}>
-							<span className="rp-av" style={{ background: p.color }}>{i + 1}</span>
+							<span className="rp-av" style={{ background: hex(p.color) }}>{i + 1}</span>
 							<span className="rp-who">
 								<span className="rp-name">{p.name}{on && <em className="rp-turn">TURN</em>}</span>
 								<span className="rp-sub">{props} propert{props === 1 ? 'y' : 'ies'}{state.jail[i] ? ' · in jail' : ''}{state.cards[i] > 0 ? ' · jail card' : ''}</span>
@@ -33,9 +34,9 @@ export function OwnedProps({ state, list }) {
 				const houses = mine.reduce((n, k) => n + (state.houses[k] === 5 ? 0 : state.houses[k]), 0);
 				const hotels = mine.filter((k) => state.houses[k] === 5).length;
 				return (
-					<div key={p.seat} className={`op${state.out[i] ? ' rp-out' : ''}`} style={{ '--pc': p.color }}>
+					<div key={p.seat} className={`op${state.out[i] ? ' rp-out' : ''}`} style={{ '--pc': hex(p.color) }}>
 						<div className="op-head">
-							<i style={{ background: p.color }} />
+							<i style={{ background: hex(p.color) }} />
 							<b>{p.name}</b>
 							<span>{mine.length} {mine.length === 1 ? 'property' : 'properties'}{houses ? ` · ${houses} 🏠` : ''}{hotels ? ` · ${hotels} 🏨` : ''}</span>
 						</div>

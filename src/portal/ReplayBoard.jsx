@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SQUARES } from './boardData.js';
 import Deed from './Deed.jsx';
+import { hex } from './colors.js';
 
 // Where square i sits on the 11 x 11 grid: GO bottom-right, then left along the bottom, up the left side,
 // right along the top and down the right side (like the real board).
@@ -32,7 +33,7 @@ export default function ReplayBoard({ state, players, hop, rolling, shownDice, c
 	const [tip, setTip] = useState(-1); // square whose deed is shown (mouse over it, or tapped on a phone)
 	const where = (p) => (hop && hop.player === p ? hop.square : state.pos[p]);
 	const atSquare = (i) => players.map((_, p) => p).filter((p) => !state.out[p] && where(p) === i);
-	const colorOf = (p) => players[p].color || '#888';
+	const colorOf = (p) => hex(players[p].color);
 
 	return (
 		<div className="rb" role="img" aria-label="The board during the replay">

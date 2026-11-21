@@ -3,6 +3,7 @@ import { api } from '../api.js';
 import { fmtDate } from './format.js';
 import Replay from './Replay.jsx';
 import { buildFrames } from './replayModel.js';
+import { hex } from './colors.js';
 
 export function Modal({ onClose, children, wide = false }) {
 	return (
@@ -72,7 +73,7 @@ export function Details({ id, replay, onClose, onReplay, onOpen, admin = false, 
 							{[...game.players].sort((a, b) => (a.final_rank || 99) - (b.final_rank || 99) || (live ? (live.get(b.seat).out - live.get(a.seat).out) * -1 || live.get(b.seat).money - live.get(a.seat).money : 0) || a.seat - b.seat).map((p) => (
 								<tr key={p.seat}>
 									<td>{p.final_rank || '–'}</td>
-									<td><span className="player-chip"><i style={{ background: p.color }} />{p.name}{p.is_ai ? ' (AI)' : ''}</span></td>
+									<td><span className="player-chip"><i style={{ background: hex(p.color) }} />{p.name}{p.is_ai ? ' (AI)' : ''}</span></td>
 									<td>{p.final_money != null ? `$${p.final_money}` : live ? (live.get(p.seat).out ? 'Bankrupt' : `$${live.get(p.seat).money}`) : '–'}</td>
 								</tr>
 							))}

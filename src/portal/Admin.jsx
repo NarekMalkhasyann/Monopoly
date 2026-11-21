@@ -6,6 +6,7 @@ import PlayerDots from './PlayerDots.jsx';
 import { Modal, Details } from './GameDetails.jsx';
 import LiveBoard from './LiveBoard.jsx';
 import { AdvancedToggle, AdvancedPanel, NO_ADVANCED, countAdvanced, applyAdvanced } from './AdvancedFilters.jsx';
+import { hex } from './colors.js';
 
 // Admin panel (administrators only; the server checks the role on every request, this page only hides things).
 //   /admin             overview: totals and the last 14 days
@@ -231,7 +232,7 @@ function Live() {
 							<span className="players">
 								{g.players.map((p) => (
 									<span key={p.seat} className="player-chip" title={p.online ? 'connected' : `away ${ago(p.awayMs + drift)}`}>
-										<i style={{ background: p.color }} />
+										<i style={{ background: hex(p.color) }} />
 										{p.name}
 										<span className={`live-dot${p.online ? ' on' : ''}`} />
 										{!p.online && <small className="muted"> {ago(p.awayMs + drift)}</small>}

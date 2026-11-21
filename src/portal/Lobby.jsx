@@ -3,6 +3,7 @@ import { leaveRoom, startRoom, chooseColor, clearError, setVisibility, joinByCod
 import { navigate } from '../router.jsx';
 import RoomsSidebar from './RoomsSidebar.jsx';
 import Lock from './Lock.jsx';
+import { hex } from './colors.js';
 
 const PALETTE = ['yellow', 'blue', 'red', 'lime', 'green', 'aqua', 'orange', 'purple',
 	'fuchsia', 'teal', 'maroon', 'navy'];
@@ -64,7 +65,7 @@ export default function Lobby({ room, you, error }) {
 				{room.players.map((p) => (
 					<div className="row" key={p.userId}>
 						<div className="row-main">
-							<span className="player-chip"><i style={{ background: p.color }} />{p.name}{p.userId === you.userId ? ' (you)' : ''}</span>
+							<span className="player-chip"><i style={{ background: hex(p.color) }} />{p.name}{p.userId === you.userId ? ' (you)' : ''}</span>
 						</div>
 						<div className="row-tags">
 							{p.host && <span className="tag">Host</span>}
@@ -87,7 +88,7 @@ export default function Lobby({ room, you, error }) {
 						aria-label={c}
 						title={taken.has(c) ? `${c} (taken)` : c}
 						className={`swatch${me && me.color === c ? ' on' : ''}`}
-						style={{ background: c }}
+						style={{ background: hex(c) }}
 						disabled={taken.has(c)}
 						onClick={() => { clearError(); chooseColor(c).catch(() => {}); }}
 					/>

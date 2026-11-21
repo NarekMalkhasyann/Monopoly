@@ -3,6 +3,7 @@ import { api } from '../api.js';
 import { watchRooms, clearError } from '../online.js';
 import { navigate } from '../router.jsx';
 import Lock from './Lock.jsx';
+import { hex } from './colors.js';
 
 // Online rooms that are still waiting for players. An open lock = anybody can join; a closed lock = private,
 // the Join button asks for the password. Started games are not listed. The server says when the list may have
@@ -53,7 +54,7 @@ export default function RoomsSidebar({ excludeId, onJoin }) {
 							{!r.isPrivate && <span className="room-code">{r.code}</span>}
 						</div>
 						<div className="room-bottom">
-							<span className="room-dots">{r.colors.map((c, i) => <i key={i} style={{ background: c }} />)}</span>
+							<span className="room-dots">{r.colors.map((c, i) => <i key={i} style={{ background: hex(c) }} />)}</span>
 							<span className="muted">{r.players} / {r.max}</span>
 							{r.players >= r.max
 								? <span className="badge badge-pending">Full</span>
