@@ -654,3 +654,31 @@ body.trade-bystander #trade { display: none !important; } /* an offer between tw
 .op-hotel { display: block; width: 15px; height: 8px; border-radius: 2px; background: #f90124; box-shadow: 0 0 0 1px #fff; }
 .op-mort { opacity: .55; }
 .op-mort .op-name { text-decoration: line-through; }
+
+/* phones and small tablets: board on top, player cards under it */
+@media (max-width: 900px) {
+	.replay-main { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+	.replay-main .rb { width: 100%; max-width: 640px; margin: 0 auto; }
+	.rp { padding: 8px 12px; gap: 10px; }
+	.rp-av { width: 30px; height: 30px; font-size: 14px; }
+	.rp-name { font-size: 14px; }
+	.rp-money { font-size: 17px; }
+	.rb-who { font-size: clamp(14px, 5.5cqw, 26px); }
+	.rb-now { display: none; }
+	.rb-center { gap: 2%; }
+	.op-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+	.op { padding: 10px 10px 8px; }
+	.op-head span { margin-left: 0; width: 100%; }
+}
+@media (max-width: 420px) { .op-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* phones: squares are too small for text - keep the logos and show a one-letter mark instead of names (tap a square for its deed) */
+@media (max-width: 560px) {
+	.rb-sq:not(.rb-corner) .rb-name { font-size: 0; display: grid; place-items: center; inset: 0; width: 100%; height: 100%; transform: none; padding: 0; top: 0; left: 0; bottom: auto; }
+	.rb-sq:not(.rb-corner) .rb-name::before { font-size: 11px; font-weight: 800; color: rgba(255, 255, 255, .75); }
+	.rb-k-card .rb-name::before { content: '?'; }
+	.rb-k-rail .rb-name::before { content: '🚉'; font-size: 10px; }
+	.rb-k-tax .rb-name::before { content: '$'; }
+	.rb-corner .rb-name { font-size: 5.5px; word-break: normal; overflow-wrap: normal; hyphens: none; }
+	.rb-t .rb-name, .rb-b .rb-name, .rb-l .rb-name, .rb-r .rb-name { padding: 0; }
+}
