@@ -580,3 +580,6 @@ body.trade-bystander #trade { display: none !important; } /* an offer between tw
 .live-dot.on { background: #34d058; box-shadow: 0 0 0 0 #34d05899; animation: live-ping 1.8s ease-out infinite; }
 @keyframes live-ping { 0% { box-shadow: 0 0 0 0 #34d05899; } 100% { box-shadow: 0 0 0 8px #34d05800; } }
 @media (prefers-reduced-motion: reduce) { .live-dot.on { animation: none; } }
+.live-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.live-pill { display: inline-flex; align-items: center; gap: 6px; font: 800 12px Montserrat, sans-serif; letter-spacing: .08em; color: #34d058; border: 1px solid #34d05866; border-radius: 99px; padding: 3px 10px 3px 8px; }
+.live-pill .live-dot { margin-left: 0; }

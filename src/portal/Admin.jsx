@@ -4,6 +4,7 @@ import { navigate } from '../router.jsx';
 import { fmtDate } from './format.js';
 import PlayerDots from './PlayerDots.jsx';
 import { Modal, Details } from './GameDetails.jsx';
+import LiveBoard from './LiveBoard.jsx';
 import { AdvancedToggle, AdvancedPanel, NO_ADVANCED, countAdvanced, applyAdvanced } from './AdvancedFilters.jsx';
 
 // Admin panel (administrators only; the server checks the role on every request, this page only hides things).
@@ -200,6 +201,7 @@ function Live() {
 	const [at, setAt] = useState(Date.now());
 	const [, tick] = useState(0);
 	const [open, setOpen] = useState(null);
+	const [watch, setWatch] = useState(null); // id of the game whose board is open
 	const [stamp, setStamp] = useState(0);
 	useEffect(() => {
 		let stop = false;
@@ -238,10 +240,11 @@ function Live() {
 							</span>
 							<span className="meta">{g.moves} moves · {g.turns} turns · {g.idleMs == null ? 'no move yet' : `last move ${ago(g.idleMs + drift)} ago`}</span>
 						</div>
-						<div className="row-actions"><button className="btn-ghost" onClick={() => setOpen({ id: g.id, replay: false })}>Details</button></div>
+						<div className="row-actions"><button className="btn-primary btn-sm" onClick={() => setWatch(g.id)}>Watch board</button><button className="btn-ghost" onClick={() => setOpen({ id: g.id, replay: false })}>Details</button></div>
 					</div>
 				))}
 			</div>
+			{watch && <LiveBoard id={watch} onClose={() => setWatch(null)} />}
 			{open && <Details id={open.id} replay={open.replay} admin onClose={() => setOpen(null)} onReplay={(on) => setOpen({ id: open.id, replay: on })} onChanged={() => setStamp((x) => x + 1)} />}
 		</>
 	);
