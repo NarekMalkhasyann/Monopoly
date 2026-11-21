@@ -259,3 +259,6 @@
 
 /* cash numbers while they count */
 .cnt-up { color: #acfa00; } .cnt-dn { color: #ff6b6b; }
+
+/* a player who is in jail: red ring on the piece (on phones there is no jail box, so this is what marks it) */
+.tk.tk-jail { box-shadow: 0 0 0 2px #e5484d, 0 3px 8px #000a; }
