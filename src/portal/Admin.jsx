@@ -13,7 +13,7 @@ import { AdvancedToggle, AdvancedPanel, NO_ADVANCED, countAdvanced, applyAdvance
 //   /admin/games       every game of every player, filters like History
 
 const PAGE = 15;
-const TABS = [['/admin', 'Overview'], ['/admin/requests', 'New users req.'], ['/admin/users', 'Users'], ['/admin/games', 'Games']];
+const TABS = [['/admin', 'Overview'], ['/admin/requests', 'New users req.'], ['/admin/users', 'Users'], ['/admin/games', 'Games'], ['/admin/live', 'Live']];
 
 const useDebounced = (value, ms = 300) => {
 	const [v, setV] = useState(value);
@@ -183,6 +183,65 @@ function AdminGames({ userId }) {
 				))}
 			</div>
 			{games.length < total && <button className="btn-ghost" onClick={more}>Load more ({total - games.length})</button>}
+			{open && <Details id={open.id} replay={open.replay} admin onClose={() => setOpen(null)} onReplay={(on) => setOpen({ id: open.id, replay: on })} onChanged={() => setStamp((x) => x + 1)} />}
+		</>
+	);
+}
+
+// ---------- live: online games being played right now ----------
+// Asks the server every 2 seconds (the server knows who is connected). The clock texts tick every second in between.
+function ago(ms) {
+	const s = Math.max(0, Math.round(ms / 1000));
+	return s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+}
+function Live() {
+	const [data, setData] = useState(null);
+	const [error, setError] = useState('');
+	const [at, setAt] = useState(Date.now());
+	const [, tick] = useState(0);
+	const [open, setOpen] = useState(null);
+	const [stamp, setStamp] = useState(0);
+	useEffect(() => {
+		let stop = false;
+		const load = () => api('GET', '/admin/live').then((r) => { if (!stop) { setData(r); setAt(Date.now()); setError(''); } }).catch((e) => !stop && setError(e.message));
+		load();
+		const a = setInterval(() => { if (!document.hidden) load(); }, 2000);
+		const b = setInterval(() => tick((n) => n + 1), 1000);
+		return () => { stop = true; clearInterval(a); clearInterval(b); };
+	}, [stamp]);
+	const games = data ? data.games : [];
+	const players = games.reduce((n, g) => n + g.players.filter((p) => p.online).length, 0);
+	const drift = Date.now() - at; // how long ago the numbers were read
+	return (
+		<>
+			<p className="muted live-head"><span className="live-dot on" /> Live · {games.length} online game{games.length === 1 ? '' : 's'} · {players} player{players === 1 ? '' : 's'} connected{data ? ` · ${data.connected} connection${data.connected === 1 ? '' : 's'} to the server` : ''}</p>
+			{error && <p className="auth-error">{error}</p>}
+			{!data && !error && <p className="muted">Loading…</p>}
+			{data && games.length === 0 && <p className="muted">No online game is being played right now.</p>}
+			<div className="rows">
+				{games.map((g) => (
+					<div className="row row-history" key={g.id}>
+						<div className="row-main">
+							<div className="row-tags">
+								<span className="tag">#{g.id} · Online · {g.code}</span>
+								<span className="badge badge-pending">In progress</span>
+							</div>
+							<span className="players">
+								{g.players.map((p) => (
+									<span key={p.seat} className="player-chip" title={p.online ? 'connected' : `away ${ago(p.awayMs + drift)}`}>
+										<i style={{ background: p.color }} />
+										{p.name}
+										<span className={`live-dot${p.online ? ' on' : ''}`} />
+										{!p.online && <small className="muted"> {ago(p.awayMs + drift)}</small>}
+									</span>
+								))}
+							</span>
+							<span className="meta">{g.moves} moves · {g.turns} turns · {g.idleMs == null ? 'no move yet' : `last move ${ago(g.idleMs + drift)} ago`}</span>
+						</div>
+						<div className="row-actions"><button className="btn-ghost" onClick={() => setOpen({ id: g.id, replay: false })}>Details</button></div>
+					</div>
+				))}
+			</div>
 			{open && <Details id={open.id} replay={open.replay} admin onClose={() => setOpen(null)} onReplay={(on) => setOpen({ id: open.id, replay: on })} onChanged={() => setStamp((x) => x + 1)} />}
 		</>
 	);
@@ -382,7 +441,7 @@ export default function Admin({ view, id, user }) {
 	if (user.role !== 'admin') {
 		return <><div className="page-head"><h2>Admin</h2></div><p className="notice">This area is for administrators only.</p></>;
 	}
-	const path = view === 'adminRequests' ? '/admin/requests' : view === 'adminUsers' || view === 'adminUser' ? '/admin/users' : view === 'adminGames' ? '/admin/games' : '/admin';
+	const path = view === 'adminRequests' ? '/admin/requests' : view === 'adminUsers' || view === 'adminUser' ? '/admin/users' : view === 'adminGames' ? '/admin/games' : view === 'adminLive' ? '/admin/live' : '/admin';
 	return (
 		<>
 			<div className="page-head"><h2>Admin</h2></div>
@@ -392,6 +451,7 @@ export default function Admin({ view, id, user }) {
 			{view === 'adminUsers' && <Users />}
 			{view === 'adminUser' && <UserPage id={id} me={user} />}
 			{view === 'adminGames' && <AdminGames />}
+			{view === 'adminLive' && <Live />}
 		</>
 	);
 }

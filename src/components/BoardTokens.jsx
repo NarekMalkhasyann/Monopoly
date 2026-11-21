@@ -87,10 +87,12 @@ export default function BoardTokens() {
 	const ir = inner.getBoundingClientRect();
 	const scale = inner.offsetWidth ? ir.width / inner.offsetWidth : 1;
 	const spot = (d) => { // where the square (or the jail box) is, in the board's own pixels
-		const el = d.jail ? document.getElementById('jail') : document.getElementById(`cell${d.sq}`);
+		let el = d.jail ? document.getElementById('jail') : document.getElementById(`cell${d.sq}`);
+		let corner = false;
+		if (d.jail && (!el || !el.getBoundingClientRect().width)) { el = document.getElementById('cell10'); corner = true; } // phones: no jail box, the piece sits at the top of the Just Visiting / Jail corner
 		if (!el) return null;
 		const r = el.getBoundingClientRect();
-		return { x: (r.left - ir.left) / scale, y: (r.top - ir.top) / scale, w: r.width / scale, h: r.height / scale };
+		return { x: (r.left - ir.left) / scale, y: (r.top - ir.top) / scale, w: r.width / scale, h: r.height / scale, corner };
 	};
 	const groups = new Map();
 	view.tokens.forEach((d) => { const key = d.jail ? 'jail' : d.sq; groups.set(key, [...(groups.get(key) || []), d.name]); });
@@ -111,8 +113,8 @@ export default function BoardTokens() {
 				const row = Math.floor(k / 3) - (Math.ceil(n / 3) - 1) / 2;
 				// top and bottom rows: the pieces sit low in the square (under the logo and name); sides and corners: in the middle
 				const low = !small && !d.jail && d.sq % 10 !== 0 && ((d.sq > 0 && d.sq < 10) || (d.sq > 20 && d.sq < 30));
-				const y = low ? s.y + s.h - (d.sq < 10 ? 8 : 14) - SIZE + row * GAP : s.y + s.h / 2 - SIZE / 2 + row * GAP + (d.jail ? 12 : 0);
-				return <div key={d.name} className={`tk${d.cur ? ' tk-turn' : ''}`} aria-label={d.name} style={{ left: s.x + s.w / 2 - SIZE / 2 + dx, top: y, backgroundColor: d.color }}>{d.n}</div>;
+				const y = s.corner ? s.y + 3 + row * GAP : low ? s.y + s.h - (d.sq < 10 ? 8 : 14) - SIZE + row * GAP : s.y + s.h / 2 - SIZE / 2 + row * GAP + (d.jail ? 12 : 0);
+				return <div key={d.name} className={`tk${d.cur ? ' tk-turn' : ''}${d.jail ? ' tk-jail' : ''}`} aria-label={d.name} style={{ left: s.x + s.w / 2 - SIZE / 2 + dx, top: y, backgroundColor: d.color }}>{d.n}</div>;
 			})}
 		</div>
 	);

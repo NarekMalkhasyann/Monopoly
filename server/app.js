@@ -226,6 +226,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 		let m;
 		const admin = await requireAdmin(req);
 		if (method === 'GET' && path === '/api/admin/stats') return [200, await adminStats()];
+		if (method === 'GET' && path === '/api/admin/live') return [200, { games: rooms.live(), connected: rooms.connections().length }];
 		if (method === 'GET' && path === '/api/admin/users') return [200, await listUsers(url.searchParams)];
 		if ((m = /^\/api\/admin\/users\/(\d+)$/.exec(path))) {
 			const id = Number(m[1]);
