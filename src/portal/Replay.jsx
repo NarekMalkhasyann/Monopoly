@@ -8,7 +8,7 @@ import { buildFrames } from './replayModel.js';
 const SPEEDS = [1, 2, 4, 8];
 const rand = () => 1 + Math.floor(Math.random() * 6);
 
-export default function Replay({ events, players, onClose }) {
+export default function Replay({ events, players, rules, onClose }) {
 	const { frames, fx } = useMemo(() => buildFrames(events, players), [events, players]);
 	const list = useMemo(() => [...players].sort((a, b) => a.seat - b.seat), [players]);
 	const total = events.length;
@@ -85,7 +85,7 @@ export default function Replay({ events, players, onClose }) {
 		<>
 			<h3 className="modal-title">Replay</h3>
 			<div className="replay-main">
-				<ReplayBoard state={state} players={list} hop={hop} rolling={rolling} shownDice={shownDice}
+				<ReplayBoard rules={rules} state={state} players={list} hop={hop} rolling={rolling} shownDice={shownDice}
 					caption={current ? current.text : 'Press Play to watch the game.'} />
 				<div className="replay-side">
 					<div className="rp-players">

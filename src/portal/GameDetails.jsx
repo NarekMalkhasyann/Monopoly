@@ -49,7 +49,7 @@ export function Details({ id, replay, onClose, onReplay, onOpen, admin = false, 
 	if (replay && game) {
 		return (
 			<Modal onClose={onClose} wide>
-				<Replay events={game.events} players={game.players} onClose={() => onReplay(false)} />
+				<Replay events={game.events} players={game.players} rules={game.rules} onClose={() => onReplay(false)} />
 			</Modal>
 		);
 	}

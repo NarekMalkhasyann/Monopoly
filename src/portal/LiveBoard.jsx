@@ -90,7 +90,7 @@ export default function LiveBoard({ id, onClose }) {
 			{!game && !error && <p className="muted">Loading…</p>}
 			{state && list.length > 0 && (
 				<div className="replay-main">
-					<ReplayBoard state={state} players={list} hop={hop} rolling={rolling} shownDice={rolling ? faces : state.dice}
+					<ReplayBoard rules={game && game.rules} state={state} players={list} hop={hop} rolling={rolling} shownDice={rolling ? faces : state.dice}
 						caption={current ? current.text : 'Waiting for the first move…'} />
 					<div className="replay-side">
 						<div className="rp-players">
