@@ -85,7 +85,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 
 	const gameSummary = async (g) => ({
 		id: g.id, mode: g.mode, status: g.status, edition: g.edition, room_code: g.room_code, owner_id: g.owner_id,
-		winner_name: g.winner_name, turn_count: g.turn_count,
+		rules: g.mode === 'online' ? (g.rules || 1) : 2, winner_name: g.winner_name, turn_count: g.turn_count,
 		created_at: g.created_at, updated_at: g.updated_at, finished_at: g.finished_at,
 		players: (await q.players(g.id)).map((p) => ({ ...p, is_ai: !!p.is_ai })),
 	});

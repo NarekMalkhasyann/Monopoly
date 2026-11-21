@@ -10,6 +10,7 @@ const kindAt = { 0: 'go', 10: 'jail', 20: 'park', 30: 'gojail', 4: 'tax', 38: 't
 const rows = sq.map((s, i) => ({
 	n: s.name, c: s.groupNumber >= 3 ? s.color : null, p: s.price, g: s.groupNumber, h: s.houseprice,
 	k: kindAt[i] || (s.groupNumber === 1 ? 'rail' : s.groupNumber === 2 ? 'util' : 'prop'),
+	...(s.groupNumber >= 3 ? { r: [s.baserent, s.rent1, s.rent2, s.rent3, s.rent4, s.rent5] } : {}),
 	...(s.logo ? { l: s.logo } : {}),
 	...(s.category ? { cat: s.category.en, hy: s.category.hy } : {}),
 }));
