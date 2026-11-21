@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api.js';
 import ReplayBoard from './ReplayBoard.jsx';
-import ReplaySide from './ReplaySide.jsx';
+import { PlayerCards, OwnedProps } from './ReplaySide.jsx';
 import { SQUARES } from './boardData.js';
 import { buildFrames } from './replayModel.js';
 import { Modal } from './GameDetails.jsx';
@@ -90,11 +90,14 @@ export default function LiveBoard({ id, onClose }) {
 			{error && <p className="auth-error">{error}</p>}
 			{!game && !error && <p className="muted">Loading…</p>}
 			{state && list.length > 0 && (
+				<>
 				<div className="replay-main">
 					<ReplayBoard rules={game && game.rules} state={state} players={list} hop={hop} rolling={rolling} shownDice={rolling ? faces : state.dice}
 						caption={current ? current.text : 'Waiting for the first move…'} recent={shown.slice(-3)} />
-					<ReplaySide state={state} list={list} />
+					<PlayerCards state={state} list={list} />
 				</div>
+				<OwnedProps state={state} list={list} />
+				</>
 			)}
 			<p className="muted replay-note">Built from the game log, so it follows a second or two behind. The log saves the dice total, not each die.</p>
 			<div className="modal-actions"><button className="btn-ghost" onClick={onClose}>Close</button></div>

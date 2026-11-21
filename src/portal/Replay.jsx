@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ReplayBoard from './ReplayBoard.jsx';
-import ReplaySide from './ReplaySide.jsx';
+import { PlayerCards, OwnedProps } from './ReplaySide.jsx';
 import { SQUARES } from './boardData.js';
 import { buildFrames } from './replayModel.js';
 
@@ -88,7 +88,7 @@ export default function Replay({ events, players, rules, onClose }) {
 			<div className="replay-main">
 				<ReplayBoard rules={rules} state={state} players={list} hop={hop} rolling={rolling} shownDice={shownDice}
 					caption={current ? current.text : 'Press Play to watch the game.'} recent={shown.slice(-3)} />
-				<ReplaySide state={state} list={list} />
+				<PlayerCards state={state} list={list} />
 			</div>
 			<div className="replay-controls" role="group" aria-label="Replay controls">
 				<button className="btn-ghost btn-sm" onClick={() => { setPlaying(false); go(0, false); }} aria-label="Back to the start">⏮</button>
@@ -113,6 +113,7 @@ export default function Replay({ events, players, rules, onClose }) {
 					</label>
 				)}
 			</div>
+			<OwnedProps state={state} list={list} />
 			<p className="muted replay-note">The log saves the dice total, not each die, so the faces shown are worked out from the total.</p>
 			<div className="modal-actions"><button className="btn-ghost" onClick={onClose}>Back to details</button></div>
 		</>
