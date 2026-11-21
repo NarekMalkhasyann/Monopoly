@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ReplayBoard from './ReplayBoard.jsx';
+import { PlayerCards, OwnedProps } from './ReplaySide.jsx';
 import { SQUARES } from './boardData.js';
 import { buildFrames } from './replayModel.js';
 
@@ -8,7 +9,7 @@ import { buildFrames } from './replayModel.js';
 const SPEEDS = [1, 2, 4, 8];
 const rand = () => 1 + Math.floor(Math.random() * 6);
 
-export default function Replay({ events, players, onClose }) {
+export default function Replay({ events, players, rules, onClose }) {
 	const { frames, fx } = useMemo(() => buildFrames(events, players), [events, players]);
 	const list = useMemo(() => [...players].sort((a, b) => a.seat - b.seat), [players]);
 	const total = events.length;
@@ -85,48 +86,9 @@ export default function Replay({ events, players, onClose }) {
 		<>
 			<h3 className="modal-title">Replay</h3>
 			<div className="replay-main">
-				<ReplayBoard state={state} players={list} hop={hop} rolling={rolling} shownDice={shownDice}
-					caption={current ? current.text : 'Press Play to watch the game.'} />
-				<div className="replay-side">
-					<div className="rp-players">
-						{list.map((p, i) => {
-							const props = state.owner.filter((o) => o === i).length;
-							return (
-								<div key={p.seat} className={`rp${state.turn === i && !state.out[i] ? ' rp-on' : ''}${state.out[i] ? ' rp-out' : ''}`}>
-									<span className="player-chip"><i style={{ background: p.color }} />{p.name}</span>
-									<span className="rp-money">{state.out[i] ? 'Bankrupt' : `$${state.money[i]}`}</span>
-									<span className="rp-sub">{props} propert{props === 1 ? 'y' : 'ies'}{state.jail[i] ? ' · in jail' : ''}{state.cards[i] > 0 ? ' · jail card' : ''}</span>
-								</div>
-							);
-						})}
-					</div>
-					<div className="log replay-log" ref={listRef} aria-live="off">
-						{shown.length === 0 && <p className="muted">Press Play to start.</p>}
-						{shown.map((e, i) => <div key={e.seq} className={i === shown.length - 1 ? 'replay-now' : ''}><span className="log-turn">T{e.turn}</span>{e.text}</div>)}
-					</div>
-					<div className="rp-props">
-						{list.map((p, i) => {
-							const mine = SQUARES.map((sq, k) => k).filter((k) => state.owner[k] === i);
-							return (
-								<div key={p.seat} className={`rp-props-row${state.out[i] ? ' rp-out' : ''}`}>
-									<span className="player-chip"><i style={{ background: p.color }} />{p.name}</span>
-									<span className="rp-props-list">
-										{mine.length === 0 && <span className="muted">no properties</span>}
-										{mine.map((k) => {
-											const h = state.houses[k];
-											return (
-												<span key={k} className={`rp-prop${state.mort[k] ? ' rp-prop-mort' : ''}`} title={`${SQUARES[k].n}${state.mort[k] ? ' (mortgaged)' : ''}`}>
-													<i style={{ background: SQUARES[k].c || '#9ca3af' }} />{SQUARES[k].n}
-													{h > 0 && <b>{h === 5 ? ' 🏨' : ` ${'🏠'.repeat(h)}`}</b>}
-												</span>
-											);
-										})}
-									</span>
-								</div>
-							);
-						})}
-					</div>
-				</div>
+				<ReplayBoard rules={rules} state={state} players={list} hop={hop} rolling={rolling} shownDice={shownDice}
+					caption={current ? current.text : 'Press Play to watch the game.'} recent={shown.slice(-3)} />
+				<PlayerCards state={state} list={list} />
 			</div>
 			<div className="replay-controls" role="group" aria-label="Replay controls">
 				<button className="btn-ghost btn-sm" onClick={() => { setPlaying(false); go(0, false); }} aria-label="Back to the start">⏮</button>
@@ -151,6 +113,7 @@ export default function Replay({ events, players, onClose }) {
 					</label>
 				)}
 			</div>
+			<OwnedProps state={state} list={list} />
 			<p className="muted replay-note">The log saves the dice total, not each die, so the faces shown are worked out from the total.</p>
 			<div className="modal-actions"><button className="btn-ghost" onClick={onClose}>Back to details</button></div>
 		</>

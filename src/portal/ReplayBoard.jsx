@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { SQUARES } from './boardData.js';
+import Deed from './Deed.jsx';
 
 // Where square i sits on the 11 x 11 grid: GO bottom-right, then left along the bottom, up the left side,
 // right along the top and down the right side (like the real board).
@@ -26,7 +28,8 @@ const edge = (c) => (c === 0 ? 0 : c === 10 ? UNITS - 102 : 102 + 72 * (c - 1));
 const mid = (c) => (c === 0 || c === 10 ? edge(c) + 51 : edge(c) + 36);
 const LOGOS = 'images/card-logos/'; // resolves from the site root (index.html has <base href="/">)
 
-export default function ReplayBoard({ state, players, hop, rolling, shownDice, caption }) {
+export default function ReplayBoard({ state, players, hop, rolling, shownDice, caption, recent = [], rules = 2 }) {
+	const [tip, setTip] = useState(-1); // square whose deed is shown (mouse over it, or tapped on a phone)
 	const where = (p) => (hop && hop.player === p ? hop.square : state.pos[p]);
 	const atSquare = (i) => players.map((_, p) => p).filter((p) => !state.out[p] && where(p) === i);
 	const colorOf = (p) => players[p].color || '#888';
@@ -40,7 +43,8 @@ export default function ReplayBoard({ state, players, hop, rolling, shownDice, c
 				const side = i < 10 ? 'b' : i < 20 ? 'l' : i < 30 ? 't' : 'r';
 				return (
 					<div key={i} className={`rb-sq rb-${side}${state.mort[i] ? ' rb-mort' : ''}${i % 10 === 0 ? ' rb-corner' : ''}`}
-						style={{ gridRow: row + 1, gridColumn: col + 1 }} title={s.n}>
+						style={{ gridRow: row + 1, gridColumn: col + 1 }} onMouseEnter={() => setTip(i)} onMouseLeave={() => setTip((t) => (t === i ? -1 : t))}
+						onClick={() => setTip((t) => (t === i ? -1 : i))} aria-label={s.n}>
 						{s.c && <span className="rb-band" style={{ background: s.c }}>
 							{h > 0 && (h === 5 ? <b className="rb-hotel" /> : Array.from({ length: h }, (_, k) => <b key={k} className="rb-house" />))}
 						</span>}
@@ -66,12 +70,17 @@ export default function ReplayBoard({ state, players, hop, rolling, shownDice, c
 					</div>
 				);
 			})}
+			{tip >= 0 && <Deed square={tip} rules={rules} houses={state.houses[tip]} mortgaged={state.mort[tip]}
+				owner={state.owner[tip] >= 0 ? { name: players[state.owner[tip]].name, color: colorOf(state.owner[tip]) } : null} />}
 			<div className="rb-center">
-				<div className="rb-logo">ACT Monopoly</div>
+				<div className="rb-now">{state.out[state.turn] ? 'GAME' : 'NOW PLAYING'}</div>
+				{players[state.turn] && <div className="rb-who"><i style={{ background: colorOf(state.turn) }} />{players[state.turn].name}</div>}
 				<div className="rb-dice">
 					{shownDice ? <><Die value={shownDice[0]} rolling={rolling} /><Die value={shownDice[1]} rolling={rolling} /></> : <span className="muted">Press Play</span>}
 				</div>
-				<div className="rb-caption" aria-live="polite">{caption}</div>
+				<div className="rb-feed" aria-live="polite">
+					{recent.length ? recent.map((e) => <div key={e.seq} className={/paid .* rent/.test(e.text) ? 'f-rent' : /jail/.test(e.text) ? 'f-jail' : 'f-buy'}>{e.text}</div>) : <div>{caption}</div>}
+				</div>
 			</div>
 		</div>
 	);
