@@ -42,7 +42,7 @@ export default function ReplayBoard({ state, players, hop, rolling, shownDice, c
 				const o = state.owner[i];
 				const side = i < 10 ? 'b' : i < 20 ? 'l' : i < 30 ? 't' : 'r';
 				return (
-					<div key={i} className={`rb-sq rb-${side}${state.mort[i] ? ' rb-mort' : ''}${i % 10 === 0 ? ' rb-corner' : ''}`}
+					<div key={i} className={`rb-sq rb-${side} rb-k-${s.k}${state.mort[i] ? ' rb-mort' : ''}${i % 10 === 0 ? ' rb-corner' : ''}`}
 						style={{ gridRow: row + 1, gridColumn: col + 1 }} onMouseEnter={() => setTip(i)} onMouseLeave={() => setTip((t) => (t === i ? -1 : t))}
 						onClick={() => setTip((t) => (t === i ? -1 : i))} aria-label={s.n}>
 						{s.c && <span className="rb-band" style={{ background: s.c }}>
