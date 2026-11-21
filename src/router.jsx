@@ -42,6 +42,7 @@ const ROUTES = [
 	[/^\/admin\/users\/?$/, 'adminUsers'],
 	[/^\/admin\/users\/(\d+)\/?$/, 'adminUser', ['id']],
 	[/^\/admin\/games\/?$/, 'adminGames'],
+	[/^\/admin\/live\/?$/, 'adminLive'],
 	[/^\/admin\/requests\/?$/, 'adminRequests'],
 	[/^\/history\/?$/, 'history'],
 	[/^\/history\/(\d+)\/?$/, 'historyDetail', ['id']],

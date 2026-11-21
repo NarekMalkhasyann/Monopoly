@@ -572,3 +572,11 @@ body.trade-bystander #trade { display: none !important; } /* an offer between tw
 	.top-drawer { box-shadow: 0 6px 12px #0006; }
 	.brand-name .ch { transition: none; }
 }
+
+/* ---------- admin: live games ---------- */
+.live-head { display: flex; align-items: center; gap: 8px; margin: 14px 0; }
+.live-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #6b6b6b; margin-left: 6px; flex: none; }
+.live-head .live-dot { margin-left: 0; }
+.live-dot.on { background: #34d058; box-shadow: 0 0 0 0 #34d05899; animation: live-ping 1.8s ease-out infinite; }
+@keyframes live-ping { 0% { box-shadow: 0 0 0 0 #34d05899; } 100% { box-shadow: 0 0 0 8px #34d05800; } }
+@media (prefers-reduced-motion: reduce) { .live-dot.on { animation: none; } }

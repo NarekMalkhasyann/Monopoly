@@ -709,6 +709,20 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 			await db.run("UPDATE games SET status = 'active', updated_at = ? WHERE id = ? AND status = 'abandoned'", [now(), id]);
 			return true;
 		},
+		// For the admin's "Live" tab: online games in progress that have at least one player connected right now.
+		live() {
+			const out = [];
+			for (const room of rooms.values()) {
+				if (room.status !== 'active') continue;
+				const players = [...room.members.values()].sort((a, b) => a.seat - b.seat).map((m) => ({
+					seat: m.seat, name: m.name, color: m.color, online: m.sessions.size > 0,
+					awayMs: m.sessions.size === 0 && m.offlineSince ? Date.now() - m.offlineSince : 0,
+				}));
+				if (!players.some((p) => p.online)) continue;
+				out.push({ id: room.id, code: room.code, moves: room.seq, turns: room.turnCount || 0, idleMs: room.lastClickAt ? Date.now() - room.lastClickAt : null, players });
+			}
+			return out.sort((a, b) => a.id - b.id);
+		},
 		// An admin ends a running online game for everybody (same result as the host abandoning it). Returns false if there was nothing to end.
 		async adminAbandon(id) {
 			const room = rooms.get(id);
