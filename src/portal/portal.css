@@ -633,3 +633,5 @@ body.trade-bystander #trade { display: none !important; } /* an offer between tw
 .rp-prop i { width: 10px; height: 10px; border-radius: 3px; }
 .rp-prop-mort { opacity: .5; }
 @media (max-width: 760px) { .rb { border-radius: 14px; padding: 3px; gap: 2px; } .rb-sq { border-radius: 5px; } .rb-feed > div:not(:last-child) { display: none; } .rp-money { font-size: 18px; } }
+.rp-money { flex: none; white-space: nowrap; }
+.rp-name { flex-wrap: wrap; row-gap: 2px; }
