@@ -5,7 +5,7 @@ import RoomsSidebar from './RoomsSidebar.jsx';
 import Lock from './Lock.jsx';
 
 const PALETTE = ['yellow', 'blue', 'red', 'lime', 'green', 'aqua', 'orange', 'purple',
-	'fuchsia', 'teal', 'maroon', 'navy', 'olive', 'silver', 'gray', 'black'];
+	'fuchsia', 'teal', 'maroon', 'navy'];
 
 // Waiting room of an online game: share the code, pick a colour, the host starts.
 export default function Lobby({ room, you, error }) {

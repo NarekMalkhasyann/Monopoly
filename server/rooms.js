@@ -11,7 +11,8 @@ import { now } from './db.js';
 import { hashPassword, verifyPassword } from './auth.js';
 
 export const COLORS = ['yellow', 'blue', 'red', 'lime', 'green', 'aqua', 'orange', 'purple',
-	'fuchsia', 'teal', 'maroon', 'navy', 'olive', 'silver', 'gray', 'black'];
+	'fuchsia', 'teal', 'maroon', 'navy'];
+// olive, silver, gray and black were removed from the choices (too dull / pale on the board); games that already use them still show them.
 // Buttons whose clicks are shared between players (see src/online.js).
 export const RELAYED = new Set(['nextbutton', 'popupclose', 'popupyes', 'popupno',
 	'buybutton', 'payfiftybutton', 'gojfbutton', 'resignbutton',
