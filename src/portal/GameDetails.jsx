@@ -99,7 +99,10 @@ export function Details({ id, replay, onClose, onReplay, onOpen, admin = false, 
 				) : (
 					<>
 						{game && onOpen && !admin && game.status === 'active' && <button className="btn-primary btn-sm" onClick={onOpen}>{game.mode === 'online' ? 'Rejoin' : 'Resume'}</button>}
-						{game && game.events.length > 0 && <button className="btn-ghost btn-sm" onClick={() => onReplay(true)}>Replay</button>}
+						{game && game.events.length > 0 && <button className="btn-replay" onClick={() => onReplay(true)}>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.53.85l10.5-6.5a1 1 0 0 0 0-1.7L9.53 4.65A1 1 0 0 0 8 5.5z" /></svg>
+							Replay
+						</button>}
 						{game && admin && running && <button className="btn-ghost danger btn-sm" onClick={() => setAsk('abandon')}>End game</button>}
 						{game && admin && !running && <button className="btn-ghost danger btn-sm" onClick={() => setAsk('delete')}>Delete</button>}
 						<button className="btn-ghost" onClick={onClose}>Close</button>

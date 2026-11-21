@@ -682,3 +682,11 @@ body.trade-bystander #trade { display: none !important; } /* an offer between tw
 	.rb-corner .rb-name { font-size: 5.5px; word-break: normal; overflow-wrap: normal; hyphens: none; }
 	.rb-t .rb-name, .rb-b .rb-name, .rb-l .rb-name, .rb-r .rb-name { padding: 0; }
 }
+
+/* Replay button in game details: lime, with a play icon, so it stands out from Close / End game */
+.btn-replay { display: inline-flex; align-items: center; gap: 8px; padding: 9px 20px 9px 16px; border: 0; border-radius: var(--radius); background: var(--green); color: var(--dark); font: 800 14px/20px Montserrat, sans-serif; cursor: pointer; box-shadow: 0 0 0 0 rgba(172, 250, 0, .45), 0 4px 14px rgba(172, 250, 0, .22); transition: transform .15s, box-shadow .2s, background-color .2s; }
+.btn-replay svg { flex: none; transition: transform .2s; }
+.btn-replay:hover { background: #c4ff3d; box-shadow: 0 0 0 4px rgba(172, 250, 0, .25), 0 6px 18px rgba(172, 250, 0, .3); }
+.btn-replay:hover svg { transform: scale(1.15); }
+.btn-replay:active { transform: translateY(1px); }
+.btn-replay:focus-visible { outline: 2px solid var(--white); outline-offset: 2px; }
