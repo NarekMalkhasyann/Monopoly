@@ -28,7 +28,7 @@ const edge = (c) => (c === 0 ? 0 : c === 10 ? UNITS - 102 : 102 + 72 * (c - 1));
 const mid = (c) => (c === 0 || c === 10 ? edge(c) + 51 : edge(c) + 36);
 const LOGOS = 'images/card-logos/'; // resolves from the site root (index.html has <base href="/">)
 
-export default function ReplayBoard({ state, players, hop, rolling, shownDice, caption, rules = 2 }) {
+export default function ReplayBoard({ state, players, hop, rolling, shownDice, caption, recent = [], rules = 2 }) {
 	const [tip, setTip] = useState(-1); // square whose deed is shown (mouse over it, or tapped on a phone)
 	const where = (p) => (hop && hop.player === p ? hop.square : state.pos[p]);
 	const atSquare = (i) => players.map((_, p) => p).filter((p) => !state.out[p] && where(p) === i);
@@ -73,11 +73,14 @@ export default function ReplayBoard({ state, players, hop, rolling, shownDice, c
 			{tip >= 0 && <Deed square={tip} rules={rules} houses={state.houses[tip]} mortgaged={state.mort[tip]}
 				owner={state.owner[tip] >= 0 ? { name: players[state.owner[tip]].name, color: colorOf(state.owner[tip]) } : null} />}
 			<div className="rb-center">
-				<div className="rb-logo">ACT Monopoly</div>
+				<div className="rb-now">{state.out[state.turn] ? 'GAME' : 'NOW PLAYING'}</div>
+				{players[state.turn] && <div className="rb-who"><i style={{ background: colorOf(state.turn) }} />{players[state.turn].name}</div>}
 				<div className="rb-dice">
 					{shownDice ? <><Die value={shownDice[0]} rolling={rolling} /><Die value={shownDice[1]} rolling={rolling} /></> : <span className="muted">Press Play</span>}
 				</div>
-				<div className="rb-caption" aria-live="polite">{caption}</div>
+				<div className="rb-feed" aria-live="polite">
+					{recent.length ? recent.map((e) => <div key={e.seq} className={/paid .* rent/.test(e.text) ? 'f-rent' : /jail/.test(e.text) ? 'f-jail' : 'f-buy'}>{e.text}</div>) : <div>{caption}</div>}
+				</div>
 			</div>
 		</div>
 	);
