@@ -6,7 +6,7 @@ import Lock from './Lock.jsx';
 import { hex } from './colors.js';
 
 const PALETTE = ['yellow', 'blue', 'red', 'lime', 'green', 'aqua', 'orange', 'purple',
-	'fuchsia', 'teal', 'maroon', 'navy'];
+	'fuchsia', 'teal', 'maroon', 'navy', 'coral', 'sky', 'indigo', 'mint', 'rose'];
 
 // Waiting room of an online game: share the code, pick a colour, the host starts.
 export default function Lobby({ room, you, error }) {

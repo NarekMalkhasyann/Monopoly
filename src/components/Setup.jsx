@@ -3,8 +3,8 @@
 // so the ids below must stay exactly as they are.
 
 const COLORS = [
-	'Aqua', 'Blue', 'Fuchsia', 'Green', 'Lime', 'Maroon',
-	'Navy', 'Orange', 'Purple', 'Red', 'Teal', 'Yellow',
+	'Aqua', 'Blue', 'Coral', 'Fuchsia', 'Green', 'Indigo', 'Lime', 'Maroon',
+	'Mint', 'Navy', 'Orange', 'Purple', 'Red', 'Rose', 'Sky', 'Teal', 'Yellow',
 ];
 
 // Default colour of players 1..8
