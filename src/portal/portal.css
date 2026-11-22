@@ -122,8 +122,15 @@
 .top-nav .nav-link:hover { color: var(--white); }
 .top-nav .nav-link.active { color: var(--green); font-weight: 700; }
 .nav-underline { position: absolute; left: 0; bottom: -1px; height: 2px; background: var(--green); border-radius: 2px; transition: transform .3s cubic-bezier(.4, 0, .2, 1), width .3s cubic-bezier(.4, 0, .2, 1); }
-.page { animation: page-in .18s ease-out; } /* opacity only: a moving full-screen scroller repaints every frame on phones */
+.page { animation: page-in .25s ease-out; } /* opacity only: a moving full-screen scroller repaints every frame on phones */
 @keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
+/* children glide up one after another; only the children move, never the scrolling page itself */
+.page > *, .rows > .row { animation: page-rise .42s cubic-bezier(.2, .7, .2, 1) backwards; animation-delay: calc(min(var(--n, 0), 8) * 45ms + 40ms); }
+.page > :nth-child(1), .rows > .row:nth-child(1) { --n: 0; } .page > :nth-child(2), .rows > .row:nth-child(2) { --n: 1; }
+.page > :nth-child(3), .rows > .row:nth-child(3) { --n: 2; } .page > :nth-child(4), .rows > .row:nth-child(4) { --n: 3; }
+.page > :nth-child(5), .rows > .row:nth-child(5) { --n: 4; } .page > :nth-child(6), .rows > .row:nth-child(6) { --n: 5; }
+.page > :nth-child(n+7), .rows > .row:nth-child(n+7) { --n: 6; }
+@keyframes page-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .top-user { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .avatar.sm-avatar { width: 34px; height: 34px; border: none; background: var(--green); font-size: 14px; flex-shrink: 0; }
 .top-user-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
@@ -157,7 +164,7 @@
 	.page h2 { font-size: 26px; }
 	.page .h2-sm { font-size: 22px; }
 }
-@media (prefers-reduced-motion: reduce) { .spinner, .page, .top-drawer, .nav-underline, .top-nav .nav-link { transition: none; animation: none; } }
+@media (prefers-reduced-motion: reduce) { .page > *, .rows > .row { animation: none !important; } .spinner, .page, .top-drawer, .nav-underline, .top-nav .nav-link { transition: none; animation: none; } }
 
 /* ---------- home ---------- */
 .welcome { background: var(--dark); padding: 30px; border-radius: 0; }
