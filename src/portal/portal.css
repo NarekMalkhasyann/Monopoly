@@ -122,8 +122,15 @@
 .top-nav .nav-link:hover { color: var(--white); }
 .top-nav .nav-link.active { color: var(--green); font-weight: 700; }
 .nav-underline { position: absolute; left: 0; bottom: -1px; height: 2px; background: var(--green); border-radius: 2px; transition: transform .3s cubic-bezier(.4, 0, .2, 1), width .3s cubic-bezier(.4, 0, .2, 1); }
-.page { animation: page-in .18s ease-out; } /* opacity only: a moving full-screen scroller repaints every frame on phones */
+.page { animation: page-in .25s ease-out; } /* opacity only: a moving full-screen scroller repaints every frame on phones */
 @keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
+/* children glide up one after another; only the children move, never the scrolling page itself */
+.page > *, .rows > .row { animation: page-rise .42s cubic-bezier(.2, .7, .2, 1) backwards; animation-delay: calc(min(var(--n, 0), 8) * 45ms + 40ms); }
+.page > :nth-child(1), .rows > .row:nth-child(1) { --n: 0; } .page > :nth-child(2), .rows > .row:nth-child(2) { --n: 1; }
+.page > :nth-child(3), .rows > .row:nth-child(3) { --n: 2; } .page > :nth-child(4), .rows > .row:nth-child(4) { --n: 3; }
+.page > :nth-child(5), .rows > .row:nth-child(5) { --n: 4; } .page > :nth-child(6), .rows > .row:nth-child(6) { --n: 5; }
+.page > :nth-child(n+7), .rows > .row:nth-child(n+7) { --n: 6; }
+@keyframes page-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .top-user { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .avatar.sm-avatar { width: 34px; height: 34px; border: none; background: var(--green); font-size: 14px; flex-shrink: 0; }
 .top-user-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
@@ -157,7 +164,7 @@
 	.page h2 { font-size: 26px; }
 	.page .h2-sm { font-size: 22px; }
 }
-@media (prefers-reduced-motion: reduce) { .spinner, .page, .top-drawer, .nav-underline, .top-nav .nav-link { transition: none; animation: none; } }
+@media (prefers-reduced-motion: reduce) { .page > *, .rows > .row { animation: none !important; } .spinner, .page, .top-drawer, .nav-underline, .top-nav .nav-link { transition: none; animation: none; } }
 
 /* ---------- home ---------- */
 .welcome { background: var(--dark); padding: 30px; border-radius: 0; }
@@ -766,3 +773,43 @@ body.trade-bystander #trade { display: none !important; } /* an offer between tw
 .rc-chart { background: radial-gradient(500px 200px at 100% 0%, rgba(62, 198, 253, .1), transparent 70%), linear-gradient(180deg, #262626, #202020); }
 .rc-award { position: relative; overflow: hidden; }
 .rc-award::after { content: ''; position: absolute; right: -30px; top: -30px; width: 90px; height: 90px; border-radius: 50%; background: var(--tint, transparent); filter: blur(24px); opacity: .35; pointer-events: none; }
+
+/* ---------- recap: opening animation ---------- */
+@keyframes rc-fade { from { opacity: 0; } }
+@keyframes rc-pop-in { from { opacity: 0; transform: translateY(18px) scale(.94); } 60% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes rc-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes rc-slide { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+@keyframes rc-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes rc-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes rc-dot { from { opacity: 0; transform: scale(0); } 70% { transform: scale(1.4); } to { opacity: 1; transform: scale(1); } }
+@keyframes rc-avatar { from { transform: scale(.4) rotate(-12deg); opacity: 0; } 65% { transform: scale(1.12) rotate(3deg); opacity: 1; } to { transform: none; } }
+@keyframes rc-crown { 0% { transform: translateY(-10px) rotate(-14deg); opacity: 0; } 70% { transform: translateY(1px) rotate(4deg); opacity: 1; } 100% { transform: none; } }
+@keyframes rc-sheen { from { background-position: -140% 0; } to { background-position: 240% 0; } }
+
+.overlay:has(.rc) { animation: rc-fade .3s ease-out both; }
+.modal:has(.rc) { animation: rc-edge 9s ease-in-out infinite alternate, rc-pop-in .5s cubic-bezier(.2, .9, .25, 1.15) both; }
+.rc-win { animation: rc-rise .5s .12s cubic-bezier(.2, .8, .2, 1) both; }
+.rc-stand { animation: rc-rise .5s .2s cubic-bezier(.2, .8, .2, 1) both; }
+.rc-chart { animation: rc-rise .5s .3s cubic-bezier(.2, .8, .2, 1) both; }
+.rc-actions { animation: rc-rise .45s .9s cubic-bezier(.2, .8, .2, 1) both; }
+.rc-crown svg { animation: rc-crown .7s .3s cubic-bezier(.2, .9, .3, 1.3) both; transform-origin: 50% 100%; }
+.rc-win .rc-av { animation: rc-avatar .6s .25s cubic-bezier(.2, .9, .3, 1.3) both; }
+.rc-win::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .13) 50%, transparent 65%) no-repeat; background-size: 60% 100%; animation: rc-sheen 1.3s .7s ease-out 1 both; }
+.rc-win { position: relative; overflow: hidden; }
+.rc-row { animation: rc-slide .4s calc(.35s + var(--i, 0) * .09s) cubic-bezier(.2, .8, .2, 1) both; }
+.rc-bar i { transform-origin: left; animation: rc-grow .8s calc(.5s + var(--i, 0) * .09s) cubic-bezier(.2, .8, .2, 1) both; }
+.rc-line { stroke-dasharray: 1; animation: rc-draw 1.1s cubic-bezier(.4, 0, .2, 1) both; }
+.rc-pop { transform-box: fill-box; transform-origin: center; animation: rc-dot .4s cubic-bezier(.2, .9, .3, 1.3) both; }
+.rc-award { animation: rc-rise .45s calc(.5s + var(--i, 0) * .09s) cubic-bezier(.2, .8, .2, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+	.overlay:has(.rc), .modal:has(.rc), .rc-win, .rc-stand, .rc-chart, .rc-actions, .rc-crown svg, .rc-win .rc-av, .rc-win::after, .rc-row, .rc-bar i, .rc-line, .rc-pop, .rc-award { animation: none !important; }
+	.rc-line { stroke-dasharray: none; }
+}
+
+/* phones: the buttons at the bottom of a pop-up wrap instead of running off the side; recap / replay get their own full-width rows */
+.modal-actions { flex-wrap: wrap; }
+@media (max-width: 560px) {
+	.modal-actions .btn-replay, .modal-actions .btn-recap { flex: 1 1 100%; justify-content: center; order: -1; }
+	.modal-actions .btn-recap { order: -2; }
+	.modal-actions .btn-ghost:not(.btn-recap), .modal-actions .btn-primary { flex: 1 1 auto; }
+}
