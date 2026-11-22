@@ -85,8 +85,7 @@
 @media (max-width: 400px) { .auth-form-side h3 { font-size: 35px; } }
 
 /* ---------- app shell: top bar + page ---------- */
-.layout { display: flex; flex-direction: column; height: 100dvh; margin: -20px; overflow: hidden; background: var(--page-bg); color: var(--white); } /* full bleed: cancels the body padding */
-@media (max-width: 1129px) { .layout { margin: -12px; } }
+.layout { display: flex; flex-direction: column; position: fixed; inset: 0; margin: 0; overflow: hidden; background: var(--page-bg); color: var(--white); } /* full bleed: cancels the body padding */
 .top-nav {
 	position: relative; z-index: 30; flex-shrink: 0; display: flex; align-items: center; gap: 28px; height: 64px; padding: 0 32px;
 	background: var(--dark); border-bottom: 1px solid var(--divider);
@@ -787,7 +786,7 @@ body.trade-bystander #trade { display: none !important; } /* an offer between tw
 @keyframes rc-sheen { from { background-position: -140% 0; } to { background-position: 240% 0; } }
 
 .overlay:has(.rc) { animation: rc-fade .3s ease-out both; }
-.modal:has(.rc) { animation: rc-edge 9s ease-in-out infinite alternate, rc-pop-in .5s cubic-bezier(.2, .9, .25, 1.15) both; }
+.modal:has(.rc) { animation: rc-pop-in .5s cubic-bezier(.2, .9, .25, 1.15) both; } /* the edge gradient stays still: an endlessly repainting scrolling modal leaves blank tiles on Android Chrome */
 .rc-win { animation: rc-rise .5s .12s cubic-bezier(.2, .8, .2, 1) both; }
 .rc-stand { animation: rc-rise .5s .2s cubic-bezier(.2, .8, .2, 1) both; }
 .rc-chart { animation: rc-rise .5s .3s cubic-bezier(.2, .8, .2, 1) both; }
