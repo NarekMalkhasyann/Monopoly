@@ -798,3 +798,11 @@ body.trade-bystander #trade { display: none !important; } /* an offer between tw
 	.overlay:has(.rc), .modal:has(.rc), .rc-win, .rc-stand, .rc-chart, .rc-actions, .rc-crown svg, .rc-win .rc-av, .rc-win::after, .rc-row, .rc-bar i, .rc-line, .rc-pop, .rc-award { animation: none !important; }
 	.rc-line { stroke-dasharray: none; }
 }
+
+/* phones: the buttons at the bottom of a pop-up wrap instead of running off the side; recap / replay get their own full-width rows */
+.modal-actions { flex-wrap: wrap; }
+@media (max-width: 560px) {
+	.modal-actions .btn-replay, .modal-actions .btn-recap { flex: 1 1 100%; justify-content: center; order: -1; }
+	.modal-actions .btn-recap { order: -2; }
+	.modal-actions .btn-ghost:not(.btn-recap), .modal-actions .btn-primary { flex: 1 1 auto; }
+}
