@@ -5,6 +5,7 @@
 // and the server answers with 'hello', 'joined', 'room', 'started', 'act', 'ended', 'left', 'error'.
 import { useSyncExternalStore } from 'react';
 import { getToken, API_BASE } from './api.js';
+import { play } from './sound.js';
 
 let state = { conn: 'closed', room: null, you: null, error: '', left: false, kicked: '', logged: 0 };
 const listeners = new Set();
@@ -42,7 +43,16 @@ function handle(msg) {
 		case 'room':
 		case 'started':
 		case 'ended':
-			if (state.room && state.room.id === msg.room.id) set({ room: msg.room });
+			if (state.room && state.room.id === msg.room.id) {
+				const before = state.room;
+				if (msg.t === 'room' && before.status === 'waiting' && msg.room.status === 'waiting') { // lobby: somebody came or went
+					const ids = (r) => new Set(r.players.map((p) => p.userId));
+					const was = ids(before), now = ids(msg.room);
+					if ([...now].some((u) => !was.has(u))) play('join'); else if ([...was].some((u) => !now.has(u))) play('leave');
+				}
+				if (msg.t === 'started' && before.status === 'waiting') play('start');
+				set({ room: msg.room });
+			}
 			break;
 		case 'act':
 			deliver(msg);
