@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
 import { fmtDate } from './format.js';
 import Replay from './Replay.jsx';
+import Recap from './Recap.jsx';
 import { buildFrames } from './replayModel.js';
 
 export function Modal({ onClose, children, wide = false }) {
@@ -22,6 +23,7 @@ export function Details({ id, replay, onClose, onReplay, onOpen, admin = false, 
 	const [error, setError] = useState('');
 	const [ask, setAsk] = useState(''); // '' | 'abandon' | 'delete': waiting for the admin to confirm
 	const [busy, setBusy] = useState(false);
+	const [recap, setRecap] = useState(false); // the Game recap window
 
 	const load = () => api('GET', `/games/${id}`).then((r) => setGame(r.game)).catch((e) => setError(e.message));
 	useEffect(() => { load(); }, [id]);
@@ -45,6 +47,15 @@ export function Details({ id, replay, onClose, onReplay, onOpen, admin = false, 
 		} catch (e) { setError(e.message); setAsk(''); }
 		setBusy(false);
 	};
+
+	if (recap && game) {
+		return (
+			<Modal onClose={() => setRecap(false)} wide>
+				<h3 className="modal-title">Game recap · #{id}</h3>
+				<Recap game={game} onReplay={() => { setRecap(false); onReplay(true); }} onClose={() => setRecap(false)} closeLabel="Back to details" />
+			</Modal>
+		);
+	}
 
 	if (replay && game) {
 		return (
@@ -99,7 +110,16 @@ export function Details({ id, replay, onClose, onReplay, onOpen, admin = false, 
 				) : (
 					<>
 						{game && onOpen && !admin && game.status === 'active' && <button className="btn-primary btn-sm" onClick={onOpen}>{game.mode === 'online' ? 'Rejoin' : 'Resume'}</button>}
-						{game && game.events.length > 0 && <button className="btn-ghost btn-sm" onClick={() => onReplay(true)}>Replay</button>}
+						{game && game.status === 'finished' && game.winner_name && game.events.length > 0 && (
+							<button className="btn-ghost btn-sm btn-recap" onClick={() => setRecap(true)}>
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
+								Game recap
+							</button>
+						)}
+						{game && game.events.length > 0 && <button className="btn-replay" onClick={() => onReplay(true)}>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.53.85l10.5-6.5a1 1 0 0 0 0-1.7L9.53 4.65A1 1 0 0 0 8 5.5z" /></svg>
+							Replay
+						</button>}
 						{game && admin && running && <button className="btn-ghost danger btn-sm" onClick={() => setAsk('abandon')}>End game</button>}
 						{game && admin && !running && <button className="btn-ghost danger btn-sm" onClick={() => setAsk('delete')}>Delete</button>}
 						<button className="btn-ghost" onClick={onClose}>Close</button>

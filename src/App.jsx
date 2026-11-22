@@ -19,6 +19,7 @@ import Admin from './portal/Admin.jsx';
 import GameBar from './portal/GameBar.jsx';
 import LoadingScreen from './components/LoadingScreen.jsx';
 import GamePage from './portal/GamePage.jsx';
+import RecapOverlay from './portal/RecapOverlay.jsx';
 import JoinPage from './portal/JoinPage.jsx';
 import NotFound from './portal/NotFound.jsx';
 import { api, getToken, setToken } from './api.js';
@@ -130,6 +131,7 @@ export default function App() {
 				<Dice3D active={showGame} />
 				{showGame && <TurnTimer />}
 				{showGame && <GameBar />}
+			{showGame && <RecapOverlay />}
 			</div>
 			{page}
 			<LoadingScreen />

@@ -55,6 +55,10 @@ export function trackOnline(config) {
 	runningKey = String(config.roomId);
 }
 
+// The end of a game (only one player left): the screen shows the recap. fn({ id, winner })
+const endListeners = new Set();
+export function subscribeGameEnd(fn) { endListeners.add(fn); return () => endListeners.delete(fn); }
+
 export function subscribeStatus(fn) {
 	listeners.add(fn);
 	fn(status);
@@ -191,6 +195,7 @@ win.onGameEvent = (text) => {
 win.onPlayerEliminated = (name) => { eliminated.push(name); };
 win.onGameEnd = (winner) => {
 	ended = true;
+	setTimeout(() => endListeners.forEach((fn) => fn({ id: gameId, winner })), 1500); // lets the winner message and the saving start first
 	if (online) {
 		// The host saves the result. If the host is no longer in the game (removed or bankrupt), the winner saves it
 		// (the server accepts the first one and ignores the rest).
