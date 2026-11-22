@@ -77,7 +77,7 @@ export default function Recap({ game, onReplay, onClose, closeLabel = 'Close' })
 				{r.awards.length > 0 && (
 					<section className="rc-awards">
 						{r.awards.map((a) => (
-							<div key={a.kind} className="rc-card rc-award">
+							<div key={a.kind} className="rc-card rc-award" style={{ '--tint': a.color }}>
 								<span className="rc-ico" style={{ color: a.color, background: `${a.color}22`, boxShadow: `inset 0 0 0 1px ${a.color}44` }}>
 									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={ICON[a.kind]} /></svg>
 								</span>
