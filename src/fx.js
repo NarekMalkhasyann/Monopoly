@@ -87,9 +87,23 @@ function pulse(el, cls, ms = 1000, delay = 0) {
 	delay ? setTimeout(go, delay) : go();
 }
 
+// The engine writes the log line at once, but the pieces on screen still walk to their square (BoardTokens).
+// Anything drawn on a square waits until they have arrived (at most 6 s, in case something is stuck).
+function afterMoves(fn) {
+	const t0 = Date.now();
+	const check = () => {
+		const busy = typeof window.tokensBusy === 'function' && window.tokensBusy();
+		if (busy && Date.now() - t0 < 6000) setTimeout(check, 60); else { if (!quiet()) { try { fn(); } catch { /* animation must never break the game */ } } }
+	};
+	setTimeout(check, 130); // the pieces notice a new position within 60 ms
+}
+
 // ---- game log events ----
 window.onGameFx = (kind, text) => {
 	if (quiet() || !window.player) return;
+	afterMoves(() => handleFx(kind, text));
+};
+function handleFx(kind, text) {
 	try {
 		let m;
 		if ((m = /^(.+) paid \$(\d+) rent to (.+)\.$/.exec(text))) {
@@ -116,7 +130,7 @@ window.onGameFx = (kind, text) => {
 			if (p) floatText(cellEl(p.position), 'BANKRUPT', true);
 		}
 	} catch { /* animation must never break the game */ }
-};
+}
 
 // ---- houses, mortgages, ownership changes: read from the game state ----
 const HOUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12 12 3l9 9v9H3z" fill="#34c759" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg>';

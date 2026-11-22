@@ -78,8 +78,13 @@ export default function BoardTokens() {
 				setView((v) => (v.geo === geo ? v : { ...v, geo }));
 			}
 		};
+		// effects in src/fx.js ask this, so rent / GO / jail effects wait until the pieces have really arrived
+		window.tokensBusy = () => targets().some((t) => {
+			const d = disp.current.get(t.name);
+			return !!d && (d.walking || (!t.jail && !d.jail && t.sq !== d.sq));
+		});
 		const iv = setInterval(tick, 60);
-		return () => { clearInterval(iv); timers.current.forEach(clearTimeout); timers.current.clear(); };
+		return () => { clearInterval(iv); delete window.tokensBusy; timers.current.forEach(clearTimeout); timers.current.clear(); };
 	}, []);
 
 	const inner = typeof document !== 'undefined' ? document.getElementById('stage-inner') : null;
