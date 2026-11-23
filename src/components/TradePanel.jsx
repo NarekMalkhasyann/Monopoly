@@ -43,15 +43,21 @@ function decorate() {
 		}
 		}
 	}
+	// what one side gives: { items: [{ text, color }], value } (value = cash + the price of the properties)
 	const side = (prefix) => {
-		const out = [];
+		const items = [];
+		let value = 0;
 		for (let i = 0; i < 42; i++) {
 			const c = document.getElementById('trade' + prefix + 'checkbox' + i);
-			if (c && c.checked) out.push(i >= 40 ? 'Jail-free card' : (win.square && win.square[i] ? win.square[i].name : '#' + i));
+			if (c && c.checked) {
+				const sq = win.square && win.square[i];
+				items.push({ text: i >= 40 ? 'Jail-free card' : (sq ? sq.name : '#' + i), color: i >= 40 ? '#ffffff80' : (sq && sq.color) || '#888' });
+				value += i >= 40 ? 50 : (sq && sq.price) || 0;
+			}
 		}
 		const m = parseInt((document.getElementById('trade-' + prefix + 'p-money') || {}).value, 10);
-		if (m > 0) out.push('$' + m);
-		return out.length ? out.join(' and ') : 'nothing';
+		if (m > 0) { items.unshift({ text: '$' + m, color: '#acfa00', cash: true }); value += m; }
+		return { items, value };
 	};
 	[['left', 'trade-leftp-name'], ['right', null]].forEach(([k]) => {
 		const nameEl = document.getElementById('trade-' + k + 'p-name');
@@ -96,18 +102,50 @@ function decorate() {
 	} else { setText(tl, `${nameOf('left')} gives`); setText(tr, `${nameOf('right')} gives`); }
 	const sum = document.getElementById('trade-summary');
 	if (sum) {
-		sum.innerHTML = '';
+		const mine = side(meSide || 'left'), theirs = side(meSide ? otherSide : 'right');
 		const rows = meSide
-			? [[youGive, side(meSide)], ['You get', side(otherSide)]]
+			? [[youGive, mine], ['You get', theirs]]
 			: [[`${nameOf('left')} gives`, side('left')], [`${nameOf('right')} gives`, side('right')]];
-		rows.forEach(([k, v]) => {
-			const d = document.createElement('div');
-			const b = document.createElement('b');
-			b.textContent = k;
-			d.appendChild(b);
-			d.appendChild(document.createTextNode(' ' + v));
-			sum.appendChild(d);
-		});
+		const sig = JSON.stringify([rows, meSide]);
+		if (sum.dataset.sig !== sig) {
+			sum.dataset.sig = sig;
+			sum.innerHTML = '';
+			rows.forEach(([k, v], idx) => {
+				const d = document.createElement('div');
+				d.className = 'ts-row ' + (idx === 0 ? 'give' : 'get');
+				const b = document.createElement('b');
+				b.textContent = k;
+				d.appendChild(b);
+				const list = document.createElement('span');
+				list.className = 'ts-items';
+				if (!v.items.length) { const n = document.createElement('em'); n.textContent = 'nothing'; list.appendChild(n); }
+				v.items.forEach((it) => {
+					const chip = document.createElement('span');
+					chip.className = 'ts-chip' + (it.cash ? ' cash' : '');
+					const dot = document.createElement('i');
+					dot.style.background = it.color;
+					chip.appendChild(dot);
+					chip.appendChild(document.createTextNode(it.text));
+					list.appendChild(chip);
+				});
+				d.appendChild(list);
+				sum.appendChild(d);
+			});
+			if (meSide && (mine.items.length || theirs.items.length)) { // is the deal fair? (cash + printed prices)
+				const diff = theirs.value - mine.value;
+				const bal = document.createElement('div');
+				bal.className = 'ts-bal ' + (diff > 0 ? 'plus' : diff < 0 ? 'minus' : 'even');
+				bal.textContent = diff === 0 ? `Even deal · both sides $${mine.value}` : (diff > 0 ? `You get $${diff} more in value than you give` : `You give $${-diff} more in value than you get`) + ` ($${mine.value} for $${theirs.value})`;
+				sum.appendChild(bal);
+			}
+		}
+	}
+	// "Swap cash": only while the offer is being written (the cash fields can be edited)
+	const swap = document.getElementById('trade-swapcash');
+	if (swap) {
+		const l = document.getElementById('trade-leftp-money'), r = document.getElementById('trade-rightp-money');
+		const editing = !!(l && r && !l.readOnly && !r.readOnly && !l.disabled && !r.disabled);
+		swap.style.display = editing ? '' : 'none';
 	}
 	['left', 'right'].forEach((k) => {
 		const m = document.getElementById('trade-' + k + 'p-money');
@@ -162,6 +200,12 @@ export default function TradePanel() {
 			<div className="trade-foot">
 				<div className="trade-footinfo">
 					<div id="trade-summary" />
+					<button type="button" id="trade-swapcash" className="trade-swap" title="Swap the two cash amounts: what you offered is asked from them and the other way round." onClick={() => {
+						const l = document.getElementById('trade-leftp-money'), r = document.getElementById('trade-rightp-money');
+						if (!l || !r) return;
+						const a = l.value, b = r.value; l.value = b; r.value = a;
+						[l, r].forEach((el) => { el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); });
+					}}>⇄ Swap cash</button>
 					<span className="trade-rules">Mortgaged properties: the new owner pays 10% at once, or can pay off the mortgage later. Sets with houses cannot be traded until the houses are sold.</span>
 				</div>
 				<div className="trade-actions">
