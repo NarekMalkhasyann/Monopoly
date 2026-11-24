@@ -63,8 +63,9 @@ const TRADE_EXPIRE_MS = () => num(process.env.TRADE_EXPIRE_MS, 60_000);
 // with, or the money differs and the clicks no longer fit the screen ("dropped a stale click", "out of sync").
 const GO_300_FROM = '2026-11-18 09:21:00';
 const GO_300_UNTIL = '2026-11-18 20:41:00';
-// Rule set of new online games: 2 = house and hotel rents halved, new house prices, $300 for stopping on GO (games made before keep rules 1, the rents they were played with)
-const RULES_NOW = 2;
+// Rule set of new online games: 2 = house and hotel rents halved, new house prices, $300 for stopping on GO; 3 = also no auctions
+// when the game began with two players (an unbought property stays with the bank). Games made before keep the rules they were played with.
+const RULES_NOW = 3;
 // Until this moment (UTC) removing an away player sent each of their properties to auction; after it they go straight back
 // to the bank. A game whose first removal happened before it must replay the old way (its saved clicks contain the auctions).
 const FORFEIT_TO_BANK_FROM = '2026-11-16 19:35:00';

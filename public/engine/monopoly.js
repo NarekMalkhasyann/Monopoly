@@ -15,6 +15,7 @@ function Game() {
 	var highestbid;
 	var currentbidder = 1;
 	var auctionproperty;
+	var startPlayers = 0; // how many players the game began with (rule set 3: a two-player online game has no auctions)
 	var auctionCount = 0; // how many auctions were started (online: every browser counts the same, see window.liveAuction)
 
 	this.rollDice = function() {
@@ -86,11 +87,20 @@ function Game() {
 		}
 	};
 
+	this.setStartPlayers = function(n) { startPlayers = n; };
+
 	this.addPropertyToAuctionQueue = function(propertyIndex) {
 		auctionQueue.push(propertyIndex);
 	};
 
 	this.auction = function() {
+		// Rule set 3, online only: with just two players an unbought property stays with the bank (no auction).
+		// The local game has its own, simpler auction and is not touched.
+		if (window.liveAuction && (window.GAME_RULES || 1) >= 3 && startPlayers === 2) {
+			auctionQueue = [];
+			return false;
+		}
+
 		if (auctionQueue.length === 0) {
 			return false;
 		}
@@ -3065,6 +3075,7 @@ function applyRules() {
 
 function setup() {
 	pcount = parseInt(document.getElementById("playernumber").value, 10);
+	game.setStartPlayers(pcount);
 
 	applyRules();
 

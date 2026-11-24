@@ -506,7 +506,7 @@ export function startOnlineGame(room, you) {
 	document.body.classList.add('online-game');
 
 	win.FORFEIT_TO_BANK = room.forfeitToBank !== false; // games from before 16 Nov 19:35 UTC auctioned a removed player's properties
-	win.GAME_RULES = room.rules || 1; // rule set 2 = new rents, house prices and GO landing; older games replay with the rules they were played with
+	win.GAME_RULES = room.rules || 1; // rule set 2 = new rents, house prices and GO landing; 3 = no auctions in a two-player game; older games replay with the rules they were played with
 	win.GO_SALARY = room.goSalary || 200; // each game replays with the salary it was played with (see server/rooms.js)
 	win.GO_LAND_SALARY = (room.rules || 1) >= 2 ? 300 : win.GO_SALARY; // stopping exactly on GO: 300 from rule set 2
 	win.seededRandom = seeded(room.seed);
