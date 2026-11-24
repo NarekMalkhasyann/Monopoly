@@ -13,7 +13,7 @@
 import { onAction, send, getOnline } from './online.js';
 import { trackOnline } from './session.js';
 import * as live from './liveAuction.js';
-import { setReplaying } from './sound.js';
+import { setReplaying, play } from './sound.js';
 import { setTradeOffer, onTradeOfferClick } from './tradeOffer.js';
 
 // Buttons whose clicks are shared (keep in sync with RELAYED in server/rooms.js).
@@ -437,6 +437,7 @@ function applyAuctionEvent(m) {
 	else if (id === 'aucend') {
 		const who = m.a.w > 0 ? bidderOf(m.a.w) : null;
 		live.close(); // first: finishing may start the next auction straight away
+		if (who) play('sold'); // gavel for a sale (nothing for "not sold")
 		win.game.liveAuctionEnd(who ? who.idx : 0, v);
 	}
 }

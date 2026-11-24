@@ -6,6 +6,16 @@ import { play } from './sound.js';
 const CLOSED = { open: false, n: 0, index: 0, high: 0, bidder: null, history: [], startedAt: 0, totalMs: 0, deadlineAt: 0, hint: '', pending: 0 };
 let state = CLOSED;
 const listeners = new Set();
+// "going once" 3 s and "going twice" 1.5 s before the clock runs out; every new bid starts the clock again
+let goingTimers = [];
+const stopGoing = () => { goingTimers.forEach(clearTimeout); goingTimers = []; };
+function scheduleGoing(remMs) {
+	stopGoing();
+	const n = state.n;
+	const at = (ms, name) => { if (remMs > ms + 200) goingTimers.push(setTimeout(() => { if (state.open && state.n === n) play(name); }, remMs - ms)); };
+	at(3000, 'going1');
+	at(1500, 'going2');
+}
 const set = (patch) => { state = { ...state, ...patch }; listeners.forEach((fn) => fn()); };
 
 export const getLiveAuction = () => state;
@@ -28,14 +38,15 @@ export function engineOpened({ index, n, turn }) {
 	}, 1500);
 }
 // The server says it is open: the clock starts, remMs is what is left.
-export function serverOpened(remMs, n) { play('aucopen'); set({ n, startedAt: Date.now(), totalMs: remMs, deadlineAt: Date.now() + remMs, hint: '' }); }
+export function serverOpened(remMs, n) { play('aucopen'); set({ n, startedAt: Date.now(), totalMs: remMs, deadlineAt: Date.now() + remMs, hint: '' }); scheduleGoing(remMs); }
 export function serverBid({ bidder, amount, remMs }) {
 	play('bid');
 	set({ high: amount, bidder, history: [{ bidder, amount, at: Date.now() }, ...state.history], startedAt: Date.now(), totalMs: remMs, deadlineAt: Date.now() + remMs, pending: 0 });
+	scheduleGoing(remMs);
 }
 // A browser that joined in the middle of an auction: what the server still has left.
-export function serverSnapshot({ remMs }) { set({ startedAt: Date.now(), totalMs: Math.max(remMs, state.high ? 5000 : 20000), deadlineAt: Date.now() + remMs }); }
-export const close = () => { clearInterval(retry); set(CLOSED); };
+export function serverSnapshot({ remMs }) { set({ startedAt: Date.now(), totalMs: Math.max(remMs, state.high ? 5000 : 20000), deadlineAt: Date.now() + remMs }); scheduleGoing(remMs); }
+export const close = () => { clearInterval(retry); stopGoing(); set(CLOSED); };
 export const showHint = (hint) => set(hint ? { hint, pending: 0 } : { hint });
 
 // The player pressed a bid button: step is how much to add. It is added to the highest bid or, when the player

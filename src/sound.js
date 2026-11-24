@@ -128,6 +128,15 @@ const SOUNDS = {
 	win: () => { [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, { t: i * 0.13, dur: i === 6 ? 0.9 : 0.25, type: 'triangle', vol: 0.22 })); tone(262, { t: 0.78, dur: 0.9, type: 'sine', vol: 0.18 }); },
 	// a colour set (or both stations / utilities) is complete: a bright run up with a sparkle on top, just after the "buy" coins
 	set: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, { t: 0.22 + i * 0.075, dur: 0.3, type: 'triangle', vol: 0.2 })); tone(2093, { t: 0.62, dur: 0.5, type: 'sine', vol: 0.1 }); coin(0.62, 2637, 0.1); },
+	// auction about to close: one knock, two knocks, then the gavel
+	going1: () => { knock(0, 0.5); tone(392, { dur: 0.25, type: 'triangle', vol: 0.12 }); },
+	going2: () => { knock(0, 0.45); knock(0.16, 0.5); tone(523, { dur: 0.25, type: 'triangle', vol: 0.12 }); },
+	sold: () => { knock(0, 0.7); tone(70, { dur: 0.3, vol: 0.5, to: 45 }); coin(0.18, 1318); coin(0.28, 1760); coin(0.38, 2093, 0.2); },
+	// a soft music-box chime when the game begins
+	start: () => { [[523, 0], [659, 0.17], [784, 0.34]].forEach(([f, t]) => { tone(f, { t, dur: 0.55, vol: 0.09 }); tone(f * 2, { t, dur: 0.3, vol: 0.025 }); }); tone(1047, { t: 0.55, dur: 0.9, vol: 0.07 }); tone(1568, { t: 0.58, dur: 0.7, vol: 0.02 }); },
+	// lobby: someone joined / left
+	join: () => { tone(587, { dur: 0.1, type: 'triangle', vol: 0.15 }); tone(880, { t: 0.08, dur: 0.18, type: 'triangle', vol: 0.15 }); },
+	leave: () => { tone(740, { dur: 0.1, type: 'triangle', vol: 0.13 }); tone(494, { t: 0.09, dur: 0.22, type: 'triangle', vol: 0.12, to: 440 }); },
 	over: () => { [440, 330].forEach((f, i) => tone(f, { t: i * 0.2, dur: 0.5, type: 'triangle', vol: 0.18 })); },
 };
 

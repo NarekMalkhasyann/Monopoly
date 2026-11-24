@@ -2687,3 +2687,20 @@ body.replaying #game-layout { display: none !important; }
 /* "Get Out of Jail Free" card in the properties list */
 #myprops .mp-card-chip { width: auto; height: auto; background: none; border: none; font-size: 11px; line-height: 1; }
 #myprops .mp-card .mp-houses { letter-spacing: normal; opacity: 0.7; }
+
+/* trade: who gets what (chips) and the balance line */
+#trade-summary { display: flex; flex-direction: column; gap: 6px; }
+.ts-row { display: flex; align-items: flex-start; gap: 8px; }
+.ts-row > b { flex: none; min-width: 58px; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; padding-top: 4px; }
+#trade-summary .ts-row.give > b { color: #ff8f8f; }
+#trade-summary .ts-row.get > b { color: #acfa00; }
+.ts-items { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
+.ts-items em { color: #ffffff80; font-style: normal; padding-top: 3px; }
+.ts-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 7px; border-radius: 999px; background: #2a2a2a; box-shadow: inset 0 0 0 1px #ffffff14; font-size: 12px; font-weight: 600; color: #fff; }
+.ts-chip i { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+.ts-chip.cash { color: #acfa00; }
+.ts-bal { font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 8px; align-self: flex-start; background: #ffffff0f; color: #ffffffb0; }
+.ts-bal.plus { background: #acfa001f; color: #acfa00; }
+.ts-bal.minus { background: #ff5a5a1f; color: #ff9a9a; }
+.trade-swap { align-self: flex-start; margin-top: 4px; padding: 6px 12px; border-radius: 9px; border: 1px solid #ffffff2a; background: #262626; color: #fff; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.trade-swap:hover { background: #333; }
