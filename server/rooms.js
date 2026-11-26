@@ -716,11 +716,11 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 			for (const room of rooms.values()) {
 				if (room.status !== 'active') continue;
 				const players = [...room.members.values()].sort((a, b) => a.seat - b.seat).map((m) => ({
-					seat: m.seat, name: m.name, color: m.color, online: m.sessions.size > 0,
+					seat: m.seat, userId: m.userId, name: m.name, color: m.color, online: m.sessions.size > 0,
 					awayMs: m.sessions.size === 0 && m.offlineSince ? Date.now() - m.offlineSince : 0,
 				}));
 				if (!players.some((p) => p.online)) continue;
-				out.push({ id: room.id, code: room.code, moves: room.seq, turns: room.turnCount || 0, idleMs: room.lastClickAt ? Date.now() - room.lastClickAt : null, players });
+				out.push({ id: room.id, code: room.code, isPrivate: !!room.isPrivate, moves: room.seq, turns: room.turnCount || 0, idleMs: room.lastClickAt ? Date.now() - room.lastClickAt : null, players });
 			}
 			return out.sort((a, b) => a.id - b.id);
 		},

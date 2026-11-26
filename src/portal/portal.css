@@ -812,3 +812,8 @@ body.trade-bystander #trade { display: none !important; } /* an offer between tw
 	.modal-actions .btn-recap { order: -2; }
 	.modal-actions .btn-ghost:not(.btn-recap), .modal-actions .btn-primary { flex: 1 1 auto; }
 }
+
+/* Live games page: public / private badges */
+.badge-public { background: #acfa0022; color: #acfa00; }
+.badge-private { background: #ffffff14; color: #ffffffb0; }
+.row-actions .btn-ghost[disabled] { opacity: .5; cursor: not-allowed; }
