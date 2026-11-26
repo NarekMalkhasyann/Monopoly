@@ -129,8 +129,10 @@ function request(msg) {
 		send(msg).catch(() => { pending = null; reject(new Error('Cannot reach the server. Is it running?')); });
 	});
 }
-export const createRoom = () => request({ t: 'create' });
-export const joinByCode = (code, password) => request({ t: 'join', code, ...(password ? { password } : {}) });
+// Starting a new join clears the old "you were removed" notice, otherwise the Play page would keep sending the player away
+const fresh = (fn) => (...a) => { if (state.kicked) set({ kicked: '' }); return fn(...a); };
+export const createRoom = fresh(() => request({ t: 'create' }));
+export const joinByCode = fresh((code, password) => request({ t: 'join', code, ...(password ? { password } : {}) }));
 export const kickPlayer = (userId) => send({ t: 'kick', userId });
 export const clearKicked = () => set({ kicked: '' });
 export const setVisibility = (isPrivate, password) => send({ t: 'visibility', private: !!isPrivate, password: password || '' });
@@ -140,7 +142,7 @@ export function watchRooms(fn) {
 	open().catch(() => {});
 	return () => roomsListeners.delete(fn);
 }
-export const joinById = (gameId) => request({ t: 'join', gameId: Number(gameId), after: lastSeq });
+export const joinById = fresh((gameId) => request({ t: 'join', gameId: Number(gameId), after: lastSeq }));
 export const leaveRoom = () => send({ t: 'leave' });
 export const startRoom = () => send({ t: 'start' });
 export const chooseColor = (color) => send({ t: 'color', color });
