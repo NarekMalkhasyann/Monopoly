@@ -22,7 +22,12 @@ export default function GamePage({ id, user, live, onLive }) {
 	const resumed = useRef(false);
 
 	// removed by the host: back to the Play page (it shows why)
-	useEffect(() => { if (online.kicked) navigate('/play', { replace: true }); }, [online.kicked]);
+	// (only a removal that happens while this page is open; an old notice must not block opening another room)
+	const kickedBefore = useRef(online.kicked);
+	useEffect(() => {
+		if (online.kicked && online.kicked !== kickedBefore.current) navigate('/play', { replace: true });
+		kickedBefore.current = online.kicked;
+	}, [online.kicked]);
 
 	// 1. find out what kind of game this is
 	useEffect(() => {
