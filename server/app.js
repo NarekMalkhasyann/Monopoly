@@ -334,6 +334,16 @@ export function createApp(db, { secret, staticDir } = {}) {
 			});
 			return [201, { game: await gameSummary(await q.game(id, user.id)) }];
 		}
+		// "Live games": every running online game. Private rooms are listed (name, players) but cannot be watched.
+		if (method === 'GET' && path === '/api/live') {
+			const user = await authUser(req);
+			const games = rooms.live().map((g) => ({
+				id: g.id, isPrivate: g.isPrivate, moves: g.moves, turns: g.turns, idleMs: g.idleMs,
+				mine: g.players.some((p) => p.userId === user.id),
+				players: g.players.map((p) => ({ seat: p.seat, name: p.name, color: p.color, online: p.online, awayMs: p.awayMs })),
+			}));
+			return [200, { games }];
+		}
 		if (method === 'GET' && path === '/api/games') {
 			const user = await authUser(req);
 			return [200, await listGames(user, url.searchParams)];
@@ -342,10 +352,19 @@ export function createApp(db, { secret, staticDir } = {}) {
 			const user = await authUser(req);
 			if (method === 'GET') {
 				// an admin may open any game (read only); everybody else only their own
-				const g = user.role === 'admin' ? await db.get('SELECT * FROM games WHERE id = ?', [Number(m[1])]) : await q.visibleGame(Number(m[1]), user.id);
-				if (!g) throw new HttpError(404, 'Game not found');
+				let g = user.role === 'admin' ? await db.get('SELECT * FROM games WHERE id = ?', [Number(m[1])]) : await q.visibleGame(Number(m[1]), user.id);
+				let spectator = false;
+				if (!g) { // anybody may watch a running online game of a PUBLIC room (read only)
+					const pub = await db.get("SELECT * FROM games WHERE id = ? AND mode = 'online' AND status = 'active' AND is_private = 0", [Number(m[1])]);
+					if (!pub) throw new HttpError(404, 'Game not found');
+					g = pub; spectator = true;
+				}
 				const seat = await q.mySeat(g.id, user.id);
 				const owner = user.role === 'admin' ? (await addOwners([{ owner_id: g.owner_id }]))[0].owner : undefined;
+				if (spectator) { // only what the board needs: no user ids, no owner, no snapshot
+					const sum = await gameSummary(g);
+					return [200, { game: { id: sum.id, mode: sum.mode, status: sum.status, rules: sum.rules, turn_count: sum.turn_count, players: sum.players.map((p) => ({ seat: p.seat, name: p.name, color: p.color, is_ai: p.is_ai })), you: null, events: cleanLog(await q.actions(g.id)).filter((e) => e.seq > (Number(url.searchParams.get('after')) || 0)) } }];
+				}
 				return [200, { game: { ...await gameSummary(g), owner, you: seat ? seat.seat : null, snapshot: g.snapshot ? JSON.parse(g.snapshot) : null, events: cleanLog(await q.actions(g.id)).filter((e) => e.seq > (Number(url.searchParams.get('after')) || 0)) } }]; // ?after=N: only the lines after N (the admin's live board)
 			}
 			if (method === 'DELETE') {
