@@ -222,10 +222,20 @@ export function createApp(db, { secret, staticDir } = {}) {
 	}
 	const busyOnline = (id) => db.get("SELECT COUNT(*) AS n FROM games g WHERE g.mode = 'online' AND g.status IN ('waiting', 'active') AND (g.owner_id = ? OR g.id IN (SELECT game_id FROM game_players WHERE user_id = ?))", [id, id]);
 
+	// Site switches an admin can change (table settings). Live games is on unless an admin switched it off.
+	const liveEnabled = async () => ((await db.get("SELECT value FROM settings WHERE key = 'liveGames'")) || {}).value !== 'off';
+
 	async function adminRoute(req, method, path, url) {
 		let m;
 		const admin = await requireAdmin(req);
 		if (method === 'GET' && path === '/api/admin/stats') return [200, await adminStats()];
+		if (method === 'GET' && path === '/api/admin/settings') return [200, { liveGames: await liveEnabled() }];
+		if (method === 'PATCH' && path === '/api/admin/settings') {
+			const b = await readJson(req);
+			if (typeof b.liveGames !== 'boolean') throw new HttpError(400, 'liveGames must be true or false');
+			await db.run("INSERT INTO settings (key, value) VALUES ('liveGames', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value", [b.liveGames ? 'on' : 'off']);
+			return [200, { liveGames: b.liveGames }];
+		}
 		if (method === 'GET' && path === '/api/admin/live') return [200, { games: rooms.live(), connected: rooms.connections().length }];
 		if (method === 'GET' && path === '/api/admin/users') return [200, await listUsers(url.searchParams)];
 		if ((m = /^\/api\/admin\/users\/(\d+)$/.exec(path))) {
@@ -335,8 +345,13 @@ export function createApp(db, { secret, staticDir } = {}) {
 			return [201, { game: await gameSummary(await q.game(id, user.id)) }];
 		}
 		// "Live games": every running online game. Private rooms are listed (name, players) but cannot be watched.
+		if (method === 'GET' && path === '/api/features') {
+			await authUser(req);
+			return [200, { liveGames: await liveEnabled() }];
+		}
 		if (method === 'GET' && path === '/api/live') {
 			const user = await authUser(req);
+			if (user.role !== 'admin' && !(await liveEnabled())) throw new HttpError(403, 'Live games are switched off');
 			const games = rooms.live().map((g) => ({
 				id: g.id, isPrivate: g.isPrivate, moves: g.moves, turns: g.turns, idleMs: g.idleMs,
 				mine: g.players.some((p) => p.userId === user.id),
@@ -355,7 +370,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 				let g = user.role === 'admin' ? await db.get('SELECT * FROM games WHERE id = ?', [Number(m[1])]) : await q.visibleGame(Number(m[1]), user.id);
 				let spectator = false;
 				if (!g) { // anybody may watch a running online game of a PUBLIC room (read only)
-					const pub = await db.get("SELECT * FROM games WHERE id = ? AND mode = 'online' AND status = 'active' AND is_private = 0", [Number(m[1])]);
+					const pub = await liveEnabled() && await db.get("SELECT * FROM games WHERE id = ? AND mode = 'online' AND status = 'active' AND is_private = 0", [Number(m[1])]);
 					if (!pub) throw new HttpError(404, 'Game not found');
 					g = pub; spectator = true;
 				}

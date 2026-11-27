@@ -79,11 +79,11 @@ export default function App() {
 
 	// The game already running on this page (e.g. a new local game just got its number: /play/local -> /play/12)
 	const running = getRunningKey();
-	const showGame = !!user && (route.name === 'local' && user.role !== 'not-approved' || (route.name === 'game' && (gameLive || running === route.params.id)));
+	const showGame = !!user && (route.name === 'local' && user.role !== 'not-approved' || ((route.name === 'game' || route.name === 'watch') && (gameLive || running === route.params.id)));
 	useEffect(() => { document.body.classList.toggle('in-game', showGame); }, [showGame]); // the board keeps its lighter grey; the portal pages are darker
 
 	// An online game is about to start on this page: until it does, the side panel must not show its placeholder names and $1500s.
-	const onlineBooting = showGame && route.name === 'game' && running !== route.params.id;
+	const onlineBooting = showGame && (route.name === 'game' || route.name === 'watch') && running !== route.params.id;
 	useEffect(() => { document.body.classList.toggle('online-route', onlineBooting); }, [onlineBooting]);
 
 	let page = null;
@@ -95,8 +95,8 @@ export default function App() {
 		}
 	} else if (route.name === 'local' && user.role === 'not-approved') {
 		page = <Shell user={user} screen="home" title="Play"><Home user={user} blocked /></Shell>;
-	} else if (route.name === 'game') {
-		if (running !== route.params.id) page = <GamePage id={route.params.id} user={user} live={gameLive} onLive={setGameLive} />;
+	} else if (route.name === 'game' || route.name === 'watch') {
+		if (running !== route.params.id) page = <GamePage id={route.params.id} user={user} live={gameLive} onLive={setGameLive} spectate={route.name === 'watch'} />;
 	} else if (route.name === 'join') {
 		page = <JoinPage code={route.params.code} user={user} />;
 	} else if (['home', 'live', 'history', 'historyDetail', 'historyReplay', 'admin', 'adminUsers', 'adminUser', 'adminGames', 'adminLive', 'adminRequests', 'notfound'].includes(route.name)) {
@@ -104,7 +104,7 @@ export default function App() {
 		page = (
 			<Shell user={user} screen={route.name === 'home' ? 'home' : route.name === 'live' ? 'live' : route.name === 'notfound' ? '' : isAdmin ? 'admin' : 'history'} title={TITLES[route.name]}>
 				{route.name === 'home' && <Home user={user} />}
-				{route.name === 'live' && <LiveGames />}
+				{route.name === 'live' && <LiveGames user={user} />}
 				{(route.name === 'history' || route.name === 'historyDetail' || route.name === 'historyReplay') && <History detailId={route.params.id} replay={route.name === 'historyReplay'} />}
 				{isAdmin && <Admin view={route.name} id={route.params.id} user={user} />}
 				{route.name === 'notfound' && <NotFound />}

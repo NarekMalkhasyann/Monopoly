@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { resumeGame } from '../session.js';
-import { joinById, leaveRoom, useOnline } from '../online.js';
+import { watchGame, joinById, leaveRoom, useOnline } from '../online.js';
 import { startOnlineGame } from '../onlineGame.js';
 import { startLoading, setLoading, finishLoading } from '../loading.js';
 import { navigate } from '../router.jsx';
@@ -14,7 +14,7 @@ import Lobby from './Lobby.jsx';
 //   online, started    -> the board, in sync with the other players
 //   finished           -> its History page
 // While the board is on screen this renders nothing; App.jsx shows the game itself.
-export default function GamePage({ id, user, live, onLive }) {
+export default function GamePage({ id, user, live, onLive, spectate }) {
 	const [game, setGame] = useState(null);
 	const [error, setError] = useState('');
 	const online = useOnline();
@@ -38,14 +38,14 @@ export default function GamePage({ id, user, live, onLive }) {
 			setGame(g);
 			if (g.mode === 'local' || g.status === 'active') { startLoading('Loading your game', g.mode === 'online' ? 'Connecting to the room…' : 'Fetching your game…'); setLoading(0.05); }
 			if (g.mode === 'online') {
-				joinById(id).catch((e) => setError(e.message));
+				(spectate ? watchGame(id) : joinById(id)).catch((e) => setError(e.message));
 			} else if (!g.snapshot) {
 				setError('This game has no saved position yet.');
 			} else {
 				setLoading(0.2, 'Setting up the board');
 				onLive(true); // show the board first, then load the position into it
 			}
-		}).catch((e) => !stale && setError(e.message));
+		}).catch((e) => !stale && setError(spectate && /not found/i.test(e.message) ? 'This game is private, or it is not being played any more, so it can not be watched.' : e.message));
 		return () => { stale = true; };
 	}, [id]);
 
@@ -72,7 +72,7 @@ export default function GamePage({ id, user, live, onLive }) {
 		if (active) { setLoading(0.1, 'Joined the room'); onLive(true); }
 	}, [active]);
 	useEffect(() => {
-		if (active && live && online.you) startOnlineGame(room, online.you);
+		if (active && live && (online.you || online.spectator)) startOnlineGame(room, online.you);
 	}, [active, live]);
 
 	useEffect(() => { if (error || online.error) finishLoading(0); }, [error, online.error]); // never leave the loading screen over an error
@@ -92,7 +92,7 @@ export default function GamePage({ id, user, live, onLive }) {
 			<Shell user={user} screen="home" title="Game">
 				<div className="page-head"><h2>Cannot open this game</h2></div>
 				<p className="auth-error" role="alert">{message}</p>
-				<button className="btn-ghost" onClick={() => navigate('/play')}>Back to Play</button>
+				<button className="btn-ghost" onClick={() => navigate(spectate ? '/live' : '/play')}>{spectate ? 'Back to Live games' : 'Back to Play'}</button>
 			</Shell>
 		);
 	}

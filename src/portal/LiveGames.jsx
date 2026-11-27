@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { navigate } from '../router.jsx';
-import LiveBoard from './LiveBoard.jsx';
+import { useFeatures } from '../features.js';
 
 // "Live games": the online games being played right now. Anybody can watch a PUBLIC room (read only, the board
 // follows the game log). Private rooms are listed too, with a lock, but they cannot be watched (only an admin can,
@@ -11,12 +11,12 @@ function ago(ms) {
 	return s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
 }
 
-export default function LiveGames() {
+export default function LiveGames({ user }) {
+	const features = useFeatures();
 	const [data, setData] = useState(null);
 	const [error, setError] = useState('');
 	const [at, setAt] = useState(Date.now());
 	const [, tick] = useState(0);
-	const [watch, setWatch] = useState(null);
 	useEffect(() => {
 		let stop = false;
 		const load = () => api('GET', '/live').then((r) => { if (!stop) { setData(r); setAt(Date.now()); setError(''); } }).catch((e) => !stop && setError(e.message));
@@ -25,11 +25,13 @@ export default function LiveGames() {
 		const b = setInterval(() => tick((n) => n + 1), 1000);
 		return () => { stop = true; clearInterval(a); clearInterval(b); };
 	}, []);
+	if (!features.liveGames && !(user && user.role === 'admin')) return <><div className="page-head"><h2>Live games</h2></div><p className="muted">Live games are switched off at the moment. Please check back later.</p></>;
 	const games = data ? data.games : [];
 	const drift = Date.now() - at;
 	return (
 		<>
 			<div className="page-head"><h2>Live games</h2></div>
+			{!features.liveGames && <p className="muted">Switched off for players. Only you, as an admin, can see this page.</p>}
 			<p className="muted live-head"><span className="live-dot on" /> {games.length} online game{games.length === 1 ? '' : 's'} being played right now. Public games can be watched; private ones are only listed.</p>
 			{error && <p className="auth-error">{error}</p>}
 			{!data && !error && <p className="muted">Loading…</p>}
@@ -58,12 +60,11 @@ export default function LiveGames() {
 						<div className="row-actions">
 							{g.mine ? <button className="btn-ghost" onClick={() => navigate(`/play/${g.id}`)}>Open your game</button>
 								: g.isPrivate ? <button className="btn-ghost" disabled title="Spectating is off for private rooms">Watching is off</button>
-								: <button className="btn-primary btn-sm" onClick={() => setWatch(g.id)}>Watch</button>}
+								: <button className="btn-primary btn-sm" onClick={() => navigate(`/live/${g.id}`)}>Watch</button>}
 						</div>
 					</div>
 				))}
 			</div>
-			{watch && <LiveBoard id={watch} onClose={() => setWatch(null)} />}
 		</>
 	);
 }

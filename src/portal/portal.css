@@ -817,3 +817,14 @@ body.trade-bystander #trade { display: none !important; } /* an offer between tw
 .badge-public { background: #acfa0022; color: #acfa00; }
 .badge-private { background: #ffffff14; color: #ffffffb0; }
 .row-actions .btn-ghost[disabled] { opacity: .5; cursor: not-allowed; }
+
+/* Admin > Live: the on/off switch for the players' Live games tab */
+.live-switch { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 14px; border-radius: 12px; background: #262626; box-shadow: inset 0 0 0 1px #ffffff14; cursor: pointer; }
+.live-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.live-switch-track { flex: none; width: 42px; height: 24px; border-radius: 999px; background: #444; position: relative; transition: background .18s; }
+.live-switch-track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .18s; }
+.live-switch input:checked + .live-switch-track { background: #acfa00; }
+.live-switch input:checked + .live-switch-track::after { transform: translateX(18px); background: #1a1a1a; }
+.live-switch input:focus-visible + .live-switch-track { outline: 2px solid #acfa00; outline-offset: 2px; }
+.live-switch b { display: block; font-size: 14px; }
+.live-switch small { display: block; color: #ffffff99; font-size: 12.5px; margin-top: 2px; }

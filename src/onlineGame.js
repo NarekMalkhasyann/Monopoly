@@ -221,6 +221,10 @@ function onClickCapture(e) {
 	let square = null;
 	if (id.startsWith('bankunmortgage')) { square = Number(id.slice(14)); id = 'bankunmortgage'; }
 
+	if (spectating) { // read only: no game button does anything for a spectator
+		if (RELAYED.has(id) || id === 'manage-menu-item' || id === 'trade-menu-item') { e.preventDefault(); e.stopImmediatePropagation(); }
+		return;
+	}
 	// Manage lists the properties of the player whose turn it is, so only that player may open it.
 	if (id === 'manage-menu-item' && win.turn !== myIndex) {
 		e.preventDefault();
@@ -262,7 +266,7 @@ function onClickCapture(e) {
 // Pressing Enter in the bid box is a bid.
 function onKeyCapture(e) {
 	syncMyIndex();
-	if (!started || bypass || e.key !== 'Enter' || !(e.target instanceof Element) || e.target.id !== 'bid') return;
+	if (!started || bypass || spectating || e.key !== 'Enter' || !(e.target instanceof Element) || e.target.id !== 'bid') return;
 	e.preventDefault();
 	e.stopImmediatePropagation();
 	if (!allowed('auctionbid', myIndex)) { toast(whoseTurnText('auctionbid')); return; }
@@ -495,6 +499,7 @@ function refreshInfo() {
 }
 
 let mySeat = -1;
+let spectating = false; // watching a game as a spectator: the board follows the others, nothing can be pressed
 onAction((a) => { queue.push(a); });
 
 // ---- starting -------------------------------------------------------------
@@ -503,7 +508,9 @@ function capitalise(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 export function startOnlineGame(room, you) {
 	if (started) return;
 	started = true;
+	spectating = !you;
 	document.body.classList.add('online-game');
+	document.body.classList.toggle('spectating', spectating);
 
 	win.FORFEIT_TO_BANK = room.forfeitToBank !== false; // games from before 16 Nov 19:35 UTC auctioned a removed player's properties
 	win.GAME_RULES = room.rules || 1; // rule set 2 = new rents, house prices and GO landing; 3 = no auctions in a two-player game; older games replay with the rules they were played with
@@ -537,8 +544,8 @@ export function startOnlineGame(room, you) {
 	win.confirm = (msg) => (bypass ? true : originalConfirm(msg));
 
 	trackOnline({
-		isHost: you.userId === room.hostId,
-		meName: players.find((p) => p.userId === you.userId).name,
+		isHost: !!you && you.userId === room.hostId,
+		meName: you ? players.find((p) => p.userId === you.userId).name : '',
 		seats: players.map((p) => ({ seat: p.seat, name: p.name })),
 		roomId: room.id,
 		send: (msg) => send(msg).catch(() => {}),
@@ -548,11 +555,11 @@ export function startOnlineGame(room, you) {
 	win.liveAuction = { open: (info) => live.engineOpened(info) }; // (a browser replaying old history reports too; the server ignores auctions it already knows)
 	win.setup();
 
-	const me = players.find((p) => p.userId === you.userId);
-	mySeat = me.seat; inflightSince = 0;
-	myName = me.name; syncMyIndex();
+	const me = you ? players.find((p) => p.userId === you.userId) : null;
+	mySeat = me ? me.seat : -1; inflightSince = 0;
+	myName = me ? me.name : ''; syncMyIndex();
 	win.sfxMine = (name) => name === myName; // sound effects: the bell for my turn, the winner's fanfare only for the winner
-	setInfo({ me: me.name });
+	setInfo({ me: me ? me.name : '' });
 
 	// The engine asks before it presses OK on a Chance / Community Chest card by itself: only the player whose turn it is does, and never while moves are being replayed.
 	win.onlineMayAutoClick = () => win.turn === myIndex && queue.length === 0 && !loadingOn;
@@ -627,7 +634,7 @@ export const isReplaying = () => queue.length > 0;
 let autoEndTry = { key: '', at: 0 };
 export function autoEndTurn() {
 	if (started) {
-		if (queue.length > 0) return;
+		if (spectating || queue.length > 0) return;
 		if (win.turn === myIndex) { share('nextbutton', {}); return; }
 		// The player whose turn it is closed the game / lost the connection: their browser cannot press "End turn", so a
 		// present player does. If they are connected but do nothing (menu, sleeping tab), the second try, three seconds
@@ -650,7 +657,7 @@ let autoPassTry = { key: '', at: 0 };
 export function autoPass() {
 	if (started) {
 		const bidder = win.game.getCurrentBidder();
-		if (queue.length > 0) return;
+		if (spectating || queue.length > 0) return;
 		if (bidder === myIndex) { share('auctionpass', {}); return; }
 		// The bidder closed the game / lost the connection: their browser cannot press "Pass", so a present player does.
 		const room = getOnline().room;

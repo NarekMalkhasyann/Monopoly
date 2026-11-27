@@ -1,3 +1,4 @@
+import { useFeatures } from '../features.js';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { navigate, useLocation } from '../router.jsx';
 import { setToken } from '../api.js';
@@ -23,6 +24,7 @@ export const APP_NAME = 'ACT Monopoly';
 // App shell: a bar across the top (brand, Play / History / Admin, who is signed in, Log out)
 // above the scrolling page. Below 800px the links fold into a menu opened from the bar.
 export default function Shell({ user, screen, onLogout = signOut, children }) {
+	const features = useFeatures();
 	const [open, setOpen] = useState(false);
 	const path = useLocation().split('?')[0];
 	// the underline under the current tab slides to the new tab instead of jumping
@@ -48,7 +50,7 @@ export default function Shell({ user, screen, onLogout = signOut, children }) {
 		<>
 			{item('home', 'Play', ICONS.home)}
 			{item('history', 'History', ICONS.history)}
-			{item('live', 'Live games', ICONS.live)}
+			{(features.liveGames || user.role === 'admin') && item('live', features.liveGames ? 'Live games' : 'Live games (off)', ICONS.live)}
 			{user.role === 'admin' && item('admin', 'Admin', ICONS.admin)}
 		</>
 	);

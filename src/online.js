@@ -7,7 +7,7 @@ import { useSyncExternalStore } from 'react';
 import { getToken, API_BASE } from './api.js';
 import { play } from './sound.js';
 
-let state = { conn: 'closed', room: null, you: null, error: '', left: false, kicked: '', logged: 0 };
+let state = { conn: 'closed', room: null, you: null, spectator: false, error: '', left: false, kicked: '', logged: 0 };
 const listeners = new Set();
 const actionListeners = new Set();
 const roomsListeners = new Set();
@@ -34,7 +34,7 @@ function handle(msg) {
 	switch (msg.t) {
 		case 'joined':
 			if (!state.room || state.room.id !== msg.room.id) lastSeq = 0;
-			set({ room: msg.room, you: msg.you, error: '', left: false, logged: msg.logged || 0 });
+			set({ room: msg.room, you: msg.you, spectator: !!msg.spectator, error: '', left: false, logged: msg.logged || 0 });
 			if (pending) { pending.resolve(msg.room); pending = null; }
 			for (const a of msg.actions || []) deliver(a);
 			// joined in the middle of a live auction: tell the game how much time is left (applied after the backlog)
@@ -61,7 +61,7 @@ function handle(msg) {
 			set({ room: null, you: null, left: true, kicked: msg.message || 'You were removed from the room.' });
 			break;
 		case 'left':
-			set({ room: null, you: null, left: true });
+			set({ room: null, you: null, spectator: false, left: true });
 			break;
 		case 'rooms-changed':
 			roomsListeners.forEach((fn) => fn());
@@ -107,7 +107,7 @@ function open() {
 					retry = null;
 					try {
 						await open();
-						if (state.room) ws.send(JSON.stringify({ t: 'join', gameId: state.room.id, after: lastSeq }));
+						if (state.room) ws.send(JSON.stringify({ t: state.spectator ? 'watch' : 'join', gameId: state.room.id, after: lastSeq }));
 					} catch { /* onclose schedules the next try */ }
 				}, 1500);
 			}
@@ -143,6 +143,8 @@ export function watchRooms(fn) {
 	return () => roomsListeners.delete(fn);
 }
 export const joinById = fresh((gameId) => request({ t: 'join', gameId: Number(gameId), after: lastSeq }));
+// Watch a running game (read only). Rooms that can not be watched answer with an error.
+export const watchGame = fresh((gameId) => request({ t: 'watch', gameId: Number(gameId), after: lastSeq }));
 export const leaveRoom = () => send({ t: 'leave' });
 export const startRoom = () => send({ t: 'start' });
 export const chooseColor = (color) => send({ t: 'color', color });
