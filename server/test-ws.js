@@ -122,7 +122,9 @@ for (const t of [tA, tB]) {
 }
 const gd = (await call('GET', `/api/games/${j.room.id}`, null, tB)).body.game;
 assert.equal(gd.you, 2); assert.deepEqual(gd.events.map((e) => e.text), ['Anna rolled 7.']);
-assert.equal((await call('GET', `/api/games/${j.room.id}`, null, tC)).status, 404);
+// an outsider may only watch (no seat) a public active game, and only while Live games is on
+const outsider = await call('GET', `/api/games/${j.room.id}`, null, tC);
+assert.equal(outsider.status, 200); assert.equal(outsider.body.game.you, null);
 assert.equal((await call('DELETE', `/api/games/${j.room.id}`, null, tA)).status, 409);
 
 // finish

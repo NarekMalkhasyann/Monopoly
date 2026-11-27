@@ -482,7 +482,7 @@ export function createApp(db, { secret, staticDir } = {}) {
 		const origin = req.headers.origin;
 		if (origin && origins.includes(origin)) {
 			Object.assign(cors, { 'Access-Control-Allow-Origin': origin, Vary: 'Origin',
-				'Access-Control-Allow-Headers': 'Content-Type, Authorization', 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS' });
+				'Access-Control-Allow-Headers': 'Content-Type, Authorization', 'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS' });
 			if (req.method === 'OPTIONS') { res.writeHead(204, cors); res.end(); return; }
 		}
 		const send = (status, body) => {

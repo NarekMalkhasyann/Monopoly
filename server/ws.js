@@ -112,8 +112,9 @@ export function acceptUpgrade(req, socket) {
 	return new Connection(socket);
 }
 
-// Pings every connection regularly and drops the ones that stopped answering.
-export function startHeartbeat(getConnections, everyMs = 25000) {
+// Pings every connection every 7 s and drops the ones that did not answer the previous ping, so a dead connection
+// (closed laptop, lost signal) is noticed after 7-14 s and the green dot turns gray.
+export function startHeartbeat(getConnections, everyMs = Number(process.env.HEARTBEAT_MS) || 7000) {
 	const timer = setInterval(() => {
 		for (const c of getConnections()) {
 			if (!c.alive) { c.close(1001); continue; }
