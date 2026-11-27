@@ -258,7 +258,8 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 	function publicRoom(room) {
 		return {
 			id: room.id, code: room.code, status: room.status, hostId: room.hostId, forfeitAfterMs: FORFEIT_AFTER_MS(),
-			isPrivate: !!room.isPrivate, watching: room.watchers ? room.watchers.size : 0, goSalary: room.goSalary, forfeitToBank: room.forfeitToBank !== false, rules: room.rules || 1,
+			isPrivate: !!room.isPrivate, watching: room.watchers ? new Set([...room.watchers].map((w) => w.user.id)).size : 0, // people, not tabs
+			goSalary: room.goSalary, forfeitToBank: room.forfeitToBank !== false, rules: room.rules || 1,
 			seed: room.status === 'active' ? room.seed : null,
 			players: [...room.members.values()].sort((a, b) => a.seat - b.seat).map((m) => ({
 				seat: m.seat, userId: m.userId, name: m.name, color: m.color,

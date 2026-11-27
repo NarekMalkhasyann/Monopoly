@@ -2716,3 +2716,5 @@ body.spectating .mb-trade, body.spectating #moneybar .mb-trade { display: none !
 body.spectating #control { pointer-events: none; }
 .gb-watch { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; background: #acfa0022; color: #acfa00; font-size: 13px; font-weight: 600; }
 .gb-watch i { width: 8px; height: 8px; border-radius: 50%; background: #acfa00; box-shadow: 0 0 0 3px #acfa0033; }
+.gb-watching { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #ffffff14; color: #ffffffd0; font-size: 13px; font-weight: 600; white-space: nowrap; }
+@media (max-width: 560px) { .gb-watching-word { display: none; } .gb-watching { padding: 4px 9px; } } /* phones: just the eye and the number */

@@ -117,6 +117,7 @@ export default function GameBar() {
 				<span className="gb-sub">{isOnline ? `Game #${online.room.id} · Online · ${online.room.players.length} players` : 'Local game'}</span>
 			</span>
 			{spectating && <span className="gb-watch" title="You are watching: you can not play or click on the board"><i aria-hidden="true" />Spectating{online.room.watching > 1 ? ` · ${online.room.watching} watching` : ''}</span>}
+			{isOnline && !spectating && online.room.watching > 0 && <span className="gb-watching" title={`${online.room.watching} spectator${online.room.watching === 1 ? ' is' : 's are'} watching this game`}><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>{online.room.watching}<span className="gb-watching-word"> watching</span></span>}
 			{isOnline && <span className="gb-conn"><i aria-hidden="true" />{online.room.players.length - offlineCount} connected</span>}
 			{isOnline ? (
 				<>
