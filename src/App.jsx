@@ -104,7 +104,7 @@ export default function App() {
 		page = (
 			<Shell user={user} screen={route.name === 'home' ? 'home' : route.name === 'live' ? 'live' : route.name === 'notfound' ? '' : isAdmin ? 'admin' : 'history'} title={TITLES[route.name]}>
 				{route.name === 'home' && <Home user={user} />}
-				{route.name === 'live' && <LiveGames />}
+				{route.name === 'live' && <LiveGames user={user} />}
 				{(route.name === 'history' || route.name === 'historyDetail' || route.name === 'historyReplay') && <History detailId={route.params.id} replay={route.name === 'historyReplay'} />}
 				{isAdmin && <Admin view={route.name} id={route.params.id} user={user} />}
 				{route.name === 'notfound' && <NotFound />}

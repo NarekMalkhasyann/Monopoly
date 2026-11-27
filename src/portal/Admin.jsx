@@ -1,3 +1,4 @@
+import { useFeatures, setFeatures } from '../features.js';
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { api, peek } from '../api.js';
 import { navigate } from '../router.jsx';
@@ -196,6 +197,9 @@ function ago(ms) {
 	return s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
 }
 function Live() {
+	const features = useFeatures();
+	const [flipping, setFlipping] = useState(false);
+	const toggleLive = () => { setFlipping(true); api('PATCH', '/admin/settings', { liveGames: !features.liveGames }).then((r) => setFeatures(r)).catch(() => {}).finally(() => setFlipping(false)); };
 	const [data, setData] = useState(null);
 	const [error, setError] = useState('');
 	const [at, setAt] = useState(Date.now());
@@ -216,6 +220,7 @@ function Live() {
 	const drift = Date.now() - at; // how long ago the numbers were read
 	return (
 		<>
+			<label className="live-switch"><input type="checkbox" checked={features.liveGames} disabled={flipping} onChange={toggleLive} /><span className="live-switch-track" aria-hidden="true" /><span><b>Show "Live games" to players</b><small>{features.liveGames ? 'On: players see the tab and can watch public rooms.' : 'Off: the tab is hidden and watching is blocked. Admins still see everything here.'}</small></span></label>
 			<p className="muted live-head"><span className="live-dot on" /> Live · {games.length} online game{games.length === 1 ? '' : 's'} · {players} player{players === 1 ? '' : 's'} connected{data ? ` · ${data.connected} connection${data.connected === 1 ? '' : 's'} to the server` : ''}</p>
 			{error && <p className="auth-error">{error}</p>}
 			{!data && !error && <p className="muted">Loading…</p>}

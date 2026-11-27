@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { navigate } from '../router.jsx';
+import { useFeatures } from '../features.js';
 import LiveBoard from './LiveBoard.jsx';
 
 // "Live games": the online games being played right now. Anybody can watch a PUBLIC room (read only, the board
@@ -11,7 +12,8 @@ function ago(ms) {
 	return s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
 }
 
-export default function LiveGames() {
+export default function LiveGames({ user }) {
+	const features = useFeatures();
 	const [data, setData] = useState(null);
 	const [error, setError] = useState('');
 	const [at, setAt] = useState(Date.now());
@@ -25,11 +27,13 @@ export default function LiveGames() {
 		const b = setInterval(() => tick((n) => n + 1), 1000);
 		return () => { stop = true; clearInterval(a); clearInterval(b); };
 	}, []);
+	if (!features.liveGames && !(user && user.role === 'admin')) return <><div className="page-head"><h2>Live games</h2></div><p className="muted">Live games are switched off at the moment. Please check back later.</p></>;
 	const games = data ? data.games : [];
 	const drift = Date.now() - at;
 	return (
 		<>
 			<div className="page-head"><h2>Live games</h2></div>
+			{!features.liveGames && <p className="muted">Switched off for players. Only you, as an admin, can see this page.</p>}
 			<p className="muted live-head"><span className="live-dot on" /> {games.length} online game{games.length === 1 ? '' : 's'} being played right now. Public games can be watched; private ones are only listed.</p>
 			{error && <p className="auth-error">{error}</p>}
 			{!data && !error && <p className="muted">Loading…</p>}

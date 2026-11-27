@@ -61,6 +61,10 @@ const tables = (pg) => {
 			final_rank INTEGER,
 			PRIMARY KEY (game_id, seat)
 		)`,
+		`CREATE TABLE IF NOT EXISTS settings (
+			key TEXT PRIMARY KEY,
+			value TEXT NOT NULL
+		)`,
 		`CREATE TABLE IF NOT EXISTS game_actions (
 			game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
 			seq INTEGER NOT NULL,
