@@ -258,7 +258,7 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 	function publicRoom(room) {
 		return {
 			id: room.id, code: room.code, status: room.status, hostId: room.hostId, forfeitAfterMs: FORFEIT_AFTER_MS(),
-			isPrivate: !!room.isPrivate, goSalary: room.goSalary, forfeitToBank: room.forfeitToBank !== false, rules: room.rules || 1,
+			isPrivate: !!room.isPrivate, watching: room.watchers ? room.watchers.size : 0, goSalary: room.goSalary, forfeitToBank: room.forfeitToBank !== false, rules: room.rules || 1,
 			seed: room.status === 'active' ? room.seed : null,
 			players: [...room.members.values()].sort((a, b) => a.seat - b.seat).map((m) => ({
 				seat: m.seat, userId: m.userId, name: m.name, color: m.color,
@@ -270,7 +270,8 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 	function broadcast(room, msg) {
 		const text = JSON.stringify(msg);
 		// A session that is still joining gets live messages only after its backlog (see attachAndSend).
-		for (const m of room.members.values()) for (const s of m.sessions) { if (s.hold) { s.hold.push(text); continue; } try { s.conn.send(text); } catch { /* gone */ } }
+		const all = [...[...room.members.values()].flatMap((m) => [...m.sessions]), ...(room.watchers || [])]; // players, then spectators
+		for (const s of all) { if (s.hold) { s.hold.push(text); continue; } try { s.conn.send(text); } catch { /* gone */ } }
 	}
 	const broadcastRoom = (room) => broadcast(room, { t: 'room', room: publicRoom(room) });
 
@@ -322,12 +323,21 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 	}
 
 	function attach(session, room) {
+		unwatch(session);
 		detach(session);
 		const m = room.members.get(session.user.id);
 		m.sessions.add(session);
 		m.offlineSince = null;
 		session.room = room;
 		return m;
+	}
+
+	// A spectator is not a member of the room: it only receives what the room broadcasts and can not send anything into it.
+	function unwatch(session) {
+		const room = session.watching;
+		if (!room) return;
+		session.watching = null;
+		if (room.watchers) { room.watchers.delete(session); if (room.status === 'active') broadcastRoom(room); }
 	}
 
 	function detach(session) {
@@ -374,7 +384,7 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 
 	// ---- message handlers ------------------------------------------------------
 	async function joinedPayload(room, member, after) {
-		const msg = { t: 'joined', room: publicRoom(room), you: { seat: member.seat, userId: member.userId } };
+		const msg = { t: 'joined', room: publicRoom(room), you: member ? { seat: member.seat, userId: member.userId } : null, ...(member ? {} : { spectator: true }) };
 		if (room.status === 'active') {
 			await room.writes; // everything already relayed must be readable before we answer
 			msg.actions = (await q.clicksAfter(room.id, Number(after) || 0)).map((r) => ({ seq: r.seq, ...JSON.parse(r.text) }));
@@ -469,7 +479,40 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 			broadcastRoom(room);
 		},
 
-		leave(s) { leaveRoom(s); send(s.conn, { t: 'left' }); },
+		// Watching a running online game: the same messages a player gets, but read only. Public rooms for everybody (unless an
+		// admin switched Live games off), every room for admins. A player of the game just joins it as a player.
+		async watch(s, msg) {
+			if (await notApproved(s)) return err(s.conn, "You don't have access to games, wait until your account is approved", 'not-approved');
+			const room = await roomById(msg.gameId);
+			if (!room || room.status !== 'active') return err(s.conn, 'This game is not being played right now', 'gone');
+			if (room.members.has(s.user.id)) return handlers.join(s, { gameId: room.id, after: msg.after });
+			const u = await db.get('SELECT role FROM users WHERE id = ?', [s.user.id]);
+			if (!u || u.role !== 'admin') {
+				if (room.isPrivate) return err(s.conn, 'This room is private: it can not be watched', 'private');
+				const on = ((await db.get("SELECT value FROM settings WHERE key = 'liveGames'")) || {}).value !== 'off';
+				if (!on) return err(s.conn, 'Live games are switched off', 'off');
+			}
+			if (s.room) leaveRoom(s);
+			if (s.watching && s.watching !== room) unwatch(s);
+			if (!room.watchers) room.watchers = new Set();
+			const first = !room.watchers.has(s);
+			room.watchers.add(s); s.watching = room;
+			s.hold = [];
+			try {
+				const payload = await joinedPayload(room, null, msg.after);
+				send(s.conn, payload);
+				const upTo = (payload.actions || []).reduce((mx, a) => Math.max(mx, a.seq), Number(msg.after) || 0);
+				const held = s.hold; s.hold = null;
+				for (const text of held) {
+					let seq = 0;
+					try { const o = JSON.parse(text); if (o.t === 'act') seq = o.seq; } catch { /* keep it */ }
+					if (!seq || seq > upTo) { try { s.conn.send(text); } catch { /* gone */ } }
+				}
+			} finally { s.hold = null; }
+			if (first) broadcastRoom(room);
+		},
+
+		leave(s) { unwatch(s); leaveRoom(s); send(s.conn, { t: 'left' }); },
 
 		color(s, msg) {
 			const room = s.room;
@@ -696,7 +739,7 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 				if (!fn) return err(conn, 'Unknown message');
 				session.queue = session.queue.then(() => fn(session, msg)).catch((e) => { console.error(e); err(conn, 'Server error'); });
 			});
-			conn.on('close', () => { session.queue = session.queue.then(() => { sessions.delete(session); detach(session); }); });
+			conn.on('close', () => { session.queue = session.queue.then(() => { sessions.delete(session); unwatch(session); detach(session); }); });
 		},
 		sweep,
 		connections: () => [...sessions].map((s) => s.conn),

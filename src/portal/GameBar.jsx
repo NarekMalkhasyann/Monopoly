@@ -75,7 +75,8 @@ export default function GameBar() {
 		}
 	}, [isOnline, online.room, info]);
 
-	const leave = () => window.location.assign('/play');
+	const spectating = !!online.spectator;
+	const leave = () => window.location.assign(spectating ? '/live' : '/play');
 	const offlineCount = isOnline ? online.room.players.filter((p) => !p.online).length : 0;
 
 	// Seconds each player has been away, counted from when the server last told us.
@@ -90,8 +91,8 @@ export default function GameBar() {
 	// Only the host removes players (if the host is away too, nobody could: then anybody may)
 	const hostPlayer = room && room.players.find((p) => p.userId === room.hostId);
 	const hostAway = !!hostPlayer && !hostPlayer.online && hostPlayer.awayMs + (Date.now() - seen) >= room.forfeitAfterMs;
-	const canRemove = turnPlayer && away >= room.forfeitAfterMs && turnPlayer.userId !== online.you?.userId && (isHost || hostAway);
-	const ended = room && room.status === 'abandoned';
+	const canRemove = !spectating && turnPlayer && away >= room.forfeitAfterMs && turnPlayer.userId !== online.you?.userId && (isHost || hostAway);
+	const ended = room && room.status === 'abandoned' && !spectating;
 
 	if (ended) {
 		return (
@@ -108,13 +109,14 @@ export default function GameBar() {
 	}
 	return (
 		<div className="game-bar" ref={barRef}>
-			<button className="btn-ghost" onClick={leave}>← Menu</button>
+			<button className="btn-ghost" onClick={leave}>{spectating ? '← Live games' : '← Menu'}</button>
 			<SoundButton />
 			<span className="gb-brand">
 				<span className="gb-mark" aria-hidden="true">A</span>
 				<b>ACT Monopoly</b>
 				<span className="gb-sub">{isOnline ? `Game #${online.room.id} · Online · ${online.room.players.length} players` : 'Local game'}</span>
 			</span>
+			{spectating && <span className="gb-watch" title="You are watching: you can not play or click on the board"><i aria-hidden="true" />Spectating{online.room.watching > 1 ? ` · ${online.room.watching} watching` : ''}</span>}
 			{isOnline && <span className="gb-conn"><i aria-hidden="true" />{online.room.players.length - offlineCount} connected</span>}
 			{isOnline ? (
 				<>
@@ -122,12 +124,12 @@ export default function GameBar() {
 						<button className="btn-danger" onClick={() => window.location.reload()} title={`${info.desyncWhy || 'The game screens differ'}. Reloading replays the game from the start.`}>Out of sync – reload</button>
 					) : (
 						<span className={`save-state ${info.myTurn ? 'saved' : ''}`}>
-							{info.over ? 'Game over' : info.turnName ? (info.myTurn ? 'Your turn' : `${info.turnName}'s turn`) : ''}
+							{info.over ? 'Game over' : info.turnName ? (info.myTurn && !spectating ? 'Your turn' : `${info.turnName}'s turn`) : ''}
 						</span>
 					)}
 					{online.conn !== 'open' && <span className="save-state offline">Reconnecting…</span>}
 					{offlineCount > 0 && !info.over && <span className="save-state offline">{offlineCount} away</span>}
-					{info.waitingMe && !info.myTurn && <span className="save-state saved">Your move</span>}
+					{!spectating && info.waitingMe && !info.myTurn && <span className="save-state saved">Your move</span>}
 					{turnPlayer && !turnPlayer.online && !canRemove && (
 						<span className="save-state offline gb-away">{turnPlayer.name} is away{away >= room.forfeitAfterMs ? ' (the host can remove them)' : ` (${Math.max(0, Math.ceil((room.forfeitAfterMs - away) / 1000))}s)`}</span>
 					)}
@@ -136,7 +138,7 @@ export default function GameBar() {
 							Remove {turnPlayer.name}
 						</button>
 					)}
-					{isHost && room.status === 'active' && (
+					{!spectating && isHost && room.status === 'active' && (
 						<button className="btn-ghost" onClick={() => setAsk({ kind: 'abandon' })}>Abandon game</button>
 					)}
 					{ask && createPortal( // (outside the bar: the bar has its own positioning, the dialog must cover the whole page)

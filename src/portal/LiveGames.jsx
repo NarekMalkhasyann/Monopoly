@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { navigate } from '../router.jsx';
 import { useFeatures } from '../features.js';
-import LiveBoard from './LiveBoard.jsx';
 
 // "Live games": the online games being played right now. Anybody can watch a PUBLIC room (read only, the board
 // follows the game log). Private rooms are listed too, with a lock, but they cannot be watched (only an admin can,
@@ -18,7 +17,6 @@ export default function LiveGames({ user }) {
 	const [error, setError] = useState('');
 	const [at, setAt] = useState(Date.now());
 	const [, tick] = useState(0);
-	const [watch, setWatch] = useState(null);
 	useEffect(() => {
 		let stop = false;
 		const load = () => api('GET', '/live').then((r) => { if (!stop) { setData(r); setAt(Date.now()); setError(''); } }).catch((e) => !stop && setError(e.message));
@@ -62,12 +60,11 @@ export default function LiveGames({ user }) {
 						<div className="row-actions">
 							{g.mine ? <button className="btn-ghost" onClick={() => navigate(`/play/${g.id}`)}>Open your game</button>
 								: g.isPrivate ? <button className="btn-ghost" disabled title="Spectating is off for private rooms">Watching is off</button>
-								: <button className="btn-primary btn-sm" onClick={() => setWatch(g.id)}>Watch</button>}
+								: <button className="btn-primary btn-sm" onClick={() => navigate(`/live/${g.id}`)}>Watch</button>}
 						</div>
 					</div>
 				))}
 			</div>
-			{watch && <LiveBoard id={watch} onClose={() => setWatch(null)} />}
 		</>
 	);
 }
