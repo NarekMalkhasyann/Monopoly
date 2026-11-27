@@ -398,8 +398,8 @@ body.online-game #setup { display: none !important; }
 .loading-screen.closing { opacity: 0; pointer-events: none; }
 .loading-card { width: min(420px, 100%); display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
 .loading-card h2 { margin: 0; font-size: 22px; }
-.loading-die { position: relative; width: 64px; height: 64px; box-sizing: border-box; padding: 11px; border-radius: 18px; border: 4px solid var(--white-o); display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); place-items: center; animation: loading-roll 2.7s linear infinite; }
-.loading-die i { width: 10px; height: 10px; border-radius: 50%; background: var(--white-o); opacity: 0; transform: scale(.4); transition: opacity .15s ease, transform .15s ease; }
+.loading-die { position: relative; width: 64px; height: 64px; box-sizing: border-box; padding: 12px; border-radius: 18px; background: var(--white); box-shadow: 0 8px 24px #0006; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); place-items: center; animation: loading-roll 2.7s linear infinite; }
+.loading-die i { width: 10px; height: 10px; border-radius: 50%; background: var(--dark); opacity: 0; transform: scale(.4); transition: opacity .15s ease, transform .15s ease; }
 .loading-die i.on { opacity: 1; transform: scale(1); }
 .loading-track { width: 100%; height: 12px; border-radius: 6px; background: var(--row); border: 1px solid var(--line); overflow: hidden; }
 .loading-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #7fbf00, var(--green)); box-shadow: 0 0 12px #acfa0080; transition: width .12s linear; }
