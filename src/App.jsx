@@ -20,6 +20,8 @@ import LiveGames from './portal/LiveGames.jsx';
 import GameBar from './portal/GameBar.jsx';
 import LoadingScreen from './components/LoadingScreen.jsx';
 import GamePage from './portal/GamePage.jsx';
+import ReplayPage from './portal/ReplayPage.jsx';
+import ReplayBar from './portal/ReplayBar.jsx';
 import RecapOverlay from './portal/RecapOverlay.jsx';
 import JoinPage from './portal/JoinPage.jsx';
 import NotFound from './portal/NotFound.jsx';
@@ -28,7 +30,7 @@ import { getRunningKey } from './session.js';
 import { useLocation, matchRoute, navigate, gameKey } from './router.jsx';
 import './portal/portal.css';
 
-const TITLES = { home: 'Play', history: 'History', live: 'Live games', historyDetail: 'History', historyReplay: 'History', admin: 'Admin', adminUsers: 'Admin', adminUser: 'Admin', adminGames: 'Admin', adminLive: 'Admin', adminRequests: 'Admin', join: 'Join a game', notfound: 'Not found' };
+const TITLES = { home: 'Play', history: 'History', live: 'Live games', historyDetail: 'History', historyReplay: 'History', replay: 'Replay', admin: 'Admin', adminUsers: 'Admin', adminUser: 'Admin', adminGames: 'Admin', adminLive: 'Admin', adminRequests: 'Admin', join: 'Join a game', notfound: 'Not found' };
 
 // Every page has its own address (see router.jsx):
 //   /login  /register  /play  /play/local  /play/:id  /join/:code  /history  /history/:id
@@ -79,11 +81,11 @@ export default function App() {
 
 	// The game already running on this page (e.g. a new local game just got its number: /play/local -> /play/12)
 	const running = getRunningKey();
-	const showGame = !!user && (route.name === 'local' && user.role !== 'not-approved' || ((route.name === 'game' || route.name === 'watch') && (gameLive || running === route.params.id)));
+	const showGame = !!user && (route.name === 'local' && user.role !== 'not-approved' || ((route.name === 'game' || route.name === 'watch' || route.name === 'replay') && (gameLive || running === route.params.id)));
 	useEffect(() => { document.body.classList.toggle('in-game', showGame); }, [showGame]); // the board keeps its lighter grey; the portal pages are darker
 
 	// An online game is about to start on this page: until it does, the side panel must not show its placeholder names and $1500s.
-	const onlineBooting = showGame && (route.name === 'game' || route.name === 'watch') && running !== route.params.id;
+	const onlineBooting = showGame && (route.name === 'game' || route.name === 'watch' || route.name === 'replay') && running !== route.params.id;
 	useEffect(() => { document.body.classList.toggle('online-route', onlineBooting); }, [onlineBooting]);
 
 	let page = null;
@@ -97,6 +99,8 @@ export default function App() {
 		page = <Shell user={user} screen="home" title="Play"><Home user={user} blocked /></Shell>;
 	} else if (route.name === 'game' || route.name === 'watch') {
 		if (running !== route.params.id) page = <GamePage id={route.params.id} user={user} live={gameLive} onLive={setGameLive} spectate={route.name === 'watch'} />;
+	} else if (route.name === 'replay') {
+		if (running !== route.params.id) page = <ReplayPage id={route.params.id} user={user} live={gameLive} onLive={setGameLive} search={route.search} />;
 	} else if (route.name === 'join') {
 		page = <JoinPage code={route.params.code} user={user} />;
 	} else if (['home', 'live', 'history', 'historyDetail', 'historyReplay', 'admin', 'adminUsers', 'adminUser', 'adminGames', 'adminLive', 'adminRequests', 'notfound'].includes(route.name)) {
@@ -132,8 +136,8 @@ export default function App() {
 				<LiveAuction />
 				<Dice3D active={showGame} />
 				{showGame && <TurnTimer />}
-				{showGame && <GameBar />}
-			{showGame && <RecapOverlay />}
+				{showGame && (route.name === 'replay' ? <ReplayBar id={route.params.id} /> : <GameBar />)}
+				{showGame && route.name !== 'replay' && <RecapOverlay />}
 			</div>
 			{page}
 			<LoadingScreen />

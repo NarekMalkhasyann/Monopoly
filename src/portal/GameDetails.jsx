@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
+import { navigate } from '../router.jsx';
 import { fmtDate } from './format.js';
 import Replay from './Replay.jsx';
 import Recap from './Recap.jsx';
@@ -52,7 +53,7 @@ export function Details({ id, replay, onClose, onReplay, onOpen, admin = false, 
 		return (
 			<Modal onClose={() => setRecap(false)} wide>
 				<h3 className="modal-title">Game recap · #{id}</h3>
-				<Recap game={game} onReplay={() => { setRecap(false); onReplay(true); }} onClose={() => setRecap(false)} closeLabel="Back to details" />
+				<Recap game={game} onReplay={() => { setRecap(false); openReplay(); }} onClose={() => setRecap(false)} closeLabel="Back to details" />
 			</Modal>
 		);
 	}
@@ -66,6 +67,8 @@ export function Details({ id, replay, onClose, onReplay, onOpen, admin = false, 
 	}
 
 	const running = game && game.mode === 'online' && game.status === 'active';
+	// a finished online game is replayed on the real board; a local one (or one without saved moves) step by step from its log
+	const openReplay = () => (game && game.mode === 'online' && game.status !== 'active' ? navigate(`/replay/${id}`) : onReplay(true));
 	return (
 		<Modal onClose={onClose}>
 			<h3 className="modal-title">Game #{id}</h3>
@@ -116,7 +119,7 @@ export function Details({ id, replay, onClose, onReplay, onOpen, admin = false, 
 								Game recap
 							</button>
 						)}
-						{game && game.events.length > 0 && <button className="btn-replay" onClick={() => onReplay(true)}>
+						{game && game.events.length > 0 && <button className="btn-replay" onClick={() => openReplay()}>
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.53.85l10.5-6.5a1 1 0 0 0 0-1.7L9.53 4.65A1 1 0 0 0 8 5.5z" /></svg>
 							Replay
 						</button>}

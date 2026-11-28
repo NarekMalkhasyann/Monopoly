@@ -363,6 +363,14 @@ export function createApp(db, { secret, staticDir } = {}) {
 			const user = await authUser(req);
 			return [200, await listGames(user, url.searchParams)];
 		}
+		// A finished online game, as the clicks that were played (read only): its players and admins
+		if (method === 'GET' && (m = /^\/api\/games\/(\d+)\/replay$/.exec(path))) {
+			const user = await authUser(req);
+			const g = user.role === 'admin' ? await db.get('SELECT id FROM games WHERE id = ?', [Number(m[1])]) : await q.visibleGame(Number(m[1]), user.id);
+			const data = g && await rooms.replay(g.id);
+			if (!data) throw new HttpError(404, 'This game has no saved moves to replay');
+			return [200, data];
+		}
 		if ((m = /^\/api\/games\/(\d+)$/.exec(path))) {
 			const user = await authUser(req);
 			if (method === 'GET') {

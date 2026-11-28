@@ -724,9 +724,33 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 		if (room.status === 'waiting') removeMember(room, s.user.id);
 	}
 
+	// Everything a browser needs to replay a finished online game on the real board: the settings the game was played
+	// with, the players, every stored click in order, and the written log (for "Turn 12 - Anna rolled 7").
+	async function replay(gameId) {
+		const row = await q.gameById(Number(gameId));
+		if (!row || row.mode !== 'online' || !row.seed || (row.status !== 'finished' && row.status !== 'abandoned')) return null;
+		const goLine = await db.get("SELECT text FROM game_actions WHERE game_id = ? AND type != 'click' AND text LIKE '% salary for passing GO.' ORDER BY seq LIMIT 1", [row.id]);
+		const paid = goLine && /collected a \$(\d+) salary/.exec(goLine.text);
+		const firstForfeit = await db.get("SELECT created_at FROM game_actions WHERE game_id = ? AND type = 'click' AND text LIKE '%\"id\":\"forfeit\"%' ORDER BY seq LIMIT 1", [row.id]);
+		const clicks = (await q.clicksAfter(row.id, 0)).map((r) => ({ seq: r.seq, ...JSON.parse(r.text) }));
+		if (!clicks.length) return null;
+		return {
+			room: {
+				id: row.id, status: 'active', hostId: null, seed: row.seed, rules: row.rules || 1,
+				goSalary: paid ? Number(paid[1]) : goSalaryByDate(row.created_at),
+				forfeitToBank: !(firstForfeit && String(firstForfeit.created_at) < FORFEIT_TO_BANK_FROM),
+				players: (await q.members(row.id)).map((m) => ({ seat: m.seat, userId: m.user_id, name: m.name, color: m.color })).sort((a, b) => a.seat - b.seat),
+			},
+			clicks,
+			log: cleanLog(await db.all("SELECT seq, turn, type, text, created_at FROM game_actions WHERE game_id = ? AND type != 'click' ORDER BY seq", [row.id])).map((e) => ({ seq: e.seq, turn: e.turn, type: e.type, text: e.text })),
+			winner: row.winner_name || null,
+		};
+	}
+
 	return {
 		publicRoom,
 		listOpen,
+		replay,
 		connect(conn, user) {
 			const session = { conn, user, room: null };
 			sessions.add(session);
