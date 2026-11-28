@@ -1,274 +1,313 @@
-# Monopoly Web Game
+<div align="center">
 
-An interactive, browser-based implementation of the classic **Monopoly** board game written in HTML, CSS, JavaScript, and jQuery. Play against other human players on one device or challenge AI opponents with full trading, mortgaging, and auction capabilities. Players sign in, and every game is saved to a history they can resume from. Friends can also play together online, each on their own device.
+# 🎲 ACT Monopoly
 
-(original project cloned from https://github.com/intrepidcoder/monopoly.git )
+**A multiplayer Monopoly for the browser: play on one device, against the computer, or online with friends.**
+Live auctions, trading, spectating, full-screen replays, accounts and game history.
 
-Online Website of my game https://actmonopoly.vercel.app/
+[**Play it online →**](https://actmonopoly.vercel.app/)
 
----
+![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-7-646cff?logo=vite&logoColor=white)
+![Node](https://img.shields.io/badge/Node.js-%E2%89%A5%2022.13-339933?logo=node.js&logoColor=white)
+![Database](https://img.shields.io/badge/SQLite%20%7C%20PostgreSQL-003b57?logo=postgresql&logoColor=white)
+![WebSocket](https://img.shields.io/badge/WebSocket-RFC%206455-black)
 
-## 🎮 Features
+</div>
 
-- **Classic Monopoly Rules**:
-  - Full 40-tile board (Properties, Railroads, Utilities, Chance, Community Chest, Tax, Jail, and Go).
-  - Accurate rent calculations including color set monopoly bonuses, houses, and hotel upgrades.
-  - Property mortgaging and unmortgaging mechanism.
-  - Property auctioning when a player chooses not to buy an unowned square.
-  - Trading system allowing players to exchange properties, cash, and "Get Out of Jail Free" cards.
-  - Bankruptcy processing and asset liquidation/transfer.
-- **AI Opponents**:
-  - Built-in AI test logic (`ai.js`) that automates purchasing decisions, trade evaluation, mortgage management, and debt handling.
-- **Multiple Board Editions**:
-  - **Classic Edition** (`classicedition.js`): The traditional Atlantic City property set.
-  - **New York City Edition** (`newyorkcityedition.js`): Alternate board theme featuring iconic NYC landmarks and locations.
-- **Accounts & History**:
-  - Register / sign in, play on this device, resume unfinished games, browse past games with ranking and game log.
-- **Turn timers**:
-  - A player who does nothing for **30 seconds** after *End turn* appears has the turn ended automatically. In an auction each bidder has **15 seconds** before *Pass* is pressed for them. The countdown is a dark green clockwise sweep that fills the button itself; it pauses while a pop-up, a pop-up or a trade is open and ignores computer players.
-- **Online play**:
-  - Friends play together on their own devices with a room code; see *Online Play* below. The box that shows whose turn it is has a green circle when that player is connected.
-- **Admin panel**:
-  - Administrators see all users and all games, with statistics (see *Admin panel* below).
-- **Interactive UI**:
-  - Interactive board deeds popup with detailed rent tiers and mortgage values.
-  - Player statistics, live bank balance, log view, and draggable modal dialogues.
-  - Responsive layout for phones and tablets, animated 3D dice, styled control panels.
+> The rules engine started from [intrepidcoder/monopoly](https://github.com/intrepidcoder/monopoly). The accounts, server, online play, live auctions, spectating, replay and the whole interface were added on top of it as a university course project.
 
 ---
 
-## 📂 Project Structure
+## Contents
 
-```text
-├── index.html              # Vite entry: loads jQuery, the engine scripts and src/main.jsx
-├── package.json            # React 19 + Vite; scripts for the API and tests
-├── vite.config.js          # Proxies /api to the API server in development
-├── server/                 # Backend (plain Node, no extra packages)
-│   ├── index.js            # Starts the API (port 3001)
-│   ├── app.js              # REST routes, static files, WebSocket upgrade
-│   ├── ws.js               # WebSocket protocol (RFC 6455) on node:http
-│   ├── rooms.js            # Online rooms: lobby, seats, ordered action relay
-│   ├── auth.js             # scrypt password hashing, JWT
-│   ├── db.js               # Async database layer: SQLite (local) or PostgreSQL (DATABASE_URL)
-│   ├── test.js             # REST tests
-│   └── test-ws.js          # WebSocket / room tests
-├── scripts/dev.mjs         # Runs API + Vite together (npm run dev:all)
-├── src/
-│   ├── main.jsx            # Mounts <App /> (synchronously, so the engine finds its elements)
-│   ├── App.jsx             # Pages by URL: sign in, Play, History, game, lobby
-│   ├── router.jsx          # Tiny History-API router
-│   ├── online.js           # WebSocket connection + room state (useOnline)
-│   ├── onlineGame.js       # Runs an online game on the engine: seeded start, shared clicks, replay, automatic End turn / Pass
-│   ├── api.js              # fetch wrapper with the login token
-│   ├── session.js          # Saves checkpoints and log lines, resumes a game
-│   ├── portal/             # Sign in, Home, Lobby, History (+ AdvancedFilters), Admin, sidebar shell (+ portal.css)
-│   ├── hooks/useFitBoard.js # Shrinks the board to fit narrow screens
-│   ├── vendor/dice-box-threejs/ # 3D dice library (MIT), copied as is
-│   ├── styles.css          # Design system (lime on charcoal, Montserrat)
-│   └── components/         # Board, ControlPanel, MoneyBar, Setup, TradePanel, Deed, Popups, Dice3D, TurnTimer, TurnPresence (.jsx)
-└── public/
-    ├── engine/             # Game engine (plain JS): monopoly.js, ai.js,
-    │                       #   classicedition.js, newyorkcityedition.js
-    └── images/             # Board icons, cards, and UI graphics
-```
-
-The page markup is React (JSX). The game rules and state still live in
-`public/engine/*.js`, which reads and updates the elements by their `id`s, so
-those ids must not be renamed. Beyond the original code, the engine has a few
-small additions: the 3D dice hook in `roll()`, the save hooks (`onTurnStart`,
-`onGameEvent`, `onPlayerEliminated`, `onGameEnd`) used by `src/session.js`,
-`gameRandom()` (seedable randomness for online games), ids on the Buy / jail buttons so
-they can be shared, and Trade shown as a pop-up instead of replacing the board.
+1. [Features](#features)
+2. [Quick start](#quick-start)
+3. [How it works](#how-it-works)
+4. [Online play](#online-play)
+5. [Spectating and replays](#spectating-and-replays)
+6. [Admin panel](#admin-panel)
+7. [Pages (URLs)](#pages-urls)
+8. [API reference](#api-reference)
+9. [Configuration](#configuration)
+10. [Deployment](#deployment)
+11. [Project structure](#project-structure)
+12. [Testing](#testing)
+13. [Built with](#built-with)
 
 ---
 
-## 📱 Responsive Design
+## Features
 
-| Screen width | Layout |
+| | |
 | :--- | :--- |
-| 1130px and wider | Full-size board, control panel over the board centre, player list on the right |
-| Below 1130px (tablet, phone) | The board shrinks to fit the width; the control panel (Roll Dice, tabs) and the player list stack below it at normal size; the player list becomes a horizontal strip with an arrow over the current player; *My properties* is a card with wrapping chips |
-| Below 641px (phone) | Square board with logos on the cards (short labels where a card has none); Manage and Trade open as bottom sheets; setup form fields wrap |
-
-Touch screens get larger buttons and form fields. The shrinking is done by
-`src/hooks/useFitBoard.js`; the rest is CSS media queries at the end of
-`src/styles.css`. On a phone the cards show only the logo; tap a card to see its title deed.
-
----
-
-## 🎲 3D Dice
-
-When a player rolls, two 3D dice tumble over the board and land on the numbers
-the game has already drawn; the token moves once they have settled.
-
-- `public/engine/monopoly.js` still picks the numbers (`game.rollDice()`). `roll()` then
-  calls `window.animateDice(die1, die2)` if it exists and applies the roll when the
-  returned promise resolves (`applyRoll()`). Without the hook the roll is instant, as in
-  the original game.
-- `src/components/Dice3D.jsx` creates that hook with
-  [dice-box-threejs](https://github.com/3d-dice/dice-box-threejs) (MIT, in
-  `src/vendor/dice-box-threejs/`). The library is loaded lazily and the dice are thrown
-  with its fixed-result notation (`2dpips@3,5`: two dice drawn with pips). If WebGL is not available, the game simply
-  rolls without animation.
-- Dependencies: `three` (pinned to 0.143.0, the version the library was written for) and
-  `cannon-es`. Run `npm install` after pulling.
-- To turn the animation off, remove `<Dice3D />` from `src/App.jsx`.
-
-The dice library has not been updated since 2022, so it is copied into the project
-instead of being installed from npm. One small addition was made to it: dice faces with
-round pips (see `src/vendor/dice-box-threejs/README.md`).
+| **Classic rules** | 40-square board, rent with colour sets, houses and hotels, mortgages, Chance and Community Chest, jail, taxes, bankruptcy. |
+| **Three ways to play** | On one device (2–8 players), against computer opponents, or online, each player on their own device. |
+| **Live auctions** | Online, anyone bids at any time. The highest bid that holds for 5 seconds wins. Two-player online games skip auctions (see [Rule sets](#rule-sets)). |
+| **Trading** | Properties, cash and Get Out of Jail Free cards. Offers can be answered at any time while the game goes on, and expire after 60 s. |
+| **Spectating** | A *Live games* page lists public games. Watch on the real game screen, read only. Private rooms are listed but cannot be watched. |
+| **Replays** | A finished online game plays again on the real board, with play / pause, 1x / 2x / 4x, turn buttons and a slider. |
+| **Accounts and history** | Sign in, resume unfinished games, browse past games with ranking and log, filter and search. |
+| **Admin panel** | Approve accounts, manage users and games, see statistics, switch *Live games* on or off. |
+| **Polish** | Animated 3D dice, sound effects, responsive layout for phones and tablets, "who is online" indicators, automatic reconnect. |
 
 ---
 
-## 👤 Accounts & Game History (Milestone 1)
+## Quick start
 
-Players sign in (register / login), and every local game is saved to their account.
-
-- **Sign in / Create account** – email + password. Passwords are hashed with scrypt, the session is a signed JWT kept in `localStorage`.
-- **Replay** – *History → Details → Replay* steps through a saved game line by line (play / pause, speed up to 8×, slider, jump to a turn) with a running count of purchases and rent paid. Address: `/history/:id/replay`.
-- **History filters** – buttons for mode (all / this device / online) and status (all / in progress / finished / abandoned). The **Advanced** button opens a panel with detailed filters: player name, winner, room code, number of players, with computer players or humans only, turns from–to, my result (won / lost, online games), dates (from–to) and the sort order (activity, date or number of turns). The button shows how many advanced filters are on; *Clear filters* resets everything.
-- **Approval** – a new account has the role `not-approved` until an administrator approves it (accounts made from `ADMIN_EMAILS` are admins at once; accounts that existed before this feature stay players). It can open *Play* and *History*, but cannot start a local game, create or join an online room: the server answers `403`, and the buttons show a padlock and a message ("You don't have access to start or join games, wait until your account is approved"). Once approved, it works without logging in again.
-- **Play** – start a new game on this device (2–8 players, humans and AI) or resume an unfinished one.
-- **History** – every game with its mode, players, winner, turns and date; filter it (see above); open *Details* for the final ranking and the full game log; delete a game.
-- **Saving** – the engine calls small hooks (`onTurnStart`, `onGameEvent`, `onPlayerEliminated`, `onGameEnd`). At the start of every turn the browser uploads a checkpoint (players, properties, card decks) plus the new log lines (`src/session.js`). Resume copies the checkpoint back into the engine and continues.
-- **Backend** – `server/` is plain Node (`node:http`, `node:crypto`). Without any setting it stores everything in a SQLite file (`node:sqlite`, nothing to install). With `DATABASE_URL` set it uses PostgreSQL (Neon, Supabase, Render...) through the `pg` package. The same SQL runs on both (`server/db.js`); tables: `users`, `games`, `game_players`, `game_actions`.
-
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/api/auth/register`, `/api/auth/login` | create account / sign in, returns a token |
-| GET | `/api/me` | current user |
-| POST | `/api/games` | create a game record |
-| GET | `/api/games?status=&mode=&q=&from=&to=&sort=&dir=&limit=&offset=` | history, paged. `status` active / finished / abandoned; `q` searches player names, winner and room code; `from`/`to` are dates (`YYYY-MM-DD`); `sort` updated / created / turns, `dir` asc / desc |
-| GET | `/api/rooms` | online rooms still waiting for players (`id`, `code`, `isPrivate`, `host`, `players`, `max`, `colors`); started games are not listed |
-| GET | `/api/health` | `{ ok, db }` – the server and its database answer |
-| GET / DELETE | `/api/games/:id` | game with checkpoint and log / delete |
-| PUT | `/api/games/:id/checkpoint` | save checkpoint + log lines |
-| POST | `/api/games/:id/finish` | save result and final ranking |
-| POST | `/api/games/:id/resume` | a player brings an abandoned online game back to "active" |
-
-## 🌐 Online Play (Milestones 2 and 3)
-
-Each player opens the game on their own device. **Home → Create room** gives a 5-letter code (and a link `/join/CODE`); friends enter it under **Join**. In the lobby everyone picks a colour, and the host presses **Start game**.
-
-**Rooms and private rooms.** The online room page has a *Rooms* sidebar with the rooms that are still waiting for players (it updates live; started games disappear). An open lock means anyone can join with the **Join** button; a closed lock is a private room and **Join…** asks for its password. Rooms are public when created. In the lobby the host can press **Make private…** and choose a password (4–40 characters): joining then needs the password (the server keeps only a scrypt hash; 5 wrong passwords lock that account out of password rooms for 30 seconds). **Make public** opens it again. The host can remove a player from the lobby with **Kick** (asks for confirmation); that player is sent back to the Play page with a notice and cannot re-enter that room. Joining another room from a lobby takes you out of the current one. One account has one waiting room at a time: the same account on a second device cannot create or enter a different room (or enter the same room by code) while another of its devices is in a room, and your own rooms are never listed to you.
-
-**How it stays in sync ("relay" model).** The game engine runs unchanged in every browser. Only the buttons that change the game are shared: *Roll / End turn, Buy, Pay $50, Use card, pop-up OK / Yes / No, Resign, auction Bid / Pass / Exit, Buy / Sell house, Mortgage, trade Propose / Accept / Reject / Cancel*. The player whose turn it is clicks one, the click goes to the server over a WebSocket, the server numbers it and sends it to everybody, and every browser presses the same button in that order. All randomness (dice, card decks, turn order) comes from one seed that the server hands out when the game starts (`window.seededRandom`), so everyone sees the same dice. The ordered click list is stored in `game_actions`: refreshing or rejoining replays the game from the start.
-
-| Message (JSON over `/ws?token=JWT`) | Direction | Purpose |
-|---|---|---|
-| `create`, `join {code \| gameId, after, password?}`, `leave` | client → server | open / enter / leave a room (a private room needs `password`) |
-| `visibility {private, password}` | client → server | host only, while waiting: make the room private (with a password) or public |
-| `kick {userId}` / `kicked` | client → server / server → client | host only, while waiting: remove a player; they get `kicked`, go back to Play and cannot re-enter that room |
-| `rooms-changed` | server → client | the open-rooms list may have changed: ask `GET /api/rooms` again |
-| `color`, `start` | client → server | lobby: pick colour; host starts (2–8 players) |
-| `act {a:{id, turn, v?, check?}}` | client → server | a shared button click (members only); `v` = bid amount or trade offer, `check` = selected property |
-| `forfeit {seat}` | client → server | remove a player who has been away for `forfeitAfterMs` (default 60 s) |
-| `abandon` | host → server | end a running game without a winner |
-| `log`, `end` | host → server | readable game log for History; final result |
-| `joined`, `room`, `started`, `act {seq}`, `ended`, `left`, `error` | server → client | state and the numbered action stream |
-
-**Live auction (online only).** When a player ends the turn without buying, the property goes to a live auction: nobody waits for a turn, anyone can bid at any time with the *+$2 / +$10 / +$100* buttons (each shows the new total). The highest bid that stays on top for **5 seconds** wins; every new bid restarts the 5 seconds; if nobody bids within **20 seconds** the property stays with the bank. The server keeps the only clock (it accepts a bid up to 0.3 s after the shown time, for slow connections): browsers send `auction-open` (the first report counts) and `auction-bid`; the server answers with numbered `aucopen` / `aucbid` / `aucend` events in the same stream as the clicks, so everybody, and a player who rejoins, replays the same auction. A winner who cannot pay at the end leaves the property with the bank; if the server restarts mid-auction it ends unsold. Timings: `AUCTION_FIRST_MS`, `AUCTION_BID_MS`, `AUCTION_GRACE_MS`. Local games keep the old turn-based auction.
-
-**Who may press what.** The browsers apply the same rule: the player whose turn it is acts, except in an auction (the current bidder) and in a trade (the player named on the left of the trade window, so the other side can accept, reject or counter-offer). Everything is checked before a click is sent (bid too low, not enough money, nothing selected), so mistakes stay on your own screen. Drawing up a trade is private; the offer appears for everybody when it is proposed.
-
-**Reconnect and rejoin.** A lost connection reconnects by itself and asks for the clicks it missed. Refreshing the page, or opening the game from History, replays the stored clicks, including auctions, trades and building, and ends in exactly the same position.
-
-**Away and abandoned games.** If the player whose turn it is leaves, the others see a countdown and then a *Remove* button: the player is declared bankrupt to the bank (their properties are auctioned) and the game goes on, or ends if one player is left. The host can also *Abandon game* for everybody. A running game that nobody has opened for 30 minutes is marked *abandoned* by the server (`ABANDON_AFTER_MS`; `FORFEIT_AFTER_MS` and `SWEEP_EVERY_MS` can be set too). Abandoned games stay in History with their own badge.
-
-**Timers and who is online.** The turn timer (30 s) and the auction timer (15 s) run in every browser, but only the browser of the player concerned sends the automatic *End turn* / *Pass*, so it happens once for everybody. Ending the turn on an unbought property opens the usual auction. The lengths are `TOTAL_SECONDS` and `AUCTION_SECONDS` in `src/components/TurnTimer.jsx`. The server tells everyone who is connected; the circle is shown in the "whose turn" box (glowing green = online, grey ring = away).
-
-**Out of sync.** If a shared click cannot be pressed on a still screen (for example an impatient second click on *OK*), every browser drops it the same way after 1.5 s. If the browsers still disagree, the bar shows a red *Out of sync – reload* button (hover it for the reason); reloading replays the game from the stored clicks.
-
-**Limits.** The server checks membership but cannot check the rules (the engine lives in the browsers), so online games are meant for friends. A player who goes away in the middle of an auction or trade (and whose turn it is not) can only be removed on their own turn, or the host can abandon the game.
-
----
-
-## 🧭 Pages (URLs)
-
-| Path | Page |
-|---|---|
-| `/login`, `/register` | Sign in / create account (signed-out visitors are redirected here) |
-| `/play` | Home: new local game, create / join an online room, continue playing |
-| `/play/local` | A new game on this device (it gets its own address after the first turn) |
-| `/play/:id` | A saved game: resumes a local game, or opens the online lobby / game |
-| `/join/:code` | Join an online room by its code, then continues at `/play/:id` |
-| `/history`, `/history/:id` | All games; details of one game |
-| `/history/:id/replay` | Step through a saved game line by line |
-| `/admin`, `/admin/requests`, `/admin/users`, `/admin/users/:id`, `/admin/games` | Admin panel (administrators only) |
-| anything else | Page not found |
-
-The router is a small module (`src/router.jsx`, History API, no library). After `npm run build`, `npm start` serves the site from `dist/` and answers every non-API path with `index.html`, so these addresses also work when typed in or reloaded.
-
----
-
-## ☁️ Deploying (Vercel + a Node host)
-
-Vercel runs the **website** only. The game server needs a long-lived process (WebSocket rooms) and a database file, which Vercel's serverless functions cannot provide, so it runs on a small Node host and the site talks to it.
-
-| Part | Where | Notes |
-|---|---|---|
-| Website (`dist/`) | Vercel | `vercel.json`: Vite build, every path falls back to `index.html` |
-| API + WebSocket | Render / Railway / Fly (any host with Node ≥ 22.13) | `render.yaml` is a ready blueprint; start command `node server/index.js` |
-| Database | Neon (PostgreSQL, free plan) | the backend reads `DATABASE_URL`; the host needs no disk |
-
-1. **Database:** create a project at neon.tech and copy its connection string (`postgresql://user:password@host/db?sslmode=require`). The tables are created automatically on the first start.
-2. **Backend:** deploy the repo to the Node host. Environment variables: `DATABASE_URL` (the Neon string), `JWT_SECRET` (long random string), `ALLOWED_ORIGIN` = your Vercel address, e.g. `https://game.example.am` (comma separated for several). Optional: `ADMIN_EMAILS` = your account's e-mail (comma separated for several) to get the **Admin** panel. Check `https://<backend>/api/health`: it should answer `{"ok":true,"db":"pg"}`.
-3. **Vercel:** Project → Settings → Environment Variables: `VITE_API_URL` = the backend address, e.g. `https://yerevanpoly-api.onrender.com` (no trailing slash; WebSockets use the same host). Redeploy, because Vite bakes it in at build time.
-4. **Domain:** add your domain to the Vercel project; if you also want a nice API address, give the backend its own sub-domain (`api.example.am`) and use that in `VITE_API_URL` and nothing else changes.
-
-Accounts and history live in PostgreSQL, so redeploying or restarting the backend loses nothing. (Without `DATABASE_URL` the backend falls back to a SQLite file, which a host without a persistent disk resets on every deploy.)
-
----
-
-## 🚀 Getting Started
-
-Requires Node.js 22.13 or newer.
+Requires **Node.js 22.13 or newer**.
 
 ```bash
 npm install
-npm run dev:all  # API + WebSocket on :3001, site on http://localhost:5173
-npm run build    # production build in dist/
-npm run test:server   # REST + WebSocket tests
-npm run build && npm start   # production: one server for site, API and WebSocket (http://localhost:3001)
+npm run dev:all        # API + WebSocket on :3001, site on http://localhost:5173
 ```
 
-`JWT_SECRET` (environment variable) should be set to a long random string outside development. Locally the database is the file `server/data/monopoly.db` (override with `DB_FILE`); set `DATABASE_URL` to use PostgreSQL instead. `npm run test:server` uses an in-memory SQLite; set `TEST_DATABASE_URL` to an empty PostgreSQL database to run the same tests on PostgreSQL.
+```bash
+npm run build && npm start   # production: one server for site, API and WebSocket on :3001
+npm run test:server          # REST + WebSocket tests
+npm run test:e2e             # real-browser tests (needs Playwright)
+```
+
+Without any setting the database is the SQLite file `server/data/monopoly.db`. Set `DATABASE_URL` to use PostgreSQL instead. Outside development, set `JWT_SECRET` to a long random string.
+
+To get the **Admin** panel, set `ADMIN_EMAILS` (for example `ADMIN_EMAILS=me@example.am`), restart the server and sign in again with that account.
 
 ---
 
-## ⚙️ Customization & Editions
+## How it works
 
-To switch between the **Classic Edition** and the **New York City Edition**, edit the engine `<script>` tags in `index.html`:
+The game rules and state live in a plain-JavaScript engine (`public/engine/`) that reads and updates the page by element `id`s, so those ids must not be renamed. React draws everything around it: sign-in, lobby, side panels, trade window, auction, history, admin.
 
-```html
-<!-- For Classic Edition: -->
-<script src="/engine/classicedition.js"></script>
-<!-- <script src="/engine/newyorkcityedition.js"></script> -->
+**Relay model (online games).** The engine runs, unchanged, in every browser. Only the buttons that change the game are shared (*Roll, End turn, Buy, Pay $50, Use card, pop-up OK / Yes / No, Resign, Build / Sell, Mortgage, trade Propose / Accept / Reject / Cancel*, auction events). The player whose turn it is clicks one, the click goes to the server over a WebSocket, the server numbers it and sends it to everybody, and every browser presses the same button in the same order. All randomness (dice, card decks, turn order) comes from one seed handed out when the game starts, so everybody sees the same dice.
 
-<!-- For New York City Edition: -->
-<!-- <script src="/engine/classicedition.js"></script> -->
-<script src="/engine/newyorkcityedition.js"></script>
+The ordered clicks are stored in `game_actions`. That one idea gives rejoin, reconnect, spectating and replay for free: all of them just play the stored clicks again.
+
 ```
+ player's browser ──click──▶ server (numbers it, stores it) ──▶ every browser, incl. spectators
+                                                                 └─ presses the same button
+```
+
+The server checks membership and turns but cannot check the rules (the engine lives in the browsers), so online games are meant for friends.
+
+### Rule sets
+
+A game keeps the rule set it started with (`games.rules`), so old games replay exactly as they were played.
+
+| Version | Change |
+| :---: | :--- |
+| 2 | Cheaper houses, halved rents, $300 for passing GO |
+| 3 | No auctions in online games that began with exactly 2 players (the property just stays with the bank) |
 
 ---
 
-## 🛠️ Built With
+## Online play
 
-- **React 19 + Vite** – Page markup and dev/build tooling.
-- **Node.js 22 (`node:http`, `node:crypto`)** – API, password hashing and JWT.
-- **SQLite (`node:sqlite`) / PostgreSQL (`pg`)** – storage; SQLite for local use, PostgreSQL (Neon) when deployed.
-- **three.js + cannon-es** – 3D dice.
-- **HTML5 & CSS3** – Board layout, styling, and typography.
-- **JavaScript (ES5/Vanilla)** – Game state management and business logic.
-- **jQuery (1.11.1)** – DOM interactions, drag-and-drop modals, and event handling.
+**Home → Create room** gives a 5-letter code and a link `/join/CODE`. Friends enter it under *Join*. In the lobby everybody picks a colour and the host presses **Start game** (2–8 players).
+
+- **Public and private rooms.** The *Rooms* list shows rooms waiting for players, live. A private room asks for a password (4–40 characters, stored as a scrypt hash; 5 wrong tries lock that account out of password rooms for 30 s). The host can switch a waiting room between public and private and can *Kick* a player.
+- **One room per account.** The same account cannot be in two waiting rooms at once.
+- **Live auction.** When a player ends the turn without buying, the property goes to auction. Bid with *+$2 / +$10 / +$100* (each button shows the new total). Every new bid restarts the 5 seconds; if nobody bids within 20 seconds the property stays with the bank. The server keeps the only clock and accepts a bid up to 0.3 s after the shown time, for slow connections.
+- **Trading.** Drafting is private; the offer appears for everybody when proposed. The two players answer it whenever they like; everybody else keeps playing. When it is answered, the engine checks the offer again and cancels it if something offered changed hands, got buildings, or a player went bankrupt. One offer is open at a time, and an unanswered offer is withdrawn after 60 s.
+- **Turn timer.** 30 s after *End turn* appears the turn ends by itself. Only the browser of the player concerned sends it, so it happens once for everybody.
+- **Who is online.** A green dot shows a connected player. The server pings every connection every 7 s, so a dead connection (closed laptop, lost signal) turns grey after 7–14 s.
+- **Away players.** If the player whose turn it is stays away for a minute, the others see a *Remove* button (host first). The player goes bankrupt to the bank and the game continues. The host can also *Abandon game*. A running game nobody opened for 30 minutes is marked *abandoned*.
+- **Reconnect and rejoin.** A lost connection reconnects by itself and asks for the clicks it missed. Refreshing or opening the game from History replays the stored clicks and ends in exactly the same position.
+- **Out of sync.** If browsers ever disagree, the bar shows a red *Out of sync – reload* button; reloading replays the game from the stored clicks.
+
+---
+
+## Spectating and replays
+
+### Live games
+
+The **Live games** page (sidebar) lists running online games with their players, turn count and how many people are watching. **Watch** opens the real game screen for a public game: the same board, tokens, cards and effects the players see, with all controls disabled. The players see an eye icon with the number of watchers. When a watched game ends, spectators get the same *Game over* recap as the players.
+
+Private rooms are listed (marked *Private*) but cannot be watched; administrators can watch any game from **Admin → Live**. Administrators can switch the whole feature off for everybody with the *Live games* switch there.
+
+### Replays
+
+**History → Details → Replay** on a finished online game opens `/replay/:id`: the real board playing the stored game again.
+
+- Play / pause, previous / next turn, speed 1x / 2x / 4x, and a slider over every move. The label shows the turn and the latest log line.
+- Going forward runs the moves in between behind the loading screen. Going back loads the page again at that point (the engine only runs forward).
+- At 4x the dice animation and sounds are skipped.
+
+Local games and games without stored clicks still open the older step-by-step replay from the log (`/history/:id/replay`).
+
+---
 
 ## Admin panel
 
-Open **Admin** in the sidebar (only administrators see it; the server checks the role on every request). It shows:
+Only administrators see **Admin** in the sidebar; the server checks the role on every request.
 
-- **Overview:** totals (users, games, in progress, finished, turns, open connections) and the last 14 days of games and sign-ups.
-- **New users req.:** accounts waiting for approval (the tab shows how many). *Approve* makes the account a player; *Reject* deletes it (the person can register again).
-- **Users:** every account with search, role filter (admins / players / not approved) and sorting; a user page shows their games, lets you make them admin / player or delete the account.
-- **Games:** every game of every player with the same filters as History (including *Advanced*) plus a search for the creator's name or e-mail; open any game (details, replay), end a running online game, or delete a finished one.
+| Tab | What it does |
+| :--- | :--- |
+| **Overview** | Totals (users, games, in progress, finished, turns, open connections) and the last 14 days of games and sign-ups. |
+| **New users req.** | Accounts waiting for approval. *Approve* makes the account a player, *Reject* deletes it. |
+| **Users** | Search, role filter and sorting; a user page shows their games and lets you make them admin or player, or delete the account. |
+| **Games** | Every game of every player, same filters as History plus creator search. Open any game, end a running online one, or delete a finished one. |
+| **Live** | All running online games, watchable even if private, and the *Live games* switch. |
 
-To become an administrator, set the environment variable `ADMIN_EMAILS` (e.g. `ADMIN_EMAILS=me@example.am`) on the backend, restart it and log in again. Admins can then promote others in the panel. You cannot change or delete your own account there.
+A new account has the role `not-approved` until an administrator approves it. It can open *Play* and *History* but cannot start a game or join a room (the server answers `403`). Accounts made from `ADMIN_EMAILS` are administrators immediately. You cannot change or delete your own account in the panel.
+
+---
+
+## Pages (URLs)
+
+| Path | Page |
+| :--- | :--- |
+| `/login`, `/register` | Sign in / create account (signed-out visitors are redirected here) |
+| `/play` | Home: new local game, create / join a room, continue playing |
+| `/play/local` | A new game on this device |
+| `/play/:id` | A saved game: resumes a local game, or opens the online lobby / game |
+| `/join/:code` | Join an online room by its code |
+| `/live`, `/live/:id` | Running games; watch one |
+| `/history`, `/history/:id` | All games; details of one game |
+| `/replay/:id` | A finished online game on the real board |
+| `/history/:id/replay` | Step-by-step replay from the log |
+| `/admin`, `/admin/requests`, `/admin/users`, `/admin/users/:id`, `/admin/games`, `/admin/live` | Admin panel |
+
+The router is a small History-API module (`src/router.jsx`). After `npm run build`, `npm start` answers every non-API path with `index.html`, so these addresses also work when typed in or reloaded.
+
+---
+
+## API reference
+
+All paths are under `/api` and need `Authorization: Bearer <token>` except register, login and health.
+
+| Method | Path | Purpose |
+| :--- | :--- | :--- |
+| POST | `/auth/register`, `/auth/login` | Create account / sign in, returns a token |
+| GET | `/me` | Current user |
+| GET | `/features` | Feature switches (for example whether Live games is on) |
+| POST | `/games` | Create a game record |
+| GET | `/games?status=&mode=&q=&from=&to=&sort=&dir=&limit=&offset=` | History, paged (`status`: active / finished / abandoned; `q` searches players, winner and room code) |
+| GET / DELETE | `/games/:id` | Game with checkpoint and log / delete. A public running online game is also readable by spectators (`you: null`) |
+| GET | `/games/:id/replay` | Settings, every stored click and the log of a finished online game (its players and admins) |
+| PUT | `/games/:id/checkpoint` | Save checkpoint and log lines |
+| POST | `/games/:id/finish` | Save result and final ranking |
+| POST | `/games/:id/resume` | Bring an abandoned online game back to *active* |
+| GET | `/rooms` | Online rooms waiting for players |
+| GET | `/live` | Running public and private games (private ones without code) |
+| GET / PATCH | `/admin/settings` | Admin: read / change feature switches |
+| GET | `/health` | `{ ok, db }` |
+
+Admin routes (`/admin/users`, `/admin/games`, `/admin/stats` and so on) are listed in `server/app.js`.
+
+### WebSocket (`/ws?token=JWT`)
+
+| Message | Direction | Purpose |
+| :--- | :--- | :--- |
+| `create`, `join {code \| gameId, after, password?}`, `leave` | client → server | Open / enter / leave a room |
+| `watch {gameId, after}` | client → server | Spectate a running game (read only) |
+| `visibility {private, password}`, `kick {userId}`, `color`, `start` | client → server | Lobby controls (host) |
+| `act {a:{id, turn, v?, check?}}` | client → server | A shared button click (members only) |
+| `auction-open`, `auction-bid` | client → server | Live auction input |
+| `forfeit {seat}`, `abandon`, `log`, `end` | client → server | Remove an away player / end without winner / log lines / result |
+| `joined`, `room`, `started`, `act {seq}`, `ended`, `left`, `kicked`, `rooms-changed`, `error` | server → client | State and the numbered action stream |
+
+The numbered stream also carries the server's auction events `aucopen`, `aucbid`, `aucend`.
+
+---
+
+## Configuration
+
+Environment variables of the server:
+
+| Variable | Default | Meaning |
+| :--- | :--- | :--- |
+| `PORT` | `3001` | HTTP / WebSocket port |
+| `DATABASE_URL` | – | PostgreSQL connection string; without it SQLite is used |
+| `DB_FILE` | `server/data/monopoly.db` | SQLite file |
+| `JWT_SECRET` | dev value | Secret for sign-in tokens, **set it in production** |
+| `ALLOWED_ORIGIN` | – | Website address(es) allowed by CORS, comma separated |
+| `ADMIN_EMAILS` | – | Accounts that become administrators, comma separated |
+| `AUCTION_FIRST_MS` / `AUCTION_BID_MS` / `AUCTION_GRACE_MS` | 20000 / 5000 / 300 | Live auction clock |
+| `TRADE_EXPIRE_MS` | 60000 | Unanswered trade offers are withdrawn after this |
+| `HEARTBEAT_MS` | 7000 | How often connections are checked |
+| `FORFEIT_AFTER_MS` | 60000 | How long a player is away before the *Remove* button appears |
+| `ABANDON_AFTER_MS`, `SWEEP_EVERY_MS` | 30 min, – | When idle running games are marked abandoned, and how often the server looks |
+
+Build time (Vercel): `VITE_API_URL` is the backend address (no trailing slash; WebSockets use the same host).
+
+### Board editions
+
+Switch between the **Classic** and **New York City** boards by editing the engine `<script>` tags in `index.html`:
+
+```html
+<script src="/engine/classicedition.js"></script>
+<!-- <script src="/engine/newyorkcityedition.js"></script> -->
+```
+
+---
+
+## Deployment
+
+Vercel runs the **website** only. The game server needs a long-lived process (WebSocket rooms), so it runs on a small Node host and the site talks to it.
+
+| Part | Where | Notes |
+| :--- | :--- | :--- |
+| Website (`dist/`) | Vercel | `vercel.json`: Vite build, every path falls back to `index.html` |
+| API + WebSocket | Render / Railway / Fly (Node ≥ 22.13) | `render.yaml` is a ready blueprint; start command `node server/index.js`; use a plan that does not sleep, or running games are interrupted |
+| Database | Neon (PostgreSQL, free plan) | The tables are created on first start; the host needs no disk |
+
+1. **Database.** Create a project at neon.tech and copy its connection string.
+2. **Backend.** Deploy the repo to the Node host with `DATABASE_URL`, `JWT_SECRET`, `ALLOWED_ORIGIN` (your Vercel address) and optionally `ADMIN_EMAILS`. Check `https://<backend>/api/health`: it should answer `{"ok":true,"db":"pg"}`.
+3. **Vercel.** Set `VITE_API_URL` to the backend address and redeploy (Vite bakes it in at build time).
+4. **Domain.** Add your domain to the Vercel project; give the backend its own sub-domain if you like and use it in `VITE_API_URL`.
+
+Accounts and history live in PostgreSQL, so restarting the backend loses nothing. (Without `DATABASE_URL` the backend uses a SQLite file, which a host without a persistent disk resets on every deploy.)
+
+---
+
+## Project structure
+
+```text
+├── index.html               # Vite entry: jQuery, the engine scripts, src/main.jsx
+├── server/                  # Backend (plain Node, no framework)
+│   ├── index.js             # Starts the API
+│   ├── app.js               # REST routes, static files, WebSocket upgrade
+│   ├── ws.js                # WebSocket protocol (RFC 6455) on node:http, heartbeat
+│   ├── rooms.js             # Rooms: lobby, seats, ordered action relay, auctions, watchers, replay data
+│   ├── auth.js              # scrypt password hashing, JWT
+│   ├── db.js                # SQLite (local) or PostgreSQL (DATABASE_URL), same SQL
+│   └── test.js, test-ws.js  # REST and WebSocket tests
+├── src/
+│   ├── App.jsx, router.jsx  # Pages by URL, tiny History-API router
+│   ├── online.js            # WebSocket connection and room state
+│   ├── onlineGame.js        # Runs an online game on the engine: seeded start, shared clicks, spectating, replay
+│   ├── liveAuction.js       # Live auction state
+│   ├── session.js           # Checkpoints, log lines, resume
+│   ├── portal/              # Sign-in, Home, Lobby, Live games, History, Replay, Admin, shell
+│   ├── components/          # Board, ControlPanel, TradePanel, LiveAuction, Dice3D, TurnTimer, …
+│   ├── sound.js, fx.js      # Sound effects and board effects
+│   └── vendor/              # 3D dice library (MIT)
+├── public/
+│   ├── engine/              # Game engine: monopoly.js, ai.js, classicedition.js, newyorkcityedition.js
+│   └── images/              # Board icons, cards and UI graphics
+└── scripts/                 # dev.mjs (API + Vite), e2e.mjs (browser tests)
+```
+
+Beyond the original code, the engine has a few small additions: the 3D dice hook in `roll()`, save hooks (`onTurnStart`, `onGameEvent`, `onPlayerEliminated`, `onGameEnd`), `gameRandom()` (seedable randomness), ids on shared buttons, the rule sets, and the offer re-check when a trade is accepted.
+
+---
+
+## Testing
+
+```bash
+npm run test:server   # REST + WebSocket / room tests (in-memory SQLite)
+npm run test:e2e      # real browsers: two and four online players, rules, live games
+```
+
+Set `TEST_DATABASE_URL` to an empty PostgreSQL database to run the server tests on PostgreSQL as well.
+
+---
+
+## Built with
+
+- **React 19 + Vite 7**: interface and tooling
+- **Node.js 22** (`node:http`, `node:crypto`, `node:sqlite`): API, WebSocket, password hashing, JWT
+- **SQLite / PostgreSQL (`pg`)**: storage; Neon when deployed
+- **three.js + cannon-es**: 3D dice (via the vendored dice-box-threejs)
+- **jQuery 1.11 + vanilla JavaScript**: the game engine
+- **Montserrat**, lime on charcoal: the design system in `src/styles.css`
