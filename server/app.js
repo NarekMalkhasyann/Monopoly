@@ -363,6 +363,14 @@ export function createApp(db, { secret, staticDir } = {}) {
 			const user = await authUser(req);
 			return [200, await listGames(user, url.searchParams)];
 		}
+		// A finished online game, as the clicks that were played (read only): its players and admins
+		if (method === 'GET' && (m = /^\/api\/games\/(\d+)\/replay$/.exec(path))) {
+			const user = await authUser(req);
+			const g = user.role === 'admin' ? await db.get('SELECT id FROM games WHERE id = ?', [Number(m[1])]) : await q.visibleGame(Number(m[1]), user.id);
+			const data = g && await rooms.replay(g.id);
+			if (!data) throw new HttpError(404, 'This game has no saved moves to replay');
+			return [200, data];
+		}
 		if ((m = /^\/api\/games\/(\d+)$/.exec(path))) {
 			const user = await authUser(req);
 			if (method === 'GET') {
@@ -370,15 +378,17 @@ export function createApp(db, { secret, staticDir } = {}) {
 				let g = user.role === 'admin' ? await db.get('SELECT * FROM games WHERE id = ?', [Number(m[1])]) : await q.visibleGame(Number(m[1]), user.id);
 				let spectator = false;
 				if (!g) { // anybody may watch a running online game of a PUBLIC room (read only)
-					const pub = await liveEnabled() && await db.get("SELECT * FROM games WHERE id = ? AND mode = 'online' AND status = 'active' AND is_private = 0", [Number(m[1])]);
-					if (!pub) throw new HttpError(404, 'Game not found');
+					const pub = await liveEnabled() && await db.get("SELECT * FROM games WHERE id = ? AND mode = 'online' AND status IN ('active', 'finished') AND is_private = 0", [Number(m[1])]);
+					// a finished game stays readable for a few minutes, so the people watching it can see the recap
+					const justEnded = pub && (pub.status === 'active' || Date.now() - Date.parse(String(pub.finished_at).replace(' ', 'T') + 'Z') < 15 * 60_000);
+					if (!pub || !justEnded) throw new HttpError(404, 'Game not found');
 					g = pub; spectator = true;
 				}
 				const seat = await q.mySeat(g.id, user.id);
 				const owner = user.role === 'admin' ? (await addOwners([{ owner_id: g.owner_id }]))[0].owner : undefined;
 				if (spectator) { // only what the board needs: no user ids, no owner, no snapshot
 					const sum = await gameSummary(g);
-					return [200, { game: { id: sum.id, mode: sum.mode, status: sum.status, rules: sum.rules, turn_count: sum.turn_count, players: sum.players.map((p) => ({ seat: p.seat, name: p.name, color: p.color, is_ai: p.is_ai })), you: null, events: cleanLog(await q.actions(g.id)).filter((e) => e.seq > (Number(url.searchParams.get('after')) || 0)) } }];
+					return [200, { game: { id: sum.id, mode: sum.mode, status: sum.status, rules: sum.rules, turn_count: sum.turn_count, winner_name: sum.winner_name, created_at: sum.created_at, finished_at: sum.finished_at, players: sum.players.map((p) => ({ seat: p.seat, name: p.name, color: p.color, is_ai: p.is_ai, final_money: p.final_money, final_rank: p.final_rank })), you: null, events: cleanLog(await q.actions(g.id)).filter((e) => e.seq > (Number(url.searchParams.get('after')) || 0)) } }];
 				}
 				return [200, { game: { ...await gameSummary(g), owner, you: seat ? seat.seat : null, snapshot: g.snapshot ? JSON.parse(g.snapshot) : null, events: cleanLog(await q.actions(g.id)).filter((e) => e.seq > (Number(url.searchParams.get('after')) || 0)) } }]; // ?after=N: only the lines after N (the admin's live board)
 			}

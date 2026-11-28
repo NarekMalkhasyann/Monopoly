@@ -8,7 +8,8 @@
 //   /join/:code        join an online room by its code, then goes to /play/:id
 //   /admin             admin panel (administrators only): /admin/users, /admin/users/:id, /admin/games
 //   /live              running online games;  /live/:id  watch one (read only)
-//   /history           all games;  /history/:id  one game's details;  /history/:id/replay  step through it
+//   /history           all games;  /history/:id  one game's details;  /history/:id/replay  step through its log;
+//   /replay/:id        a finished online game played again on the real board
 //
 // The node server answers every non-API path with index.html, so each of these also
 // works when typed in or reloaded.
@@ -50,6 +51,7 @@ const ROUTES = [
 	[/^\/history\/?$/, 'history'],
 	[/^\/history\/(\d+)\/?$/, 'historyDetail', ['id']],
 	[/^\/history\/(\d+)\/replay\/?$/, 'historyReplay', ['id']],
+	[/^\/replay\/(\d+)\/?$/, 'replay', ['id']],
 ];
 
 // "/play/12?x=1" -> { name: 'game', params: { id: '12' }, search: URLSearchParams }
@@ -67,7 +69,7 @@ export function matchRoute(location) {
 export function gameKey(location) {
 	const r = matchRoute(location);
 	if (r.name === 'local') return 'local';
-	if (r.name === 'game' || r.name === 'watch') return r.params.id;
+	if (r.name === 'game' || r.name === 'watch' || r.name === 'replay') return r.params.id;
 	return null;
 }
 

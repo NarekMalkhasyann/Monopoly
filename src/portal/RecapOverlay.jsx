@@ -4,9 +4,9 @@ import { subscribeGameEnd } from '../session.js';
 import { Modal } from './GameDetails.jsx';
 import Recap from './Recap.jsx';
 
-// Shown over the board when a game ends (for every player of an online game): waits until the server has the finished
+// Shown over the board when a game ends (for every player of an online game and for the people watching it): waits until the server has the finished
 // game and its log, then shows the recap. Going on to the replay or the menu reloads the page, which gives the next game a clean engine.
-export default function RecapOverlay() {
+export default function RecapOverlay({ spectating = false }) {
 	const [game, setGame] = useState(null);
 	const [shown, setShown] = useState(false);
 
@@ -27,7 +27,7 @@ export default function RecapOverlay() {
 	return (
 		<Modal wide onClose={() => setShown(false)}>
 			<h3 className="modal-title">Game over</h3>
-			<Recap game={game} onReplay={() => go(`/history/${game.id}/replay`)} onClose={() => go('/play')} closeLabel="Back to menu" />
+			<Recap game={game} onReplay={spectating ? undefined : () => go(`/replay/${game.id}`)} onClose={() => go(spectating ? '/live' : '/play')} closeLabel={spectating ? 'Back to Live games' : 'Back to menu'} />
 			<p className="rc-keep"><button className="link-btn" onClick={() => setShown(false)}>Look at the board</button></p>
 		</Modal>
 	);

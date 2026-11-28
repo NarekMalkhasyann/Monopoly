@@ -278,7 +278,7 @@ function tick() {
 }
 
 function tickOnce() {
-	setReplaying(queue.length > 1 || loadingOn); // old moves (rejoining, catching up) are replayed without sound
+	setReplaying(queue.length > 1 || loadingOn || (replay && replay.speed >= 4)); // old moves (rejoining, catching up) are replayed without sound
 	syncMyIndex();
 	syncTradeShared();
 	if (loadingOn && Date.now() - loadStart > 90000) { loadingOff(); finishLoading(0); } // never trap the player behind it
@@ -286,7 +286,7 @@ function tickOnce() {
 	if (!m) { restoreFast(); if (loadingOn) endLoad(); return false; }
 
 	// A long backlog (rejoining) is replayed without animations.
-	if (queue.length > 1) {
+	if (queue.length > 1 || (replay && replay.speed >= 4)) {
 		if (win.jQuery) win.jQuery.fx.off = true;
 		if (win.animateDice && !savedDice) { savedDice = win.animateDice; win.animateDice = undefined; }
 	} else {
@@ -559,17 +559,20 @@ export function startOnlineGame(room, you) {
 	win.onlineMayAutoClick = () => win.turn === myIndex && queue.length === 0 && !loadingOn;
 	document.addEventListener('click', onClickCapture, true);
 	document.addEventListener('keydown', onKeyCapture, true);
-	timer = setInterval(() => { tick(); refreshInfo(); }, 40);
+	timer = setInterval(() => { tick(); refreshInfo(); if (replay) replayStep(); }, 40);
 
 	// Rejoining a long game replays every stored move: show how far it is instead of letting it flash by on the board.
-	if (queue.length >= LOAD_MIN_MOVES) {
-		loadingOn = true; loadStart = Date.now(); applied = 0;
-		// the property lists and cash numbers are drawn once at the end instead of after every single move
-		for (const f of REDRAW) { saved[f] = win[f]; win[f] = () => {}; }
-		document.body.classList.add('replaying'); // (the board is not drawn while the moves run behind the loading screen)
-		startLoading('Loading your game', `Replaying ${queue.length} moves…`);
-		setLoading(0.15);
-	} else finishLoading();
+	if (queue.length >= LOAD_MIN_MOVES) beginBacklogLoad('Loading your game');
+	else finishLoading();
+}
+
+function beginBacklogLoad(title) {
+	loadingOn = true; loadStart = Date.now(); applied = 0;
+	// the property lists and cash numbers are drawn once at the end instead of after every single move
+	for (const f of REDRAW) { saved[f] = win[f]; win[f] = () => {}; }
+	document.body.classList.add('replaying'); // (the board is not drawn while the moves run behind the loading screen)
+	startLoading(title, `Replaying ${queue.length} moves…`);
+	setLoading(0.15);
 }
 
 // ---- loading screen while a long backlog is replayed
@@ -609,6 +612,106 @@ export function stopOnlineGame() {
 	document.removeEventListener('keydown', onKeyCapture, true);
 	win.liveAuction = undefined; live.close();
 	win.sfxMine = undefined; setReplaying(false);
+}
+
+// ---- replaying a finished game on the real board (portal/ReplayPage.jsx, portal/ReplayBar.jsx)
+// The stored clicks are fed to the same queue the live game uses, one at a time and paced by the speed. The engine can
+// only go forward, so going back loads the page again at the wanted point (the moves up to it run behind the loading
+// screen); going forward runs the moves in between the same way, without staying on the board.
+let replay = null; // { id, actions, log, winner, cursor, playing, speed, nextAt, finished }
+const replayListeners = new Set();
+let replaySnapshot = null;
+
+function replayTurnAt(cursor) { // the log line that was the latest when click number `cursor` had been pressed
+	if (!replay || cursor <= 0) return { turn: 0, text: '' };
+	const seq = replay.actions[cursor - 1].seq;
+	let lo = 0, hi = replay.log.length - 1, found = -1;
+	while (lo <= hi) { const mid = (lo + hi) >> 1; if (replay.log[mid].seq <= seq) { found = mid; lo = mid + 1; } else hi = mid - 1; }
+	return found < 0 ? { turn: 0, text: '' } : { turn: replay.log[found].turn, text: replay.log[found].text };
+}
+function replayNotify() {
+	if (!replay) return;
+	const at = replayTurnAt(replay.cursor - queue.length);
+	const next = { total: replay.actions.length, cursor: replay.cursor - queue.length, playing: replay.playing, speed: replay.speed, finished: replay.finished, turn: at.turn, text: at.text, turns: replay.turns, winner: replay.winner, loading: loadingOn };
+	if (replaySnapshot && Object.keys(next).every((k) => replaySnapshot[k] === next[k])) return;
+	replaySnapshot = next;
+	replayListeners.forEach((fn) => fn(next));
+}
+export function subscribeReplay(fn) {
+	replayListeners.add(fn);
+	if (replaySnapshot) fn(replaySnapshot);
+	return () => replayListeners.delete(fn);
+}
+export const isReplayGame = () => !!replay;
+
+function scaleAnimations(speed) { // jQuery animations (pop-ups, cash counting, tokens) follow the speed
+	const $ = win.jQuery;
+	if (!$ || !$.speed) return;
+	if (!$.speed.__orig) {
+		const orig = $.speed;
+		$.speed = function () { const o = orig.apply(this, arguments); if (typeof o.duration === 'number') o.duration = o.duration / (win.__replaySpeed || 1); return o; };
+		$.speed.__orig = orig;
+	}
+	win.__replaySpeed = speed;
+}
+
+function replaySettled() {
+	const busy = (win.jQuery && win.jQuery(':animated').length > 0) || document.getElementById('dice-scene')?.classList.contains('visible') || (win.tokensBusy && win.tokensBusy());
+	return !busy;
+}
+function replayStep() {
+	if (!replay) return;
+	replayNotify();
+	if (!replay.playing || loadingOn || queue.length > 0) return;
+	if (replay.cursor >= replay.actions.length) {
+		if (replaySettled()) { replay.playing = false; replay.finished = true; replayNotify(); }
+		return;
+	}
+	if (!replaySettled() || Date.now() < replay.nextAt) return;
+	queue.push(replay.actions[replay.cursor++]);
+	replay.nextAt = Date.now() + 500 / replay.speed;
+}
+
+export function startReplayGame(data, opts = {}) {
+	const at = Math.max(0, Math.min(opts.at || 0, data.clicks.length));
+	const turns = [];
+	for (const e of data.log) if (e.turn > 0 && (!turns.length || turns[turns.length - 1].turn !== e.turn)) turns.push({ turn: e.turn, seq: e.seq });
+	replay = { id: data.room.id, actions: data.clicks, log: data.log, winner: data.winner, cursor: at, playing: opts.play !== false, speed: opts.speed || 1, nextAt: 0, finished: false, turns };
+	for (let i = 0; i < at; i++) queue.push(data.clicks[i]);
+	scaleAnimations(replay.speed);
+	startOnlineGame(data.room, null);
+	replayNotify();
+}
+export function replayPlay() {
+	if (!replay) return;
+	if (replay.finished) return replaySeek(0, true);
+	replay.playing = true; replayNotify();
+}
+export function replayPause() { if (replay) { replay.playing = false; replayNotify(); } }
+export function replaySetSpeed(v) { if (replay) { replay.speed = v; scaleAnimations(v); replayNotify(); } }
+export function replaySeek(cursor, play) {
+	if (!replay) return;
+	const target = Math.max(0, Math.min(cursor, replay.actions.length));
+	const now = replay.cursor - queue.length;
+	if (target <= now) { // back: a clean engine, brought to that point behind the loading screen
+		location.assign(`/replay/${replay.id}?at=${target}&play=${(play ?? replay.playing) ? 1 : 0}&speed=${replay.speed}`);
+		return;
+	}
+	replay.finished = false;
+	while (replay.cursor < target) queue.push(replay.actions[replay.cursor++]);
+	if (play !== undefined) replay.playing = play;
+	if (!loadingOn && queue.length > 1) beginBacklogLoad('Skipping ahead');
+	replayNotify();
+}
+// first click of the n-th turn from the current one (n = -1 is the start of this turn, or of the one before it)
+export function replayTurnCursor(dir) {
+	if (!replay) return 0;
+	const now = replay.cursor - queue.length;
+	const cursorOf = (t) => { const i = replay.actions.findIndex((a) => a.seq > t.seq); return i < 0 ? replay.actions.length : i; };
+	const starts = replay.turns.map(cursorOf);
+	if (dir > 0) return starts.find((c) => c > now) ?? replay.actions.length;
+	const before = starts.filter((c) => c < now - 1);
+	return before.length ? before[before.length - 1] : 0;
 }
 
 // A player removed because they stayed away: the engine takes everything they own back to the bank.
