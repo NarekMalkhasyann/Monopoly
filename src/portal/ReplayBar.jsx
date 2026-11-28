@@ -29,6 +29,11 @@ export default function ReplayBar({ id }) {
 		<div className="game-bar replay-top" ref={barRef} role="group" aria-label="Replay controls">
 			<button className="btn-ghost" onClick={() => { window.location.assign(`/history/${id}`); }}>← History</button>
 			<SoundButton />
+			<span className="gb-brand">
+				<span className="gb-mark" aria-hidden="true">A</span>
+				<b>ACT Monopoly</b>
+				<span className="gb-sub">Replay · Game #{id}</span>
+			</span>
 			<div className="rb-buttons">
 				<button className="rb-btn" onClick={() => replaySeek(replayTurnCursor(-1))} aria-label="Previous turn" title="Previous turn">{icon(<path d="M6 6h2v12H6zM9.5 12L18 6v12z" />)}</button>
 				<button className="rb-btn rb-play" onClick={() => (r.playing ? replayPause() : replayPlay())} aria-label={r.playing ? 'Pause' : r.finished ? 'Play again' : 'Play'} title={r.playing ? 'Pause' : r.finished ? 'Play again' : 'Play'}>

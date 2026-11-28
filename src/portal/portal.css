@@ -828,24 +828,26 @@ body.trade-bystander #trade { display: none !important; } /* an offer between tw
 .live-switch small { display: block; color: #ffffff99; font-size: 12.5px; margin-top: 2px; }
 
 /* ---- replay controls (portal/ReplayBar.jsx): they live in the top header, which is the game bar's ---- */
-.replay-top { color: #fff; }
+.replay-top { color: var(--white); }
 .replay-top .rb-buttons { display: flex; align-items: center; gap: 6px; flex: none; }
-.replay-top .rb-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #ffffff33; background: #ffffff14; color: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; }
-.replay-top .rb-btn:hover { background: #ffffff26; }
-.replay-top .rb-play { width: 40px; height: 40px; background: var(--green); border-color: var(--green); color: #101010; }
-.replay-top .rb-play:hover { background: var(--green); filter: brightness(1.08); }
+/* same look as the other game bar buttons: transparent, thin grey line, white on hover; the lime accent only marks what is on */
+.replay-top .rb-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--gray); display: grid; place-items: center; cursor: pointer; padding: 0; transition: border-color .2s, color .2s; }
+.replay-top .rb-btn:hover { border-color: var(--white); color: var(--white); background: transparent; }
+.replay-top .rb-play { width: 38px; height: 38px; border-color: var(--green); color: var(--green); }
+.replay-top .rb-play:hover { border-color: var(--green); color: var(--green); filter: brightness(1.2); }
 .replay-top .rb-slider { flex: 1; min-width: 80px; height: 28px; margin: 0; background: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
-.replay-top .rb-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--green) var(--p), #ffffff30 var(--p)); }
-.replay-top .rb-slider::-moz-range-track { height: 6px; border-radius: 3px; background: #ffffff30; }
-.replay-top .rb-slider::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--green); }
-.replay-top .rb-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 0; margin-top: -6px; box-shadow: 0 1px 4px #0008; }
-.replay-top .rb-slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 0; }
+.replay-top .rb-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--green) var(--p), var(--line) var(--p)); }
+.replay-top .rb-slider::-moz-range-track { height: 4px; border-radius: 2px; background: var(--line); }
+.replay-top .rb-slider::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--green); }
+.replay-top .rb-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--white); border: 0; margin-top: -6px; }
+.replay-top .rb-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--white); border: 0; }
 .replay-top .rb-label { flex: none; min-width: 84px; display: flex; flex-direction: column; line-height: 1.25; font-family: Montserrat, sans-serif; }
-.replay-top .rb-label b { font-size: 13px; }
-.replay-top .rb-label span { font-size: 12px; color: var(--white-o); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.replay-top .rb-speed { display: flex; border: 1px solid #ffffff33; border-radius: 999px; overflow: hidden; flex: none; }
-.replay-top .rb-speed button { background: none; border: 0; color: var(--white-o); font: 700 12px Montserrat, sans-serif; padding: 6px 11px; cursor: pointer; }
-.replay-top .rb-speed button.on { background: var(--green); color: #101010; }
+.replay-top .rb-label b { font-size: 13px; font-weight: 600; color: var(--white); }
+.replay-top .rb-label span { font-size: 12px; color: var(--gray); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.replay-top .rb-speed { display: flex; gap: 4px; flex: none; }
+.replay-top .rb-speed button { background: transparent; border: 1px solid var(--line); border-radius: var(--radius); color: var(--gray); font: 600 12px Montserrat, sans-serif; padding: 6px 10px; cursor: pointer; transition: border-color .2s, color .2s; }
+.replay-top .rb-speed button:hover { border-color: var(--white); color: var(--white); }
+.replay-top .rb-speed button.on { border-color: var(--green); color: var(--green); }
 @media (max-width: 1129px) {
 	/* two rows: back, sound, buttons, turn and speed above; the slider across the full width below */
 	.game-bar.replay-top { height: auto; flex-wrap: wrap; overflow: visible; padding: 6px 12px 8px; gap: 4px 10px; justify-content: flex-start; }
@@ -857,5 +859,5 @@ body.trade-bystander #trade { display: none !important; } /* an offer between tw
 	.replay-top .gb-sound { display: none; } /* no room on a phone: the sound switch is in the game bar of live games */
 	.game-bar.replay-top { gap: 4px 8px; }
 	.replay-top .rb-label { min-width: 0; }
-	.replay-top .rb-speed button { padding: 6px 9px; }
+	.replay-top .rb-speed button { padding: 6px 8px; }
 }
