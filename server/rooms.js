@@ -724,11 +724,11 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 		if (room.status === 'waiting') removeMember(room, s.user.id);
 	}
 
-	// Everything a browser needs to replay a finished online game on the real board: the settings the game was played
+	// Everything a browser needs to replay an online game (any status: a finished or abandoned game that was taken up again is "active" for a while) on the real board: the settings the game was played
 	// with, the players, every stored click in order, and the written log (for "Turn 12 - Anna rolled 7").
 	async function replay(gameId) {
 		const row = await q.gameById(Number(gameId));
-		if (!row || row.mode !== 'online' || !row.seed || (row.status !== 'finished' && row.status !== 'abandoned')) return null;
+		if (!row || row.mode !== 'online' || !row.seed) return null;
 		const goLine = await db.get("SELECT text FROM game_actions WHERE game_id = ? AND type != 'click' AND text LIKE '% salary for passing GO.' ORDER BY seq LIMIT 1", [row.id]);
 		const paid = goLine && /collected a \$(\d+) salary/.exec(goLine.text);
 		const firstForfeit = await db.get("SELECT created_at FROM game_actions WHERE game_id = ? AND type = 'click' AND text LIKE '%\"id\":\"forfeit\"%' ORDER BY seq LIMIT 1", [row.id]);
