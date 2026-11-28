@@ -387,7 +387,7 @@ function tickOnce() {
 		}
 		else if (id === 'forfeit') {
 			// Only if that player is still in the game and it is their turn (two people may press at once).
-			const room = getOnline().room;
+			const room = roomNow();
 			const who = room && room.players.find((x) => x.seat === m.a.v);
 			const idx = who ? byName(who.name) : 0;
 			if (idx && idx === win.turn) { win.game.forfeit(); tradeShared = false; }
@@ -395,7 +395,7 @@ function tickOnce() {
 		else if (id === 'autopass') {
 			// "Pass" pressed for a bidder who is not connected. Only if that player is still the bidder (several browsers
 			// send this at the same moment; the first one counts, the others find the auction moved on).
-			const room = getOnline().room;
+			const room = roomNow();
 			const who = room && room.players.find((x) => x.seat === m.a.v);
 			const idx = who ? byName(who.name) : 0;
 			const btn = document.getElementById('auctionpass');
@@ -404,7 +404,7 @@ function tickOnce() {
 		else if (id === 'autoend') {
 			// "End turn" pressed for a player who is away. Only if it is still that player's turn and the button is there
 			// (several browsers send this at the same moment; the first one counts).
-			const room = getOnline().room;
+			const room = roomNow();
 			const who = room && room.players.find((x) => x.seat === m.a.v);
 			const idx = who ? byName(who.name) : 0;
 			const btn = document.getElementById('nextbutton');
@@ -424,8 +424,10 @@ function tickOnce() {
 }
 
 // ---- live auction (the server numbers and times it, see server/rooms.js) -----------------
+// The room whose seats the clicks name: the live one, or (replaying a finished game) the one the server sent with the moves.
+const roomNow = () => (replay ? replay.room : getOnline().room);
 function bidderOf(seat) {
-	const room = getOnline().room;
+	const room = roomNow();
 	const idx = room ? playerIndexOfSeat(room, seat) : 0;
 	return idx ? { idx, seat, name: win.player[idx].name, color: win.player[idx].color } : null;
 }
@@ -675,14 +677,15 @@ function replayStep() {
 	}
 	if (!replaySettled() || Date.now() < replay.nextAt) return;
 	queue.push(replay.actions[replay.cursor++]);
-	replay.nextAt = Date.now() + 500 / replay.speed;
+	const upNext = replay.actions[replay.cursor];
+	replay.nextAt = Date.now() + (upNext && upNext.a.id === 'aucbid' ? 300 : 500) / replay.speed; // the bids of an auction follow each other quickly
 }
 
 export function startReplayGame(data, opts = {}) {
 	const at = Math.max(0, Math.min(opts.at || 0, data.clicks.length));
 	const turns = [];
 	for (const e of data.log) if (e.turn > 0 && (!turns.length || turns[turns.length - 1].turn !== e.turn)) turns.push({ turn: e.turn, seq: e.seq });
-	replay = { id: data.room.id, actions: data.clicks, log: data.log, winner: data.winner, cursor: at, playing: opts.play !== false, speed: opts.speed || 1, nextAt: 0, finished: false, turns };
+	replay = { id: data.room.id, room: data.room, actions: data.clicks, log: data.log, winner: data.winner, cursor: at, playing: opts.play !== false, speed: opts.speed || 1, nextAt: 0, finished: false, turns };
 	for (let i = 0; i < at; i++) queue.push(data.clicks[i]);
 	scaleAnimations(replay.speed);
 	startOnlineGame(data.room, null);
