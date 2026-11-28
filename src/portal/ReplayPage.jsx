@@ -29,11 +29,16 @@ export default function ReplayPage({ id, user, live, onLive, search }) {
 	useEffect(() => {
 		if (!live || !data || started.current) return;
 		started.current = true;
-		startReplayGame(data, {
-			at: Number(search.get('at')) || 0,
-			speed: [1, 2, 4].includes(Number(search.get('speed'))) ? Number(search.get('speed')) : 1,
-			play: search.get('play') !== '0',
-		});
+		try {
+			startReplayGame(data, {
+				at: Number(search.get('at')) || 0,
+				speed: [1, 2, 4].includes(Number(search.get('speed'))) ? Number(search.get('speed')) : 1,
+				play: search.get('play') !== '0',
+			});
+		} catch (e) {
+			// no usable player list: show the old log replay instead of a broken board
+			navigate(`/history/${id}/replay`, { replace: true });
+		}
 	}, [live, data]);
 
 	if (live) return null;
