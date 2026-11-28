@@ -526,6 +526,7 @@ export function startOnlineGame(room, you) {
 
 	// Fill the engine's own setup form (it reads these fields by id) and start.
 	const players = [...room.players].sort((a, b) => a.seat - b.seat);
+	if (players.length < 2 || players.length > 8) throw new Error('This game has no usable player list.');
 	const count = document.getElementById('playernumber');
 	count.value = String(players.length);
 	count.dispatchEvent(new Event('change', { bubbles: true }));

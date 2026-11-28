@@ -739,7 +739,8 @@ const err = (conn, message, code) => send(conn, { t: 'error', message, ...(code 
 				id: row.id, status: 'active', hostId: null, seed: row.seed, rules: row.rules || 1,
 				goSalary: paid ? Number(paid[1]) : goSalaryByDate(row.created_at),
 				forfeitToBank: !(firstForfeit && String(firstForfeit.created_at) < FORFEIT_TO_BANK_FROM),
-				players: (await q.members(row.id)).map((m) => ({ seat: m.seat, userId: m.user_id, name: m.name, color: m.color })).sort((a, b) => a.seat - b.seat),
+				// every player of the game, also one whose account was deleted since (user_id is empty then): the clicks name seats
+				players: (await db.all('SELECT seat, name, color, user_id FROM game_players WHERE game_id = ? ORDER BY seat', [row.id])).map((m) => ({ seat: m.seat, userId: m.user_id, name: m.name, color: m.color })),
 			},
 			clicks,
 			log: cleanLog(await db.all("SELECT seq, turn, type, text, created_at FROM game_actions WHERE game_id = ? AND type != 'click' ORDER BY seq", [row.id])).map((e) => ({ seq: e.seq, turn: e.turn, type: e.type, text: e.text })),
