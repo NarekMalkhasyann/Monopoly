@@ -137,7 +137,7 @@ export default function App() {
 				<Dice3D active={showGame} />
 				{showGame && <TurnTimer />}
 				{showGame && (route.name === 'replay' ? <ReplayBar id={route.params.id} /> : <GameBar />)}
-				{showGame && route.name !== 'replay' && <RecapOverlay />}
+				{showGame && route.name !== 'replay' && <RecapOverlay spectating={route.name === 'watch'} />}
 			</div>
 			{page}
 			<LoadingScreen />

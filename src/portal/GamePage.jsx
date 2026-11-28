@@ -34,6 +34,7 @@ export default function GamePage({ id, user, live, onLive, spectate }) {
 		let stale = false;
 		api('GET', `/games/${id}`).then(({ game: g }) => {
 			if (stale) return;
+			if (spectate && g.status === 'finished') { setError('This game has already finished.'); return; }
 			if (g.status === 'finished' || g.status === 'abandoned') { navigate(`/history/${id}`, { replace: true }); return; }
 			setGame(g);
 			if (g.mode === 'local' || g.status === 'active') { startLoading('Loading your game', g.mode === 'online' ? 'Connecting to the room…' : 'Fetching your game…'); setLoading(0.05); }

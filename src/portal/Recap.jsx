@@ -108,10 +108,10 @@ export default function Recap({ game, onReplay, onClose, closeLabel = 'Close' })
 				)}
 			</div>
 			<div className="rc-actions">
-				<button className="btn-replay" onClick={onReplay}>
+				{onReplay && <button className="btn-replay" onClick={onReplay}>
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.53.85l10.5-6.5a1 1 0 0 0 0-1.7L9.53 4.65A1 1 0 0 0 8 5.5z" /></svg>
 					Watch replay
-				</button>
+				</button>}
 				<button className="btn-ghost" onClick={onClose}>{closeLabel}</button>
 			</div>
 		</div>
