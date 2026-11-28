@@ -129,7 +129,6 @@ function allowed(id, who) {
 	if (id === 'bankunmortgage') return !!t && who === t.creditor;
 	if (who === win.turn) return true;
 	if (id === 'popupclose' || id === 'popupyes' || id === 'popupno') {
-		if (tradeShared && (who === byName(text('trade-leftp-name')) || who === byName(text('trade-rightp-name')))) return true;
 		if (t && t.money < 0 && t.creditor > 0 && who === t.creditor) return true; // creditor of a bankrupt player
 	}
 	return false;
@@ -243,13 +242,8 @@ function onClickCapture(e) {
 		} else win.onlineTradeSelf = myIndex; // the engine starts the draft for me, not for the player whose turn it is
 		return;
 	}
-	// While an offer is open for the two players it is about, nobody else presses game buttons (the offer covers the board).
-	if (tradeShared && RELAYED.has(id) && !TRADE_BUTTONS.has(id) && id !== 'popupclose' && id !== 'popupyes' && id !== 'popupno') {
-		e.preventDefault();
-		e.stopImmediatePropagation();
-		toast('A trade offer is open. Open it from the Trade offer card and answer it first.');
-		return;
-	}
+	// An open offer does not stop the game: its two players answer it whenever they like (the Trade offer card), and
+	// everybody keeps playing. If the offer no longer holds when it is answered, the engine cancels it.
 	// The "X has proposed a trade with you" pop-up exists only on the recipient's screen, so closing it is local too.
 	if ((id === 'popupclose') && tradeShared && /proposed a trade/.test(text('popuptext'))) return;
 	// Cancelling your own draft (nothing shared yet) is local.

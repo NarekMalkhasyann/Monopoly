@@ -677,6 +677,27 @@ function Game() {
 
 	};
 
+	// Why an offer can no longer be carried out ("" = it still can): the property must still belong to the one giving
+	// it and have no buildings on its colour group (the same rule the trade window follows when the offer is made),
+	// and a Get Out of Jail Free card must still be in the giver's hand.
+	var tradeProblem = function(t) {
+		var a = t.getInitiator(), b = t.getRecipient();
+		for (var i = 0; i < 40; i++) {
+			var f = t.getProperty(i);
+			if (!f) continue;
+			var sq = square[i];
+			if (sq.owner !== (f === 1 ? a.index : b.index)) return sq.name + " no longer belongs to " + (f === 1 ? a.name : b.name) + ".";
+			var group = sq.group || [i];
+			for (var g = 0; g < group.length; g++) {
+				if (square[group[g]].house || square[group[g]].hotel) return "there are buildings on the " + sq.name + " colour group.";
+			}
+		}
+		var cc = t.getCommunityChestJailCard(), ch = t.getChanceJailCard();
+		if (cc && !(cc === 1 ? a : b).communityChestJailCard) return "the Get Out of Jail Free card is gone.";
+		if (ch && !(ch === 1 ? a : b).chanceJailCard) return "the Get Out of Jail Free card is gone.";
+		return "";
+	};
+
 	var readTrade = function() {
 		var initiator = currentInitiator;
 		var recipient = currentRecipient;
@@ -901,6 +922,17 @@ function Game() {
 		initiator = tradeObj.getInitiator();
 		recipient = tradeObj.getRecipient();
 
+		// Online, the game goes on while an offer waits for its answer, so what was offered may have changed hands or
+		// been built on since. Such an offer is cancelled (the same in every browser) instead of being carried out.
+		var problem = tradeProblem(tradeObj);
+		if (problem) {
+			addAlert("The trade between " + initiator.name + " and " + recipient.name + " was cancelled: " + problem, "trade");
+			pendingTradeNames = null;
+			window.tradeEnd = undefined;
+			$("#trade").hide();
+			$("#buy-menu-item").click();
+			return false;
+		}
 
 		if (money > 0 && money > initiator.money) {
 			document.getElementById("trade-leftp-money").value = initiator.name + " does not have $" + money + ".";
@@ -1198,6 +1230,14 @@ function Game() {
 		}
 
 		addAlert(p.name + " is bankrupt.", "bankrupt");
+
+		// An open trade offer that this player is part of ends with the player.
+		if ($("#trade").css("display") !== "none" && (currentInitiator === p || currentRecipient === p)) {
+			addAlert("The open trade offer was cancelled.", "trade");
+			pendingTradeNames = null;
+			window.tradeEnd = undefined;
+			$("#trade").hide();
+		}
 
 		if (p.creditor !== 0) {
 			pcredit.money += p.money;
