@@ -67,8 +67,8 @@ export function Details({ id, replay, onClose, onReplay, onOpen, admin = false, 
 	}
 
 	const running = game && game.mode === 'online' && game.status === 'active';
-	// a finished online game is replayed on the real board; a local one (or one without saved moves) step by step from its log
-	const openReplay = () => (game && game.mode === 'online' && game.status !== 'active' ? navigate(`/replay/${id}`) : onReplay(true));
+	// an online game (finished, abandoned or one that was taken up again) is replayed on the real board; a local one (or one without saved moves) step by step from its log
+	const openReplay = () => (game && game.mode === 'online' ? navigate(`/replay/${id}`) : onReplay(true));
 	return (
 		<Modal onClose={onClose}>
 			<h3 className="modal-title">Game #{id}</h3>

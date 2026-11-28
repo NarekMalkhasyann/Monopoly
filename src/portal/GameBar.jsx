@@ -9,7 +9,7 @@ import { Modal } from './GameDetails.jsx';
 import { soundOn, setSoundOn, subscribeSound } from '../sound.js';
 
 // Speaker button: sound effects on / off (remembered in this browser).
-function SoundButton() {
+export function SoundButton() {
 	const [on, setOn] = useState(soundOn());
 	useEffect(() => subscribeSound(() => setOn(soundOn())), []);
 	return (
